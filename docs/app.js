@@ -234,8 +234,41 @@ function attachAutoCalc(){
   });
 }
 
+// ==== 折り畳み（開閉状態の保存/復元） ====
+const COLLAPSE_KEY = 'uvtw_collapse_v1';
+
+function loadCollapseState(){
+  try{ return JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '{}'); }
+  catch{ return {}; }
+}
+function saveCollapseState(state){
+  localStorage.setItem(COLLAPSE_KEY, JSON.stringify(state));
+}
+function initCollapsibles(){
+  const state = loadCollapseState();
+  document.querySelectorAll('.card.collapsible').forEach(sec=>{
+    const id = sec.getAttribute('data-collapse-id');
+    if (state[id] === true) sec.classList.add('collapsed');
+    const header = sec.querySelector('.card-header');
+    header.setAttribute('aria-expanded', sec.classList.contains('collapsed') ? 'false' : 'true');
+
+    const toggle = () => {
+      sec.classList.toggle('collapsed');
+      const st = loadCollapseState();
+      st[id] = sec.classList.contains('collapsed');
+      saveCollapseState(st);
+      header.setAttribute('aria-expanded', sec.classList.contains('collapsed') ? 'false' : 'true');
+    };
+    header.addEventListener('click', toggle);
+    header.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+  });
+}
+
 window.addEventListener('DOMContentLoaded', ()=>{
   refreshPresetSelect();
+  initCollapsibles();
 
   // 共有URL
   $('shareUrlBtn').addEventListener('click', handleShareUrl);
