@@ -24,3 +24,8 @@ table.breakdown thead{background:#0e141c;color:#9bb0c3}
 table.breakdown tbody tr:nth-child(even){background:#0c121a}
 table.breakdown td.num{text-align:right;font-variant-numeric:tabular-nums}
 label.row{display:flex;align-items:center;gap:8px;margin-top:8px}
+h2{display:flex;align-items:center;gap:.5rem}
+h2::before{
+  content:""; display:inline-block; width:.6rem; height:.6rem;
+  border-radius:999px; background:#6aa7ff; box-shadow:0 0 0 3px rgba(106,167,255,.15);
+}
