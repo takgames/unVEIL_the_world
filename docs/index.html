@@ -13,23 +13,32 @@
     <!-- プリセット（ユーザー保存型） -->
     <section class="card">
       <h2>プリセット</h2>
+    
+      <!-- 上部ツールバー：共有 -->
+      <div class="preset-toolbar">
+        <button id="shareUrlBtn" class="ghost small">共有URLをコピー</button>
+      </div>
+    
       <div class="grid">
         <label>プリセット一覧
           <select id="presetSelect"></select>
         </label>
-        <div class="row">
-          <button id="applyPresetBtn">適用</button>
+    
+        <div class="cluster">
           <button id="overwritePresetBtn">上書き保存</button>
-          <button id="renamePresetBtn" class="ghost">名前変更</button>
           <button id="deletePresetBtn" class="ghost">削除</button>
         </div>
-
-        <label>新規／変更後の名前<input id="presetName" type="text" placeholder="例）ボス戦用"></label>
-        <div class="row">
+    
+        <label>新規／変更後の名前
+          <input id="presetName" type="text" placeholder="例）ボス戦用">
+        </label>
+    
+        <div class="cluster">
           <button id="savePresetBtn">現在の入力を新規保存</button>
-          <button id="shareUrlBtn" class="ghost">共有URLをコピー</button>
+          <button id="renamePresetBtn" class="ghost">名前変更</button>
         </div>
       </div>
+    
       <p class="note" id="banner" style="display:none"></p>
     </section>
 
