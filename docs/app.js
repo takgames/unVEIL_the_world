@@ -106,6 +106,15 @@ function refreshPresetSelect(selectId){
   if (selectId) sel.value = selectId;
 }
 
+function handleApplyPresetById(id){
+  const presets = loadPresets();
+  const p = presets.find(x=>x.id===id);
+  if (!p) return;
+  applyParams(p.values);
+  calc(); // 自動計算＆保存
+  showBanner(`プリセット「${p.name}」を適用しました。`);
+}
+
 function handleSavePreset(){
   const name = $('presetName').value.trim() || '未命名プリセット';
   const values = collectParams();
@@ -226,25 +235,30 @@ function attachAutoCalc(){
 }
 
 window.addEventListener('DOMContentLoaded', ()=>{
-  // プリセットUI
   refreshPresetSelect();
+
+  // 共有URL
+  $('shareUrlBtn').addEventListener('click', handleShareUrl);
+
+  // プリセット操作
   $('savePresetBtn').addEventListener('click', handleSavePreset);
-  $('applyPresetBtn').addEventListener('click', handleApplyPreset);
   $('overwritePresetBtn').addEventListener('click', handleOverwritePreset);
   $('renamePresetBtn').addEventListener('click', handleRenamePreset);
   $('deletePresetBtn').addEventListener('click', handleDeletePreset);
-  $('shareUrlBtn').addEventListener('click', handleShareUrl);
 
-  // 入力変更で自動計算
+  // ★ プルダウン選択＝即時適用
+  $('presetSelect').addEventListener('change', (e)=>{
+    const id = e.target.value;
+    if (id) handleApplyPresetById(id);
+  });
+
+  // 入力変更で自動計算（既存関数）
   attachAutoCalc();
 
   // 保存値の復元 or URLロード
   if (!tryLoadFromUrl()){
     const saved = localStorage.getItem(STATE_KEY);
-    if (saved){
-      applyParams(JSON.parse(saved));
-    }
-    // ここでcalc()を呼べば初回表示が更新される
+    if (saved){ applyParams(JSON.parse(saved)); }
     calc(false);
   }
 
