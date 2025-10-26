@@ -3,21 +3,44 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>unVEIL the world ダメージ計算（MVP v4）</title>
+  <title>unVEIL the world ダメージ計算（MVP v7）</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="container">
     <h1>unVEIL the world ダメージ計算（MVP）</h1>
 
+    <!-- プリセット（ユーザー保存型） -->
+    <section class="card">
+      <h2>プリセット</h2>
+      <div class="grid">
+        <label>プリセット一覧
+          <select id="presetSelect"></select>
+        </label>
+        <div class="row">
+          <button id="applyPresetBtn">適用</button>
+          <button id="overwritePresetBtn">上書き保存</button>
+          <button id="renamePresetBtn" class="ghost">名前変更</button>
+          <button id="deletePresetBtn" class="ghost">削除</button>
+        </div>
+
+        <label>新規／変更後の名前<input id="presetName" type="text" placeholder="例）ボス戦用"></label>
+        <div class="row">
+          <button id="savePresetBtn">現在の入力を新規保存</button>
+          <button id="shareUrlBtn" class="ghost">共有URLをコピー</button>
+        </div>
+      </div>
+      <p class="note" id="banner" style="display:none"></p>
+    </section>
+
     <!-- グループA：ステータス -->
     <section class="card">
       <h2>グループA：ステータス</h2>
       <div class="grid">
         <label>攻撃力<input id="atk" type="number" min="0" value="2000"></label>
-        <label>使い魔攻撃力（戦闘中）<input id="familiarAtk" type="number" min="0" value="0"></label>
-        <label>会心率(%)<input id="critRatePct" type="number" step="0.1" value="50"></label>
-        <label>会心ダメージ(%)<input id="critDmgPct" type="number" step="0.1" value="100"></label>
+        <label>使い魔攻撃力（戦闘中）<input id="familiarAtk" type="number" min="0" value="100"></label>
+        <label>会心率(%)<input id="critRatePct" type="number" step="0.1" value="10"></label>
+        <label>会心ダメージ(%)<input id="critDmgPct" type="number" step="0.1" value="50"></label>
       </div>
       <p class="note">計算に用いる攻撃力 = 攻撃力 + 使い魔攻撃力</p>
     </section>
@@ -26,7 +49,7 @@
     <section class="card">
       <h2>グループB：スキル</h2>
       <div class="grid">
-        <label>スキル攻撃(%)<input id="skillPct" type="number" min="0" step="0.1" value="200"></label>
+        <label>スキル攻撃(%)<input id="skillPct" type="number" min="0" step="0.1" value="100"></label>
         <label>スキル固定値<input id="skillFlat" type="number" step="1" value="0"></label>
       </div>
     </section>
@@ -35,17 +58,9 @@
     <section class="card">
       <h2>グループC：バフ</h2>
       <div class="grid">
-        <label>カード系ダメージアップ(%)<input id="cardUpPct" type="number" step="0.1" value="0"></label>
-        <label>全体ダメージアップ(%)<input id="globalUpPct" type="number" step="0.1" value="0"></label>
-        <label>属性ダメージアップ(%)<input id="elemUpPct" type="number" step="0.1" value="0"></label>
-
-        <label>会心モード
-          <select id="critMode">
-            <option value="none">なし</option>
-            <option value="on">発生時（確定会心）</option>
-            <option value="expected" selected>期待値（会心率を考慮）</option>
-          </select>
-        </label>
+        <label>カード系ダメージアップ(%)<input id="cardUpPct" type="number" step="0.5" value="0"></label>
+        <label>全体ダメージアップ(%)<input id="globalUpPct" type="number" step="0.5" value="0"></label>
+        <label>属性ダメージアップ(%)<input id="elemUpPct" type="number" step="0.5" value="0"></label>
       </div>
     </section>
 
@@ -53,8 +68,7 @@
     <section class="card">
       <h2>グループD：敵</h2>
       <div class="grid">
-        <label>防御力<input id="def" type="number" min="0" step="1" value="500"></label>
-
+        <label>防御力<input id="def" type="number" min="0" step="1" value="0"></label>
         <label>属性相性
           <select id="affinity">
             <option value="none" selected>なし（×1.00）</option>
@@ -62,13 +76,11 @@
             <option value="dis">不利（×0.85）</option>
           </select>
         </label>
-
         <label class="row"><input id="applyBreak" type="checkbox"> ブレイク状態（×1.30）</label>
       </div>
     </section>
 
     <section class="action">
-      <button id="calcBtn">計算する</button>
       <button id="resetBtn" class="ghost">リセット</button>
     </section>
 
@@ -76,7 +88,8 @@
       <h2>結果</h2>
       <div id="results" class="results">
         <div><span>基本ダメージ</span><strong id="basic">—</strong></div>
-        <div><span>最終ダメージ（切り捨て）</span><strong id="final">—</strong></div>
+        <div><span>最終（会心発生時・切り捨て）</span><strong id="finalCritOn">—</strong></div>
+        <div><span>最終（会心期待値・切り捨て）</span><strong id="finalExpected">—</strong></div>
       </div>
     </section>
 
@@ -88,7 +101,7 @@
           <tbody></tbody>
         </table>
       </div>
-      <p class="note">丸めは最終結果のみ <strong>切り捨て</strong>。固定倍率：有利1.25 / 不利0.85 / ブレイク1.30。</p>
+      <p class="note">丸めは各「最終」値のみ <strong>切り捨て</strong>。固定倍率：有利1.25 / 不利0.85 / ブレイク1.30。</p>
     </section>
 
     <footer>
