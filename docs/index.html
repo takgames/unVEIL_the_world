@@ -3,11 +3,84 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>unVEIL the world ダメージ計算（試作）</title>
+  <title>unVEIL the world ダメージ計算（MVP v3）</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="container">
-    <h1>unVEIL the world ダメージ計算</h1>
+    <h1>unVEIL the world ダメージ計算（MVP）</h1>
+
+    <section class="card">
+      <h2>基本ダメージ入力</h2>
+      <div class="grid">
+        <label>攻撃力<input id="atk" type="number" min="0" value="2000"></label>
+        <label>スキル攻撃(%)<input id="skillPct" type="number" min="0" step="0.1" value="200"></label>
+        <label>スキル固定値<input id="skillFlat" type="number" step="1" value="0"></label>
+
+        <label>カード系ダメージアップ(%)<input id="cardUpPct" type="number" step="0.1" value="0"></label>
+        <label>全体ダメージアップ(%)<input id="globalUpPct" type="number" step="0.1" value="0"></label>
+        <label>属性ダメージアップ(%)<input id="elemUpPct" type="number" step="0.1" value="0"></label>
+
+        <label>防御力<input id="def" type="number" min="0" step="1" value="500"></label>
+      </div>
+      <p class="note">基本 = (攻撃力×スキル% + 固定値) × (1+カード%) × (1+全体%) × (1+属性%) × e^(-防御/1092)</p>
+    </section>
+
+    <section class="card">
+      <h2>最終ダメージ条件</h2>
+      <div class="grid">
+        <label>会心ダメージ(%)<input id="critDmgPct" type="number" step="0.1" value="100"></label>
+
+        <label>会心モード
+          <select id="critMode">
+            <option value="none">なし</option>
+            <option value="on">発生時（確定会心）</option>
+            <option value="expected" selected>期待値（会心率を考慮）</option>
+          </select>
+        </label>
+        <label>会心率(%)<input id="critRatePct" type="number" step="0.1" value="50"></label>
+
+        <label>属性相性
+          <select id="affinity">
+            <option value="none" selected>なし（×1.00）</option>
+            <option value="adv">有利（×1.25）</option>
+            <option value="dis">不利（×0.85）</option>
+          </select>
+        </label>
+
+        <label class="row"><input id="applyBreak" type="checkbox"> ブレイク状態（×1.30）</label>
+      </div>
+      <p class="note">最終 = 基本 × 会心 × 属性相性 × ブレイク（条件を満たす場合のみ）／ 最終結果は<strong>切り捨て</strong></p>
+    </section>
+
+    <section class="action">
+      <button id="calcBtn">計算する</button>
+      <button id="resetBtn" class="ghost">リセット</button>
+    </section>
+
+    <section class="card">
+      <h2>結果</h2>
+      <div id="results" class="results">
+        <div><span>基本ダメージ</span><strong id="basic">—</strong></div>
+        <div><span>最終ダメージ（切り捨て）</span><strong id="final">—</strong></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>途中値（内訳）</h2>
+      <div class="table-wrap">
+        <table class="breakdown" id="breakdown">
+          <thead><tr><th>要素</th><th>値</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <span class="note">有利=1.25 / 不利=0.85 / ブレイク=1.30（固定）。丸めは最終結果で切り捨て。</span>
+    </footer>
   </main>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
