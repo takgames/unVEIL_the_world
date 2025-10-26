@@ -28,19 +28,16 @@ function decodeObj(s){
 // ========== 入出力 ==========
 function collectParams(){
   return {
-    // A: ステータス
     atk: num('atk') || 0,
     familiarAtk: num('familiarAtk') || 0,
     critRatePct: num('critRatePct') || 0,
     critDmgPct: num('critDmgPct') || 0,
-    // B: スキル
+    atkUpPct: num('atkUpPct') || 0,
     skillPct: num('skillPct') || 0,
     skillFlat: num('skillFlat') || 0,
-    // C: バフ
     cardUpPct: num('cardUpPct') || 0,
     globalUpPct: num('globalUpPct') || 0,
     elemUpPct: num('elemUpPct') || 0,
-    // D: 敵
     def: num('def') || 0,
     affinity: $('affinity').value,
     applyBreak: $('applyBreak').checked
@@ -57,13 +54,11 @@ function applyParams(values){
 }
 
 function render(out){
-  $('basic').textContent        = isFinite(out.basic) ? fmtInt(out.basic) : '—';
-  $('finalCritOn').textContent  = isFinite(out.finalCritOn) ? fmtInt(out.finalCritOn) : '—';
-  $('finalExpected').textContent= isFinite(out.finalExpected) ? fmtInt(out.finalExpected) : '—';
-
+  // 途中値テーブル
   const rows = [
     ['攻撃力',                      fmtFloat(out.atkBase)],
     ['使い魔攻撃力',                fmtFloat(out.familiar)],
+    ['攻撃力アップ (1+%)',          `×${fmtMul(out.atkUp)}`],   // ← 追加
     ['＝ 計算用攻撃力',             fmtFloat(out.atkEff)],
     ['(攻撃×スキル% + 固定値)',     fmtFloat(out.baseTerm)],
     ['カード系 (1+%)',              `×${fmtMul(out.cardUp)}`],
@@ -75,13 +70,23 @@ function render(out){
     ['会心（期待値）',              `期待値 ×${fmtMul(out.critMulExpected)}`],
     ['属性相性',                    out.affinityLabel],
     ['ブレイク',                    `×${fmtMul(out.breakMul)}`],
+    ['＝ 最終（通常／丸め前）',      fmtFloat(out.finalRawNoCrit)],
+    ['最終（通常／切り捨て）',       fmtInt(out.finalNoCrit)],
     ['＝ 最終（会心発生時／丸め前）', fmtFloat(out.finalRawCritOn)],
     ['最終（会心発生時／切り捨て）',  fmtInt(out.finalCritOn)],
     ['＝ 最終（期待値／丸め前）',     fmtFloat(out.finalRawExpected)],
     ['最終（期待値／切り捨て）',      fmtInt(out.finalExpected)],
   ];
-  const tbody = $('breakdown').querySelector('tbody');
+  const tbody = document.getElementById('breakdown').querySelector('tbody');
   tbody.innerHTML = rows.map(([k,v])=>`<tr><td>${k}</td><td class="num">${v}</td></tr>`).join('');
+
+  // バーの更新（最大値を基準に 3 本を相対化）
+  const vNo  = out.finalNoCrit;
+  const vOn  = out.finalCritOn;
+  const vExp = out.finalExpected;
+  const maxV = Math.max(vNo, vOn, vExp, 1);
+
+  updateStackedBars(out.finalNoCrit, out.finalCritOn, out.finalExpected);
 }
 
 function calc(save=true){
@@ -91,7 +96,7 @@ function calc(save=true){
   if (save) localStorage.setItem(STATE_KEY, JSON.stringify(params));
 }
 
-// ========== プリセット管理（localStorage） ==========
+// ========== プリセット管理 ==========
 function loadPresets(){
   try { return JSON.parse(localStorage.getItem(PRESETS_KEY) || '[]'); }
   catch { return []; }
@@ -105,28 +110,17 @@ function refreshPresetSelect(selectId){
   sel.innerHTML = presets.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   if (selectId) sel.value = selectId;
 }
-
-function handleApplyPresetById(id){
-  const presets = loadPresets();
-  const p = presets.find(x=>x.id===id);
-  if (!p) return;
-  applyParams(p.values);
-  calc(); // 自動計算＆保存
-  showBanner(`プリセット「${p.name}」を適用しました。`);
-}
-
 function handleSavePreset(){
   const name = $('presetName').value.trim() || '未命名プリセット';
   const values = collectParams();
   const presets = loadPresets();
   const item = { id: uid(), name, values, updatedAt: NOW() };
-  presets.unshift(item);                // 新しいものを先頭に
+  presets.unshift(item);
   savePresets(presets);
   refreshPresetSelect(item.id);
   $('presetName').value = '';
   showBanner(`「${item.name}」を保存しました。`);
 }
-
 function handleOverwritePreset(){
   const sel = $('presetSelect');
   const id = sel.value;
@@ -139,7 +133,6 @@ function handleOverwritePreset(){
   savePresets(presets);
   showBanner(`プリセット「${presets[idx].name}」を上書き保存しました。`);
 }
-
 function handleRenamePreset(){
   const sel = $('presetSelect');
   const id = sel.value;
@@ -156,18 +149,14 @@ function handleRenamePreset(){
   $('presetName').value = '';
   showBanner(`プリセット名を「${name}」に変更しました。`);
 }
-
-function handleApplyPreset(){
-  const sel = $('presetSelect');
-  const id = sel.value;
+function handleApplyPresetById(id){
   const presets = loadPresets();
   const p = presets.find(x=>x.id===id);
   if (!p) return;
   applyParams(p.values);
-  calc(); // 適用と同時に再計算＆保存
+  calc();
   showBanner(`プリセット「${p.name}」を適用しました。`);
 }
-
 function handleDeletePreset(){
   const sel = $('presetSelect');
   const id = sel.value;
@@ -186,18 +175,12 @@ function handleDeletePreset(){
 function buildShareUrl(){
   const payload = { v:2, params: collectParams() };
   const u = new URL(location.href);
-  u.search = ''; // 既存クエリを消す
+  u.search = '';
   u.searchParams.set('p', encodeObj(payload));
   return u.toString();
 }
 async function handleShareUrl(){
-  const url = buildShareUrl();
-  try{
-    await navigator.clipboard.writeText(url);
-    showBanner('共有URLをクリップボードにコピーしました。');
-  }catch{
-    window.prompt('このURLをコピーしてください：', url);
-  }
+  openShareMenu(true);
 }
 function tryLoadFromUrl(){
   const sp = new URLSearchParams(location.search);
@@ -207,12 +190,228 @@ function tryLoadFromUrl(){
     const obj = decodeObj(p);
     if (obj && obj.params){
       applyParams(obj.params);
-      calc(); // 保存も更新
+      calc();
       showBanner('URLからパラメータを読み込みました（保存は未実施）。');
       return true;
     }
   }catch{}
   return false;
+}
+
+// ========== 折り畳み（開閉状態の保存/復元 + アニメ） ==========
+const COLLAPSE_KEY = 'uvtw_collapse_v3';
+
+const DEFAULT_COLLAPSE = {
+  preset: true,   // ← プリセットをデフォ閉
+  status: false,
+  skill:  false,
+  buff:   false,
+  enemy:  false,
+  result: false,
+  breakdown: true // ← 内訳はデフォ閉（従来どおり）
+};
+
+
+function loadCollapseState(){
+  try{
+    const parsed = JSON.parse(localStorage.getItem(COLLAPSE_KEY) || 'null');
+    return parsed && typeof parsed === 'object' ? parsed : { ...DEFAULT_COLLAPSE };
+  }catch{
+    return { ...DEFAULT_COLLAPSE };
+  }
+}
+function saveCollapseState(state){
+  localStorage.setItem(COLLAPSE_KEY, JSON.stringify(state));
+}
+
+// 現在の開閉状態に合わせて高さをセット
+function setHeights(section){
+  const body = section.querySelector('.card-body');
+  if (!body) return;
+  if (section.classList.contains('collapsed')) {
+    body.style.height = '0px';
+  } else {
+    // 開いているときは「内容の高さ」をセット（初期表示＆リサイズ用）
+    body.style.height = body.scrollHeight + 'px';
+  }
+}
+
+// 高さトランジションを実行
+function animateToggle(section, willCollapse){
+  const body = section.querySelector('.card-body');
+  if (!body) return;
+
+  section.classList.add('animating');
+
+  // 現在の高さ → 目標の高さ
+  const startH = body.getBoundingClientRect().height;
+  const endH   = willCollapse ? 0 : body.scrollHeight;
+
+  // 低速モーション配慮：transitionが無効なら即座に反映
+  const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const computed = getComputedStyle(body);
+  const dur = parseFloat(computed.transitionDuration || '0') +
+              parseFloat(computed.transitionDelay || '0');
+
+  const finish = () => {
+    section.classList.remove('animating');
+    if (!willCollapse) {
+      // 開いたときは自動高さに戻す（内容変化に追従）
+      body.style.height = 'auto';
+      body.style.opacity = '1';
+    } else {
+      // 閉じたときは0px維持
+      body.style.height = '0px';
+      body.style.opacity = ''; // CSSに任せる
+    }
+  };
+
+  if (prefersReduced || dur === 0 || isNaN(dur)) {
+    // トランジションなしですぐ反映
+    body.style.height = willCollapse ? '0px' : 'auto';
+    finish();
+    return;
+  }
+
+  // 通常のアニメ
+  body.style.height = startH + 'px';
+  // 次フレームで目標値へ
+  requestAnimationFrame(()=>{ body.style.height = endH + 'px'; });
+
+  let done = false;
+  const onEnd = () => {
+    if (done) return;
+    done = true;
+    body.removeEventListener('transitionend', onEnd);
+    finish();
+  };
+  body.addEventListener('transitionend', onEnd);
+
+  // フォールバック（万一 transitionend が来なくても解除する）
+  setTimeout(onEnd, Math.max(250, dur * 1000 + 50));
+}
+
+function initCollapsibles(){
+  const state = loadCollapseState();
+
+  document.querySelectorAll('.card.collapsible').forEach(sec=>{
+    const id = sec.getAttribute('data-collapse-id');
+
+    // 初期クラス適用
+    if (state[id] === true) sec.classList.add('collapsed');
+
+    // 初期高さ
+    const body = sec.querySelector('.card-body');
+    if (body) {
+      body.style.height = sec.classList.contains('collapsed') ? '0px' : body.scrollHeight + 'px';
+    }
+
+    const header = sec.querySelector('.card-header');
+    const updateAria = () =>
+      header.setAttribute('aria-expanded', sec.classList.contains('collapsed') ? 'false' : 'true');
+    updateAria();
+
+    const onToggle = () => {
+      const willCollapse = !sec.classList.contains('collapsed');
+      // 現在高さを固定してからクラス反転
+      if (body) body.style.height = body.getBoundingClientRect().height + 'px';
+      sec.classList.toggle('collapsed', willCollapse);
+      animateToggle(sec, willCollapse);
+
+      const st = loadCollapseState();
+      st[id] = willCollapse;
+      saveCollapseState(st);
+      updateAria();
+    };
+
+    header.addEventListener('click', onToggle);
+    header.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); }
+    });
+
+    // リサイズ時：開いているカードは高さを更新
+    window.addEventListener('resize', ()=>{
+      if (!sec.classList.contains('collapsed') && body) {
+        body.style.height = 'auto';
+        requestAnimationFrame(()=>{ if (body) body.style.height = body.scrollHeight + 'px'; });
+      }
+    });
+  });
+}
+
+// 前回値を保持して差分アニメ
+const prevVals = { noCrit: 0, critOn: 0, expected: 0 };
+
+function animateNumber(el, from, to, dur=350){
+  if (!isFinite(from)) from = 0;
+  if (!isFinite(to))   to   = 0;
+  const start = performance.now();
+  const step = now => {
+    const t = Math.min(1, (now - start) / dur);
+    const val = Math.round(from + (to - from) * t);
+    el.textContent = val.toLocaleString('ja-JP');
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function updateBarRow(rowEl, value, max){
+  const fill = rowEl.querySelector('.fill');
+  const valEl = rowEl.querySelector('.value');
+  const key = rowEl.dataset.key;
+
+  // 数値アニメ
+  animateNumber(valEl, prevVals[key] || 0, value);
+
+  // 幅アニメ（相対値）
+  const pct = max > 0 ? (value / max) * 100 : 0;
+  requestAnimationFrame(()=>{ fill.style.width = Math.max(0, Math.min(100, pct)) + '%'; });
+
+  // 軽いハイライト
+  rowEl.classList.add('updated');
+  setTimeout(()=>rowEl.classList.remove('updated'), 360);
+
+  prevVals[key] = value;
+}
+
+const prevLegend = { noCrit:0, critOn:0, expected:0 };
+
+function updateStackedBars(vNo, vOn, vExp){
+  const maxV = Math.max(vNo, vOn, vExp, 1);
+  const pct = (v)=> Math.max(0, Math.min(100, (v/maxV)*100));
+
+  // 幅トランジション
+  document.getElementById('fill-noCrit').style.width   = pct(vNo) + '%';
+  document.getElementById('fill-critOn').style.width   = pct(vOn) + '%';
+  document.getElementById('fill-expected').style.width = pct(vExp) + '%';
+
+  // 凡例の数値（アニメ）
+  const pairs = [
+    ['noCrit',   vNo, 'leg-noCrit'],
+    ['critOn',   vOn, 'leg-critOn'],
+    ['expected', vExp,'leg-expected']
+  ];
+  for (const [key, val, id] of pairs){
+    const el = document.getElementById(id);
+    animateNumber(el, prevLegend[key] || 0, val);
+    const leg = el.closest('.leg');
+    leg.classList.add('updated');
+    setTimeout(()=>leg.classList.remove('updated'), 360);
+    prevLegend[key] = val;
+  }
+}
+
+function openShareMenu(show=true){
+  const menu = document.getElementById('shareMenu');
+  menu.setAttribute('aria-hidden', show ? 'false' : 'true');
+}
+function copyTextAndNotify(text, msg){
+  navigator.clipboard.writeText(text).then(()=>{
+    showBanner(msg);
+  }).catch(()=>{
+    // Fallback
+    window.prompt('このテキストをコピーしてください：', text);
+  }).finally(()=> openShareMenu(false));
 }
 
 // ========== UI ヘルパ ==========
@@ -224,84 +423,66 @@ function showBanner(text){
   clearTimeout(bannerTimer);
   bannerTimer = setTimeout(()=>{ el.style.display='none'; }, 3000);
 }
-
-// ========== 初期化 ==========
 function attachAutoCalc(){
-  // すべての input/select に入力監視を付ける（自動計算 & 自動保存）
   document.querySelectorAll('input, select').forEach(el=>{
     const evt = (el.tagName === 'SELECT' || el.type === 'checkbox') ? 'change' : 'input';
     el.addEventListener(evt, ()=>calc(true));
   });
 }
 
-// ==== 折り畳み（開閉状態の保存/復元） ====
-const COLLAPSE_KEY = 'uvtw_collapse_v1';
-
-function loadCollapseState(){
-  try{ return JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '{}'); }
-  catch{ return {}; }
-}
-function saveCollapseState(state){
-  localStorage.setItem(COLLAPSE_KEY, JSON.stringify(state));
-}
-function initCollapsibles(){
-  const state = loadCollapseState();
-  document.querySelectorAll('.card.collapsible').forEach(sec=>{
-    const id = sec.getAttribute('data-collapse-id');
-    if (state[id] === true) sec.classList.add('collapsed');
-    const header = sec.querySelector('.card-header');
-    header.setAttribute('aria-expanded', sec.classList.contains('collapsed') ? 'false' : 'true');
-
-    const toggle = () => {
-      sec.classList.toggle('collapsed');
-      const st = loadCollapseState();
-      st[id] = sec.classList.contains('collapsed');
-      saveCollapseState(st);
-      header.setAttribute('aria-expanded', sec.classList.contains('collapsed') ? 'false' : 'true');
-    };
-    header.addEventListener('click', toggle);
-    header.addEventListener('keydown', (e)=>{
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
-    });
-  });
-}
-
+// ========== 初期化 ==========
 window.addEventListener('DOMContentLoaded', ()=>{
   refreshPresetSelect();
-  initCollapsibles();
-
-  // 共有URL
   $('shareUrlBtn').addEventListener('click', handleShareUrl);
-
-  // プリセット操作
   $('savePresetBtn').addEventListener('click', handleSavePreset);
   $('overwritePresetBtn').addEventListener('click', handleOverwritePreset);
   $('renamePresetBtn').addEventListener('click', handleRenamePreset);
   $('deletePresetBtn').addEventListener('click', handleDeletePreset);
-
-  // ★ プルダウン選択＝即時適用
   $('presetSelect').addEventListener('change', (e)=>{
     const id = e.target.value;
     if (id) handleApplyPresetById(id);
   });
-
-  // 入力変更で自動計算（既存関数）
   attachAutoCalc();
-
-  // 保存値の復元 or URLロード
+  initCollapsibles();
   if (!tryLoadFromUrl()){
     const saved = localStorage.getItem(STATE_KEY);
     if (saved){ applyParams(JSON.parse(saved)); }
     calc(false);
   }
-
-  // リセット
   $('resetBtn').addEventListener('click', ()=>{
+    const ok = window.confirm('すべての入力を初期状態に戻します。よろしいですか？');
+    if (!ok) return;
+
     localStorage.removeItem(STATE_KEY);
     document.querySelectorAll('input, select').forEach(el=>{
       if ('defaultValue' in el) el.value = el.defaultValue;
       if (el.type === 'checkbox') el.checked = el.defaultChecked;
     });
     calc(true);
+    showBanner('入力を初期化しました。');
+  });
+  // 共有メニュー
+  document.getElementById('shareUrlBtn').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    handleShareUrl();
+  });
+  document.getElementById('copyPlainBtn').addEventListener('click', ()=>{
+    const url = buildShareUrl();
+    copyTextAndNotify(url, '共有URLをコピーしました。');
+  });
+  document.getElementById('copyMarkdownBtn').addEventListener('click', ()=>{
+    const url = buildShareUrl();
+    const md  = `[(非公式) unVEIL the world ダメージシミュレーター](${url})`;
+    copyTextAndNotify(md, 'Markdown形式でコピーしました。');
+  });
+  // メニューの外をクリックしたら閉じる
+  document.addEventListener('click', (e)=>{
+    const anchor = document.querySelector('.menu-anchor');
+    const menu   = document.getElementById('shareMenu');
+    if (!anchor.contains(e.target)) openShareMenu(false);
+  });
+  // Escで閉じる
+  document.addEventListener('keydown', (e)=>{
+    if (e.key === 'Escape') openShareMenu(false);
   });
 });

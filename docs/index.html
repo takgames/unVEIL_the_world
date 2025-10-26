@@ -3,12 +3,26 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>unVEIL the world ダメージ計算（MVP v7）</title>
+  <title>(非公式) unVEIL the world ダメージシミュレーター</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="container">
-    <h1>unVEIL the world ダメージ計算（MVP）</h1>
+    <header class="header-bar">
+      <h1>(非公式) unVEIL the world ダメージシミュレーター</h1>
+      <div class="header-actions">
+        <button id="resetBtn" class="reset-btn btn-sm" title="入力値を初期状態に戻します">↺ リセット</button>
+
+        <!-- 共有：ボタン＋ミニメニュー -->
+        <div class="menu-anchor">
+          <button id="shareUrlBtn" class="share-btn btn-sm">共有URLをコピー</button>
+          <div id="shareMenu" class="menu" role="menu" aria-hidden="true">
+            <button id="copyPlainBtn"    role="menuitem">URLをコピー</button>
+            <button id="copyMarkdownBtn" role="menuitem">Markdownでコピー</button>
+          </div>
+        </div>
+      </div>
+    </header>
 
     <!-- プリセット（折り畳み可） -->
     <section class="card collapsible" data-collapse-id="preset">
@@ -16,31 +30,32 @@
         <h2>プリセット</h2><span class="chev" aria-hidden="true"></span>
       </div>
       <div id="preset-body" class="card-body">
-        <!-- 上部ツールバー：共有 -->
-        <div class="preset-toolbar">
-          <button id="shareUrlBtn" class="ghost small">共有URLをコピー</button>
-        </div>
-    
-        <div class="grid">
-          <label>プリセット一覧
-            <select id="presetSelect"></select>
-          </label>
-    
-          <div class="cluster">
-            <button id="overwritePresetBtn">上書き保存</button>
-            <button id="deletePresetBtn" class="ghost">削除</button>
+        <div class="preset-flex">
+          <!-- 左ブロック：共有・プリセット選択・上書き・削除 -->
+          <div class="preset-left">
+            <label>プリセット一覧
+              <select id="presetSelect"></select>
+            </label>
+
+            <div class="cluster">
+              <button id="overwritePresetBtn">上書き保存</button>
+              <button id="deletePresetBtn" class="ghost">削除</button>
+            </div>
           </div>
-    
-          <label>新規／変更後の名前
-            <input id="presetName" type="text" placeholder="例）ボス戦用">
-          </label>
-    
-          <div class="cluster">
-            <button id="savePresetBtn">現在の入力を新規保存</button>
-            <button id="renamePresetBtn" class="ghost">名前変更</button>
+
+          <!-- 右ブロック：名前入力・新規保存・名前変更 -->
+          <div class="preset-right">
+            <label>新規／変更後の名前
+              <input id="presetName" type="text" placeholder="例) アレクサンドラ 奥義 魔の素">
+            </label>
+
+            <div class="cluster">
+              <button id="savePresetBtn">新規保存</button>
+              <button id="renamePresetBtn" class="ghost">名前変更</button>
+            </div>
           </div>
         </div>
-    
+
         <p class="note" id="banner" style="display:none"></p>
       </div>
     </section>
@@ -51,13 +66,12 @@
         <h2>ステータス</h2><span class="chev" aria-hidden="true"></span>
       </div>
       <div id="status-body" class="card-body">
-        <div class="grid">
+        <div class="grid status-grid">
           <label>攻撃力<input id="atk" type="number" min="0" value="2000"></label>
           <label>使い魔攻撃力（戦闘中）<input id="familiarAtk" type="number" min="0" value="100"></label>
           <label>会心率(%)<input id="critRatePct" type="number" step="0.1" value="10"></label>
           <label>会心ダメージ(%)<input id="critDmgPct" type="number" step="0.1" value="50"></label>
         </div>
-        <p class="note">計算に用いる攻撃力 = 攻撃力 + 使い魔攻撃力</p>
       </div>
     </section>
 
@@ -81,6 +95,7 @@
       </div>
       <div id="buff-body" class="card-body">
         <div class="grid">
+          <label>攻撃力アップ(%)<input id="atkUpPct" type="number" step="0.5" value="0"></label>
           <label>カード系ダメージアップ(%)<input id="cardUpPct" type="number" step="0.5" value="0"></label>
           <label>全体ダメージアップ(%)<input id="globalUpPct" type="number" step="0.5" value="0"></label>
           <label>属性ダメージアップ(%)<input id="elemUpPct" type="number" step="0.5" value="0"></label>
@@ -93,23 +108,23 @@
       <div class="card-header" role="button" tabindex="0" aria-expanded="true" aria-controls="enemy-body">
         <h2>敵</h2><span class="chev" aria-hidden="true"></span>
       </div>
-      <div id="enemy-body" class="card-body">
-        <div class="grid">
-          <label>防御力<input id="def" type="number" min="0" step="1" value="0"></label>
-          <label>属性相性
-            <select id="affinity">
-              <option value="none" selected>なし（×1.00）</option>
-              <option value="adv">有利（×1.25）</option>
-              <option value="dis">不利（×0.85）</option>
-            </select>
-          </label>
-          <label class="row"><input id="applyBreak" type="checkbox"> ブレイク状態（×1.30）</label>
-        </div>
-      </div>
-    </section>
+      <div class="grid enemy-grid">
+        <label>防御力<input id="def" type="number" min="0" value="0"></label>
 
-    <section class="action">
-      <button id="resetBtn" class="ghost">リセット</button>
+        <label>属性相性
+          <select id="affinity">
+            <option value="none">なし（×1.00）</option>
+            <option value="adv">有利（×1.25）</option>
+            <option value="dis">不利（×0.85）</option>
+          </select>
+        </label>
+
+        <!-- チェックボックスを左側に -->
+        <label class="break-check">
+          <input type="checkbox" id="applyBreak">
+          ブレイク状態（×1.30）
+        </label>
+      </div>
     </section>
 
     <!-- 結果 -->
@@ -117,16 +132,25 @@
       <div class="card-header" role="button" tabindex="0" aria-expanded="true" aria-controls="result-body">
         <h2>結果</h2><span class="chev" aria-hidden="true"></span>
       </div>
-      <div id="result-body" class="card-body">
-        <div id="results" class="results">
-          <div><span>基本ダメージ</span><strong id="basic">—</strong></div>
-          <div><span>最終（会心発生時・切り捨て）</span><strong id="finalCritOn">—</strong></div>
-          <div><span>最終（会心期待値・切り捨て）</span><strong id="finalExpected">—</strong></div>
+        <div id="result-body" class="card-body">
+          <div class="stacked" id="stacked">
+            <div class="bar big">
+              <div class="fill noCrit" id="fill-noCrit"></div>
+              <div class="fill expected" id="fill-expected"></div>
+              <div class="fill critOn" id="fill-critOn"></div>
+            </div>
+
+            <!-- 凡例（タイトル兼用）※順序：通常→平均→会心 -->
+            <div class="legend">
+              <span class="leg noCrit"><i></i>通常ダメージ <b id="leg-noCrit">—</b></span>
+              <span class="leg expected"><i></i>平均ダメージ (期待値) <b id="leg-expected">—</b></span>
+              <span class="leg critOn"><i></i>会心ダメージ <b id="leg-critOn">—</b></span>
+            </div>
+          </div>
         </div>
-      </div>
     </section>
 
-    <!-- 途中値 -->
+    <!-- 途中値（内訳） -->
     <section class="card collapsible" data-collapse-id="breakdown">
       <div class="card-header" role="button" tabindex="0" aria-expanded="true" aria-controls="breakdown-body">
         <h2>途中値（内訳）</h2><span class="chev" aria-hidden="true"></span>
@@ -143,7 +167,9 @@
     </section>
 
     <footer>
-      <span class="note">式：基本 = (ATK合算×スキル% + 固定値)×(1+各%)×e^(-DEF/1092)、最終 = 基本×会心×相性×ブレイク</span>
+      <span class="note">
+        &copy;2025 Tak (ver.1.0.2)<br>本シミュレーターは実測検証に基づいた近似値の推測を目的としているため、<br>実際のゲームプレイにおける結果と一致することを保証するものではありません。
+      </span>
     </footer>
   </main>
 
