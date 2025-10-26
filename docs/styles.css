@@ -29,6 +29,21 @@ h2::before{
   content:""; display:inline-block; width:.6rem; height:.6rem;
   border-radius:999px; background:#6aa7ff; box-shadow:0 0 0 3px rgba(106,167,255,.15);
 }
+
 #presetSelect{min-width:240px}
 #presetName{min-width:240px}
 #banner{margin-top:8px}
+
+/* プリセット周りのレスポンシブ改善 */
+.preset-toolbar{
+  display:flex; justify-content:flex-end; margin-bottom:8px;
+}
+.cluster{
+  display:flex; gap:12px; flex-wrap:wrap; align-items:center;
+}
+button.small{padding:8px 12px; font-size:14px}
+
+/* 狭い幅での入力・ボタンの並び崩れ対策 */
+@media (max-width: 720px){
+  #presetSelect, #presetName{min-width:100%}
+}
