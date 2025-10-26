@@ -10,82 +10,101 @@
   <main class="container">
     <h1>unVEIL the world ダメージ計算（MVP）</h1>
 
-    <!-- プリセット（ユーザー保存型） -->
-    <section class="card">
-      <h2>プリセット</h2>
-    
-      <!-- 上部ツールバー：共有 -->
-      <div class="preset-toolbar">
-        <button id="shareUrlBtn" class="ghost small">共有URLをコピー</button>
+    <!-- プリセット（折り畳み可） -->
+    <section class="card collapsible" data-collapse-id="preset">
+      <div class="card-header" role="button" tabindex="0" aria-expanded="true" aria-controls="preset-body">
+        <h2>プリセット</h2><span class="chev" aria-hidden="true"></span>
       </div>
-    
-      <div class="grid">
-        <label>プリセット一覧
-          <select id="presetSelect"></select>
-        </label>
-    
-        <div class="cluster">
-          <button id="overwritePresetBtn">上書き保存</button>
-          <button id="deletePresetBtn" class="ghost">削除</button>
+      <div id="preset-body" class="card-body">
+        <!-- 上部ツールバー：共有 -->
+        <div class="preset-toolbar">
+          <button id="shareUrlBtn" class="ghost small">共有URLをコピー</button>
         </div>
     
-        <label>新規／変更後の名前
-          <input id="presetName" type="text" placeholder="例）ボス戦用">
-        </label>
+        <div class="grid">
+          <label>プリセット一覧
+            <select id="presetSelect"></select>
+          </label>
     
-        <div class="cluster">
-          <button id="savePresetBtn">現在の入力を新規保存</button>
-          <button id="renamePresetBtn" class="ghost">名前変更</button>
+          <div class="cluster">
+            <button id="overwritePresetBtn">上書き保存</button>
+            <button id="deletePresetBtn" class="ghost">削除</button>
+          </div>
+    
+          <label>新規／変更後の名前
+            <input id="presetName" type="text" placeholder="例）ボス戦用">
+          </label>
+    
+          <div class="cluster">
+            <button id="savePresetBtn">現在の入力を新規保存</button>
+            <button id="renamePresetBtn" class="ghost">名前変更</button>
+          </div>
+        </div>
+    
+        <p class="note" id="banner" style="display:none"></p>
+      </div>
+    </section>
+
+    <!-- ステータス -->
+    <section class="card collapsible" data-collapse-id="status">
+      <div class="card-header" role="button" tabindex="0" aria-expanded="true" aria-controls="status-body">
+        <h2>ステータス</h2><span class="chev" aria-hidden="true"></span>
+      </div>
+      <div id="status-body" class="card-body">
+        <div class="grid">
+          <label>攻撃力<input id="atk" type="number" min="0" value="2000"></label>
+          <label>使い魔攻撃力（戦闘中）<input id="familiarAtk" type="number" min="0" value="100"></label>
+          <label>会心率(%)<input id="critRatePct" type="number" step="0.1" value="10"></label>
+          <label>会心ダメージ(%)<input id="critDmgPct" type="number" step="0.1" value="50"></label>
+        </div>
+        <p class="note">計算に用いる攻撃力 = 攻撃力 + 使い魔攻撃力</p>
+      </div>
+    </section>
+
+    <!-- スキル -->
+    <section class="card collapsible" data-collapse-id="skill">
+      <div class="card-header" role="button" tabindex="0" aria-expanded="true" aria-controls="skill-body">
+        <h2>スキル</h2><span class="chev" aria-hidden="true"></span>
+      </div>
+      <div id="skill-body" class="card-body">
+        <div class="grid">
+          <label>スキル攻撃(%)<input id="skillPct" type="number" min="0" step="0.1" value="100"></label>
+          <label>スキル固定値<input id="skillFlat" type="number" step="1" value="0"></label>
         </div>
       </div>
-    
-      <p class="note" id="banner" style="display:none"></p>
     </section>
 
-    <!-- グループA：ステータス -->
-    <section class="card">
-      <h2>グループA：ステータス</h2>
-      <div class="grid">
-        <label>攻撃力<input id="atk" type="number" min="0" value="2000"></label>
-        <label>使い魔攻撃力（戦闘中）<input id="familiarAtk" type="number" min="0" value="100"></label>
-        <label>会心率(%)<input id="critRatePct" type="number" step="0.1" value="10"></label>
-        <label>会心ダメージ(%)<input id="critDmgPct" type="number" step="0.1" value="50"></label>
+    <!-- バフ -->
+    <section class="card collapsible" data-collapse-id="buff">
+      <div class="card-header" role="button" tabindex="0" aria-expanded="true" aria-controls="buff-body">
+        <h2>バフ</h2><span class="chev" aria-hidden="true"></span>
       </div>
-      <p class="note">計算に用いる攻撃力 = 攻撃力 + 使い魔攻撃力</p>
-    </section>
-
-    <!-- グループB：スキル -->
-    <section class="card">
-      <h2>グループB：スキル</h2>
-      <div class="grid">
-        <label>スキル攻撃(%)<input id="skillPct" type="number" min="0" step="0.1" value="100"></label>
-        <label>スキル固定値<input id="skillFlat" type="number" step="1" value="0"></label>
+      <div id="buff-body" class="card-body">
+        <div class="grid">
+          <label>カード系ダメージアップ(%)<input id="cardUpPct" type="number" step="0.5" value="0"></label>
+          <label>全体ダメージアップ(%)<input id="globalUpPct" type="number" step="0.5" value="0"></label>
+          <label>属性ダメージアップ(%)<input id="elemUpPct" type="number" step="0.5" value="0"></label>
+        </div>
       </div>
     </section>
 
-    <!-- グループC：バフ -->
-    <section class="card">
-      <h2>グループC：バフ</h2>
-      <div class="grid">
-        <label>カード系ダメージアップ(%)<input id="cardUpPct" type="number" step="0.5" value="0"></label>
-        <label>全体ダメージアップ(%)<input id="globalUpPct" type="number" step="0.5" value="0"></label>
-        <label>属性ダメージアップ(%)<input id="elemUpPct" type="number" step="0.5" value="0"></label>
+    <!-- 敵 -->
+    <section class="card collapsible" data-collapse-id="enemy">
+      <div class="card-header" role="button" tabindex="0" aria-expanded="true" aria-controls="enemy-body">
+        <h2>敵</h2><span class="chev" aria-hidden="true"></span>
       </div>
-    </section>
-
-    <!-- グループD：敵 -->
-    <section class="card">
-      <h2>グループD：敵</h2>
-      <div class="grid">
-        <label>防御力<input id="def" type="number" min="0" step="1" value="0"></label>
-        <label>属性相性
-          <select id="affinity">
-            <option value="none" selected>なし（×1.00）</option>
-            <option value="adv">有利（×1.25）</option>
-            <option value="dis">不利（×0.85）</option>
-          </select>
-        </label>
-        <label class="row"><input id="applyBreak" type="checkbox"> ブレイク状態（×1.30）</label>
+      <div id="enemy-body" class="card-body">
+        <div class="grid">
+          <label>防御力<input id="def" type="number" min="0" step="1" value="0"></label>
+          <label>属性相性
+            <select id="affinity">
+              <option value="none" selected>なし（×1.00）</option>
+              <option value="adv">有利（×1.25）</option>
+              <option value="dis">不利（×0.85）</option>
+            </select>
+          </label>
+          <label class="row"><input id="applyBreak" type="checkbox"> ブレイク状態（×1.30）</label>
+        </div>
       </div>
     </section>
 
@@ -93,24 +112,34 @@
       <button id="resetBtn" class="ghost">リセット</button>
     </section>
 
-    <section class="card">
-      <h2>結果</h2>
-      <div id="results" class="results">
-        <div><span>基本ダメージ</span><strong id="basic">—</strong></div>
-        <div><span>最終（会心発生時・切り捨て）</span><strong id="finalCritOn">—</strong></div>
-        <div><span>最終（会心期待値・切り捨て）</span><strong id="finalExpected">—</strong></div>
+    <!-- 結果 -->
+    <section class="card collapsible" data-collapse-id="result">
+      <div class="card-header" role="button" tabindex="0" aria-expanded="true" aria-controls="result-body">
+        <h2>結果</h2><span class="chev" aria-hidden="true"></span>
+      </div>
+      <div id="result-body" class="card-body">
+        <div id="results" class="results">
+          <div><span>基本ダメージ</span><strong id="basic">—</strong></div>
+          <div><span>最終（会心発生時・切り捨て）</span><strong id="finalCritOn">—</strong></div>
+          <div><span>最終（会心期待値・切り捨て）</span><strong id="finalExpected">—</strong></div>
+        </div>
       </div>
     </section>
 
-    <section class="card">
-      <h2>途中値（内訳）</h2>
-      <div class="table-wrap">
-        <table class="breakdown" id="breakdown">
-          <thead><tr><th>要素</th><th>値</th></tr></thead>
-          <tbody></tbody>
-        </table>
+    <!-- 途中値 -->
+    <section class="card collapsible" data-collapse-id="breakdown">
+      <div class="card-header" role="button" tabindex="0" aria-expanded="true" aria-controls="breakdown-body">
+        <h2>途中値（内訳）</h2><span class="chev" aria-hidden="true"></span>
       </div>
-      <p class="note">丸めは各「最終」値のみ <strong>切り捨て</strong>。固定倍率：有利1.25 / 不利0.85 / ブレイク1.30。</p>
+      <div id="breakdown-body" class="card-body">
+        <div class="table-wrap">
+          <table class="breakdown" id="breakdown">
+            <thead><tr><th>要素</th><th>値</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="note">丸めは各「最終」値のみ <strong>切り捨て</strong>。固定倍率：有利1.25 / 不利0.85 / ブレイク1.30。</p>
+      </div>
     </section>
 
     <footer>
