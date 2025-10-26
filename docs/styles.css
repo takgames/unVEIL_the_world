@@ -29,3 +29,6 @@ h2::before{
   content:""; display:inline-block; width:.6rem; height:.6rem;
   border-radius:999px; background:#6aa7ff; box-shadow:0 0 0 3px rgba(106,167,255,.15);
 }
+#presetSelect{min-width:240px}
+#presetName{min-width:240px}
+#banner{margin-top:8px}
