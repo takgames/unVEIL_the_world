@@ -5,8 +5,12 @@ const AFFINITY_MAP = { none: { mul: 1.00, label: "なし ×1.00" },
                        dis:  { mul: 0.85, label: "不利 ×0.85" } };
 
 export function computeAll(p) {
-  // 基本ダメージ
-  const atk = Math.max(0, +p.atk || 0);
+  // --- ステータス（ATK合算） ---
+  const atkBase = Math.max(0, +p.atk || 0);
+  const familiar = Math.max(0, +p.familiarAtk || 0);
+  const atkEff = atkBase + familiar; // 計算に用いる攻撃力
+
+  // --- スキル・バフ ---
   const skillPct = Math.max(0, +p.skillPct || 0) / 100; // % → 倍率
   const skillFlat = +p.skillFlat || 0;
 
@@ -14,10 +18,12 @@ export function computeAll(p) {
   const globalUp = 1 + ( +p.globalUpPct || 0 ) / 100;
   const elemUp = 1 + ( +p.elemUpPct || 0 ) / 100;
 
+  // --- 敵パラメータ ---
   const def = Math.max(0, +p.def || 0);
   const defenseFactor = Math.exp(-def / 1092); // e^(-DEF/1092)
 
-  const baseTerm = atk * skillPct + skillFlat;
+  // 基本ダメージ
+  const baseTerm = atkEff * skillPct + skillFlat;
   const basic = baseTerm * cardUp * globalUp * elemUp * defenseFactor;
 
   // 会心
@@ -40,7 +46,8 @@ export function computeAll(p) {
   const finalFloored = Math.floor(finalRaw);
 
   return {
-    // 中間
+    // 途中値（表示用）
+    atkBase, familiar, atkEff,
     baseTerm, cardUp, globalUp, elemUp, defenseFactor,
     // 出力
     basic, critMul, critLabel,
