@@ -47,3 +47,28 @@ button.small{padding:8px 12px; font-size:14px}
 @media (max-width: 720px){
   #presetSelect, #presetName{min-width:100%}
 }
+
+/* ── 折り畳み UI ───────────────────────────── */
+.card-header{
+  display:flex; align-items:center; justify-content:space-between;
+  cursor:pointer; user-select:none; gap:8px; margin:-4px -4px 12px; padding:4px;
+  border-radius:10px;
+}
+.card-header:focus{ outline:2px solid #254a85; outline-offset:2px }
+.card-body{ display:block }
+.card.collapsed .card-body{ display:none }
+
+.chev{
+  width:10px; height:10px; border-right:2px solid #9bb0c3; border-bottom:2px solid #9bb0c3;
+  transform:rotate(45deg); transition:transform .18s ease;
+  flex:0 0 auto; margin-left:8px; opacity:.9;
+}
+.card.collapsed .chev{ transform:rotate(-45deg) } /* 上向きに */
+
+/* プリセット周り（前回のまま + 微調整） */
+.preset-toolbar{ display:flex; justify-content:flex-end; margin-bottom:8px }
+.cluster{ display:flex; gap:12px; flex-wrap:wrap; align-items:center }
+button.small{ padding:8px 12px; font-size:14px }
+@media (max-width: 720px){
+  #presetSelect, #presetName{ min-width:100% }
+}
