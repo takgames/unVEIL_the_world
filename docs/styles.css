@@ -251,24 +251,11 @@ button.small {
 
 /* ===== ヘッダー共有ボタン（差別化スタイル） ===== */
 .share-btn{
-  position: relative;
-  font-size: 0.95rem;
-  padding: 10px 14px 10px 36px;   /* 左にアイコン分の余白 */
-  border-radius: 999px;
-  background: transparent;
-  color: #cfe4ff;
-  border: 1.5px solid rgba(120,170,255,.55);
-  box-shadow: 0 0 0 0 rgba(120,170,255,.0);
-  transition: border-color .15s, box-shadow .15s, background-color .15s, transform .04s;
+  display:inline-flex; align-items:center; gap:.45rem;
+  padding:6px 10px; border-radius:999px;
+  position:relative;
 }
-
-/* アイコン（📎風のリンク） */
-.share-btn::before{
-  content: "🔗";
-  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-  font-size: 1rem; line-height: 1;
-  opacity: .9;
-}
+.share-icon{ line-height:1; font-size:.95rem; }
 
 .share-btn:hover{
   border-color: rgba(120,170,255,.9);
@@ -388,22 +375,8 @@ button.small {
 .reset-btn:active{ transform:translateY(1px); }
 .reset-btn:focus{ outline:none; box-shadow:0 0 0 3px rgba(255,140,140,.18); }
 
-/* 共有ボタン（既存）との高さ合わせ */
-.share-btn{ padding:10px 14px 10px 36px; }
-
 /* 小さめボタン共通 */
 .btn-sm{ font-size:.88rem; padding:6px 10px; }
-
-/* 共有ボタン（小さめ用に再調整） */
-.share-btn{
-  position: relative;
-  padding-left: 30px; /* アイコンぶん少しだけ確保 */
-}
-.share-btn::before{
-  content: "🔗";
-  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
-  font-size: .95rem; line-height: 1; opacity: .9;
-}
 
 /* ヘッダー右側の並び */
 .header-actions{ display:flex; gap:.5rem; align-items:center; }
@@ -444,3 +417,81 @@ button.small {
   accent-color: #7bb6ff; /* ブルー系チェック */
   cursor: pointer;
 }
+
+/* number のスピンボタン非表示（Chrome/Edge/Safari） */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* フォーカス時のリング統一（input / select） */
+input, select {
+  transition: border-color .15s, box-shadow .15s, background-color .15s;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: #7bb6ff;
+  box-shadow: 0 0 0 2px rgba(120,170,255,.25);
+}
+
+/* === 結果の軽いアニメーション === */
+#result-body.changed {
+  animation: resultPulse .38s ease;
+}
+@keyframes resultPulse {
+  from { transform: scale(0.995); opacity: .92; }
+  to   { transform: scale(1);     opacity: 1; }
+}
+
+/* === Theme Variables === */
+:root{
+  --bg: #0b0f16; --card:#121b29; --text:#e0e6ee; --muted:#9bb0c3;
+  --line:#2a3a52; --accent:#7bb6ff; --accent-soft:rgba(120,170,255,.25);
+  --bar1-1:#5fa0ff; --bar1-2:#7bb6ff; --bar2-1:#75d08c; --bar2-2:#9be2aa; --bar3-1:#ff7979; --bar3-2:#ff9ea3;
+  --overlay: rgba(0,0,0,.45);
+}
+[data-theme="light"]{
+  --bg:#f6f8fc; --card:#ffffff; --text:#1b2330; --muted:#506070;
+  --line:#dbe4f0; --accent:#2b71f7; --accent-soft:rgba(43,113,247,.18);
+  --overlay: rgba(0,0,0,.35);
+}
+body{ background:var(--bg); color:var(--text); transition:background .25s, color .25s; }
+.card{ background:var(--card); }
+.breakdown th,.breakdown td{ border-bottom:1px solid var(--line); }
+
+/* 結果バーの色を変数に寄せる（既存の定義を上書き） */
+.bar.big .fill.noCrit{ background:linear-gradient(90deg,var(--bar1-1),var(--bar1-2)); }
+.bar.big .fill.expected{ background:linear-gradient(90deg,var(--bar2-1),var(--bar2-2)); }
+.bar.big .fill.critOn{ background:linear-gradient(90deg,var(--bar3-1),var(--bar3-2)); }
+
+/* ヘッダーの小アイコンボタン */
+.btn-icon{
+  padding:6px 8px; border-radius:10px; background:transparent; border:1px solid var(--line); color:var(--text);
+}
+.btn-icon:hover{ background:rgba(127,150,200,.12); }
+.btn-sm{ font-size:.88rem; padding:6px 10px; }
+
+/* モバイル微調整 */
+@media (max-width:560px){
+  .header-actions{ gap:.35rem; }
+  .legend{ gap:.6rem; }
+  .bar.big{ height:18px; }
+}
+
+/* Help modal */
+.overlay{
+  position:fixed; inset:0; background:var(--overlay);
+  backdrop-filter: blur(2px);
+  display:none; align-items:center; justify-content:center; z-index:50;
+}
+.overlay[aria-hidden="false"]{ display:flex; }
+.modal{
+  width:min(680px, 92vw); background:var(--card); color:var(--text);
+  border:1px solid var(--line); border-radius:14px; box-shadow:0 12px 30px rgba(0,0,0,.4);
+}
+.modal-header,.modal-footer{ padding:12px 14px; border-bottom:1px solid var(--line); }
+.modal-footer{ border-top:1px solid var(--line); border-bottom:0; display:flex; justify-content:flex-end; gap:.5rem; align-items:center; }
+.modal-body{ padding:12px 16px; }
+.modal-header{ display:flex; align-items:center; justify-content:space-between; }
+.modal ol{ margin:0; padding-left:1.1rem; }

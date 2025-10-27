@@ -87,6 +87,10 @@ function render(out){
   const maxV = Math.max(vNo, vOn, vExp, 1);
 
   updateStackedBars(out.finalNoCrit, out.finalCritOn, out.finalExpected);
+
+  const resultBody = document.getElementById('result-body');
+  resultBody.classList.add('updated');
+  setTimeout(()=>resultBody.classList.remove('updated'), 400);
 }
 
 function calc(save=true){
@@ -172,8 +176,16 @@ function handleDeletePreset(){
 }
 
 // ========== URL 共有 ==========
+function currentShareName(){
+  // 1) 選択中プリセットの名前 2) 入力欄の名前 3) 未指定なら空
+  const sel = document.getElementById('presetSelect');
+  const selectedName = sel && sel.value ? (sel.options[sel.selectedIndex]?.text || '') : '';
+  const typed = (document.getElementById('presetName')?.value || '').trim();
+  return selectedName || typed || '';
+}
+
 function buildShareUrl(){
-  const payload = { v:2, params: collectParams() };
+  const payload = { v:3, name: currentShareName(), params: collectParams() };
   const u = new URL(location.href);
   u.search = '';
   u.searchParams.set('p', encodeObj(payload));
@@ -191,6 +203,10 @@ function tryLoadFromUrl(){
     if (obj && obj.params){
       applyParams(obj.params);
       calc();
+      if (obj.name){
+        const nameEl = document.getElementById('presetName');
+        if (nameEl) nameEl.value = obj.name;
+      }
       showBanner('URLからパラメータを読み込みました（保存は未実施）。');
       return true;
     }
@@ -378,26 +394,38 @@ const prevLegend = { noCrit:0, critOn:0, expected:0 };
 
 function updateStackedBars(vNo, vOn, vExp){
   const maxV = Math.max(vNo, vOn, vExp, 1);
-  const pct = (v)=> Math.max(0, Math.min(100, (v/maxV)*100));
+  const pct = v => Math.max(0, Math.min(100, (v / maxV) * 100));
 
-  // 幅トランジション
-  document.getElementById('fill-noCrit').style.width   = pct(vNo) + '%';
-  document.getElementById('fill-critOn').style.width   = pct(vOn) + '%';
-  document.getElementById('fill-expected').style.width = pct(vExp) + '%';
+  // 幅
+  document.getElementById('fill-critOn').style.width   = pct(vOn) + '%';   // ベース
+  document.getElementById('fill-expected').style.width = pct(vExp) + '%';  // 中層
+  document.getElementById('fill-noCrit').style.width   = pct(vNo) + '%';   // 最上
 
-  // 凡例の数値（アニメ）
+  // 凡例の数値アニメ（既存ロジック）
   const pairs = [
     ['noCrit',   vNo, 'leg-noCrit'],
+    ['expected', vExp,'leg-expected'],
     ['critOn',   vOn, 'leg-critOn'],
-    ['expected', vExp,'leg-expected']
   ];
+  let changed = false;
   for (const [key, val, id] of pairs){
+    if (prevLegend[key] !== val) changed = true;
     const el = document.getElementById(id);
     animateNumber(el, prevLegend[key] || 0, val);
     const leg = el.closest('.leg');
     leg.classList.add('updated');
     setTimeout(()=>leg.classList.remove('updated'), 360);
     prevLegend[key] = val;
+  }
+
+  // どれか変わっていたら結果カードに軽いアニメを付与
+  if (changed) {
+    const rb = document.getElementById('result-body');
+    rb.classList.remove('changed'); // 連打でも再生させるため一度外す
+    // 次フレームで付け直し
+    requestAnimationFrame(()=> rb.classList.add('changed'));
+    // 後始末（クラスはアニメ終了後残っていてもOKだが念のため）
+    setTimeout(()=> rb.classList.remove('changed'), 420);
   }
 }
 
@@ -412,6 +440,29 @@ function copyTextAndNotify(text, msg){
     // Fallback
     window.prompt('このテキストをコピーしてください：', text);
   }).finally(()=> openShareMenu(false));
+}
+
+// === Theme ===
+const THEME_KEY = 'uvtw_theme';
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem(THEME_KEY, theme);
+}
+function initTheme(){
+  const saved = localStorage.getItem(THEME_KEY);
+  applyTheme(saved || 'dark');
+}
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  applyTheme(cur === 'dark' ? 'light' : 'dark');
+}
+
+// === Help Modal ===
+const HELP_KEY = 'uvtw_help_hide';
+function openHelp(show=true){ document.getElementById('helpOverlay').setAttribute('aria-hidden', show?'false':'true'); }
+function initHelp(){
+  const hide = localStorage.getItem(HELP_KEY) === '1';
+  if (!hide) openHelp(true);
 }
 
 // ========== UI ヘルパ ==========
@@ -461,6 +512,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
     calc(true);
     showBanner('入力を初期化しました。');
   });
+
   // 共有メニュー
   document.getElementById('shareUrlBtn').addEventListener('click', (e)=>{
     e.stopPropagation();
@@ -471,18 +523,40 @@ window.addEventListener('DOMContentLoaded', ()=>{
     copyTextAndNotify(url, '共有URLをコピーしました。');
   });
   document.getElementById('copyMarkdownBtn').addEventListener('click', ()=>{
-    const url = buildShareUrl();
-    const md  = `[(非公式) unVEIL the world ダメージシミュレーター](${url})`;
-    copyTextAndNotify(md, 'Markdown形式でコピーしました。');
+  const url = buildShareUrl();
+  const name = currentShareName() || 'unVEIL the world ダメージシミュレーター';
+  const md  = `[${name}](${url})`;
+  copyTextAndNotify(md, 'Markdown形式でコピーしました。');
   });
+
   // メニューの外をクリックしたら閉じる
   document.addEventListener('click', (e)=>{
     const anchor = document.querySelector('.menu-anchor');
     const menu   = document.getElementById('shareMenu');
     if (!anchor.contains(e.target)) openShareMenu(false);
   });
+
   // Escで閉じる
   document.addEventListener('keydown', (e)=>{
     if (e.key === 'Escape') openShareMenu(false);
   });
+
+  // Theme
+  initTheme();
+  document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+
+  // Help
+  document.getElementById('helpBtn').addEventListener('click', ()=>openHelp(true));
+  document.getElementById('helpClose').addEventListener('click', ()=>openHelp(false));
+  document.getElementById('helpOk').addEventListener('click', ()=>openHelp(false));
+  document.getElementById('helpDontShow').addEventListener('change', (e)=>{
+    localStorage.setItem(HELP_KEY, e.target.checked ? '1' : '0');
+  });
+  // オーバーレイ外クリックで閉じる
+  document.getElementById('helpOverlay').addEventListener('click', (e)=>{
+    if (e.target.id === 'helpOverlay') openHelp(false);
+  });
+
+  // 初回自動表示
+  initHelp();
 });
