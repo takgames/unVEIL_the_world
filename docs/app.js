@@ -37,23 +37,55 @@ function updateMainFieldState(slot){
   const typeEl = $(`eq_${slot}_mainType`);
   const valEl  = $(`eq_${slot}_mainVal`);
   if (!typeEl || !valEl) return;
-  const isOther = (typeEl.value === 'other');
-  valEl.disabled = isOther;
+
+  const t = typeEl.value;
+  const wasDisabled = valEl.disabled;
+
+  if (t === 'other') {
+    valEl.disabled = true;
+    valEl.value = '';                // ★ 空白にする（0ではない）
+  } else {
+    valEl.disabled = false;
+    // 直前まで無効だった/空だったなら 0 を初期値に（編集開始しやすく）
+    if (wasDisabled || valEl.value === '') valEl.value = '0';
+  }
 }
 
 function initEquipMainState(){
   ['glove','clothes','crest','ring','brooch'].forEach(slot=>{
     const sel = $(`eq_${slot}_mainType`);
     if (!sel) return;
-    // 初期反映
-    updateMainFieldState(slot);
-    // 変更時に反映＋再計算
-    sel.addEventListener('change', ()=>{
+    updateMainFieldState(slot);           // 初期反映
+    sel.addEventListener('change', ()=>{  // 切替時
       updateMainFieldState(slot);
-      calc();
+      calc();                             // 即時再計算
     });
   });
 }
+
+function initZeroAutoClear(){
+  // 数値入力にテンキー＆0オートクリア
+  document.querySelectorAll('input[type="number"]').forEach(el=>{
+    el.setAttribute('inputmode','numeric');  // テンキー
+    el.setAttribute('pattern','\\d*');       // iOS向け
+    el.addEventListener('focus', ()=>{
+      if (el.value === '0') el.value = '';   // ★ 0なら消す
+    });
+    el.addEventListener('blur', ()=>{
+      // メイン値については updateMainFieldState が管理するので何もしない
+      // それ以外の空欄は 0 を戻しておく（お好みで）
+      const isMainVal = /eq_.*_mainVal$/.test(el.id);
+      if (!isMainVal && el.value === '') el.value = '0';
+      // mainVal は「その他」の時は disabled なので blur は来ない
+    });
+  });
+}
+
+// 追加：デバウンス
+function debounce(fn, wait = 150){
+  let t; return (...args) => { clearTimeout(t); t = setTimeout(()=>fn(...args), wait); };
+}
+const debouncedCalc = debounce(()=>calc(), 150);
 
 // 成功フィードバック：ボタンのラベルを一時的に変更してフラッシュ
 function flashButtonFeedback(btnId, okText = '✓ 完了', duration = 1200){
@@ -649,13 +681,14 @@ window.addEventListener('DOMContentLoaded', () => {
   initCollapsibles();
   updatePresetSelect(false);
   initEquipMainState();
+  initZeroAutoClear();
 
   if (!tryLoadFromUrl()) calc(true);
 
   // 入力変更で自動再計算
   document.querySelectorAll('input, select').forEach(el => {
-    el.addEventListener('input', () => calc());
-    el.addEventListener('change', () => calc());
+    el.addEventListener('input', debouncedCalc);
+    el.addEventListener('change', () => calc()); // 確定系は即時
   });
 
   // プリセット

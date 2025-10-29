@@ -84,78 +84,80 @@
         <h2>装備ステータス</h2>
       </div>
       <div class="card-body">
-        <div class="equip-grid">
-          <div class="equip-head"></div>
-          <div class="equip-head">メイン種類</div>
-          <div class="equip-head">メイン値</div>
-          <div class="equip-head">攻撃力</div>
-          <div class="equip-head">攻撃力補正(%)</div>
-          <div class="equip-head">会心率(%)</div>
-          <div class="equip-head">会心ダメージ(%)</div>
+        <div class="equip-scroll-wrapper">
+          <div class="equip-grid">
+            <div class="equip-head"></div>
+            <div class="equip-head">メイン種類</div>
+            <div class="equip-head">メイン値</div>
+            <div class="equip-head">攻撃力</div>
+            <div class="equip-head">攻撃力補正(%)</div>
+            <div class="equip-head">会心率(%)</div>
+            <div class="equip-head">会心ダメージ(%)</div>
 
-          <!-- グローブ（メイン：攻撃力 固定） -->
-          <div class="equip-name">グローブ</div>
-          <span class="fixed-label">攻撃力</span>
-          <input id="eq_glove_mainVal" type="number" value="0" />
-          <input id="eq_glove_atk" type="number" value="0" />
-          <input id="eq_glove_atkPct" type="number" step="0.1" value="0" />
-          <input id="eq_glove_critRate" type="number" step="0.1" value="0" />
-          <input id="eq_glove_critDmg" type="number" step="0.1" value="0" />
-          <!-- 内部値保持用（collectParams が読む） -->
-          <input id="eq_glove_mainType" type="hidden" value="atk" />
+            <!-- グローブ（メイン：攻撃力 固定） -->
+            <div class="equip-name">グローブ</div>
+            <span class="fixed-label">攻撃力</span>
+            <input id="eq_glove_mainVal" type="number" value="0" />
+            <input id="eq_glove_atk" type="number" value="0" />
+            <input id="eq_glove_atkPct" type="number" step="0.1" value="0" />
+            <input id="eq_glove_critRate" type="number" step="0.1" value="0" />
+            <input id="eq_glove_critDmg" type="number" step="0.1" value="0" />
+            <!-- 内部値保持用（collectParams が読む） -->
+            <input id="eq_glove_mainType" type="hidden" value="atk" />
 
-          <!-- 服（メイン：その他 固定＝計算には影響しない） -->
-          <div class="equip-name">服</div>
-          <span class="fixed-label">その他</span>
-          <input id="eq_clothes_mainVal" type="number" value="0" disabled />
-          <input id="eq_clothes_atk" type="number" value="0" />
-          <input id="eq_clothes_atkPct" type="number" step="0.1" value="0" />
-          <input id="eq_clothes_critRate" type="number" step="0.1" value="0" />
-          <input id="eq_clothes_critDmg" type="number" step="0.1" value="0" />
-          <input id="eq_clothes_mainType" type="hidden" value="other" />
+            <!-- 服（メイン：その他 固定＝計算には影響しない） -->
+            <div class="equip-name">服</div>
+            <span class="fixed-label">その他</span>
+            <input id="eq_clothes_mainVal" type="number" value="0" disabled />
+            <input id="eq_clothes_atk" type="number" value="0" />
+            <input id="eq_clothes_atkPct" type="number" step="0.1" value="0" />
+            <input id="eq_clothes_critRate" type="number" step="0.1" value="0" />
+            <input id="eq_clothes_critDmg" type="number" step="0.1" value="0" />
+            <input id="eq_clothes_mainType" type="hidden" value="other" />
 
-          <!-- 紋章（メイン：攻撃力 / 攻撃力補正% / 属性ダメ%） -->
-          <div class="equip-name">紋章</div>
-          <select id="eq_crest_mainType">
-            <option value="atk">攻撃力</option>
-            <option value="atkPct">攻撃力補正%</option>
-            <option value="elemPct">属性ダメージ%</option>
-            <option value="other">その他</option>
-          </select>
-          <input id="eq_crest_mainVal" type="number" step="0.1" value="0" />
-          <input id="eq_crest_atk" type="number" value="0" />
-          <input id="eq_crest_atkPct" type="number" step="0.1" value="0" />
-          <input id="eq_crest_critRate" type="number" step="0.1" value="0" />
-          <input id="eq_crest_critDmg" type="number" step="0.1" value="0" />
+            <!-- 紋章（メイン：攻撃力 / 攻撃力補正% / 属性ダメ%） -->
+            <div class="equip-name">紋章</div>
+            <select id="eq_crest_mainType">
+              <option value="atk">攻撃力</option>
+              <option value="atkPct">攻撃力補正%</option>
+              <option value="elemPct">属性ダメージ%</option>
+              <option value="other">その他</option>
+            </select>
+            <input id="eq_crest_mainVal" type="number" step="0.1" value="0" />
+            <input id="eq_crest_atk" type="number" value="0" />
+            <input id="eq_crest_atkPct" type="number" step="0.1" value="0" />
+            <input id="eq_crest_critRate" type="number" step="0.1" value="0" />
+            <input id="eq_crest_critDmg" type="number" step="0.1" value="0" />
 
-          <!-- 指輪（メイン：攻撃力 / 攻撃力補正% / 会心率% / 会心ダメ%） -->
-          <div class="equip-name">指輪</div>
-          <select id="eq_ring_mainType">
-            <option value="atk">攻撃力</option>
-            <option value="atkPct">攻撃力補正%</option>
-            <option value="critRate">会心率%</option>
-            <option value="critDmg">会心ダメージ%</option>
-            <option value="other">その他</option>
-          </select>
-          <input id="eq_ring_mainVal" type="number" step="0.1" value="0" />
-          <input id="eq_ring_atk" type="number" value="0" />
-          <input id="eq_ring_atkPct" type="number" step="0.1" value="0" />
-          <input id="eq_ring_critRate" type="number" step="0.1" value="0" />
-          <input id="eq_ring_critDmg" type="number" step="0.1" value="0" />
+            <!-- 指輪（メイン：攻撃力 / 攻撃力補正% / 会心率% / 会心ダメ%） -->
+            <div class="equip-name">指輪</div>
+            <select id="eq_ring_mainType">
+              <option value="atk">攻撃力</option>
+              <option value="atkPct">攻撃力補正%</option>
+              <option value="critRate">会心率%</option>
+              <option value="critDmg">会心ダメージ%</option>
+              <option value="other">その他</option>
+            </select>
+            <input id="eq_ring_mainVal" type="number" step="0.1" value="0" />
+            <input id="eq_ring_atk" type="number" value="0" />
+            <input id="eq_ring_atkPct" type="number" step="0.1" value="0" />
+            <input id="eq_ring_critRate" type="number" step="0.1" value="0" />
+            <input id="eq_ring_critDmg" type="number" step="0.1" value="0" />
 
-          <!-- ブローチ（メイン：攻撃力 / 攻撃力補正% / 会心ダメ%） -->
-          <div class="equip-name">ブローチ</div>
-          <select id="eq_brooch_mainType">
-            <option value="atk">攻撃力</option>
-            <option value="atkPct">攻撃力補正%</option>
-            <option value="critDmg">会心ダメージ%</option>
-            <option value="other">その他</option>
-          </select>
-          <input id="eq_brooch_mainVal" type="number" step="0.1" value="0" />
-          <input id="eq_brooch_atk" type="number" value="0" />
-          <input id="eq_brooch_atkPct" type="number" step="0.1" value="0" />
-          <input id="eq_brooch_critRate" type="number" step="0.1" value="0" />
-          <input id="eq_brooch_critDmg" type="number" step="0.1" value="0" />
+            <!-- ブローチ（メイン：攻撃力 / 攻撃力補正% / 会心ダメ%） -->
+            <div class="equip-name">ブローチ</div>
+            <select id="eq_brooch_mainType">
+              <option value="atk">攻撃力</option>
+              <option value="atkPct">攻撃力補正%</option>
+              <option value="critDmg">会心ダメージ%</option>
+              <option value="other">その他</option>
+            </select>
+            <input id="eq_brooch_mainVal" type="number" step="0.1" value="0" />
+            <input id="eq_brooch_atk" type="number" value="0" />
+            <input id="eq_brooch_atkPct" type="number" step="0.1" value="0" />
+            <input id="eq_brooch_critRate" type="number" step="0.1" value="0" />
+            <input id="eq_brooch_critDmg" type="number" step="0.1" value="0" />
+          </div>
         </div>
         <div class="equip-summary">
           <div class="sum-title">装備合計</div>
