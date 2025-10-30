@@ -217,11 +217,11 @@
     </section>
 
     <!-- 結果 -->
-    <section class="card collapsible" data-collapse-id="result">
-      <div class="card-header" role="button" tabindex="0" aria-expanded="true">
+    <section id="resultCard" class="card" data-nocollapse="1">
+      <div class="card-header">
         <h2>結果</h2>
       </div>
-      <div id="result-body" class="card-body">
+      <div class="card-body">
         <div class="bar big">
           <div id="fill-critOn" class="fill critOn"></div>
           <div id="fill-expected" class="fill expected"></div>
@@ -277,25 +277,28 @@
     </div>
   </div>
 
-  <!-- 固定結果バー -->
-  <footer id="resultFooter">
-    <div class="footer-inner">
-      <div class="footer-label">結果</div>
-      <div class="footer-values">
-        <div class="footer-item">
-          <span class="label">通常</span>
-          <span id="fixedNormal" class="value">0</span>
+  <!-- 固定ドック：結果カードの見た目そのまま -->
+  <div id="resultDock" class="result-dock" aria-hidden="true">
+    <div class="result-dock-inner">
+      <section class="card">
+        <div class="card-header">
+          <h2>結果</h2>
         </div>
-        <div class="footer-item">
-          <span class="label">会心</span>
-          <span id="fixedCrit" class="value">0</span>
+        <div class="card-body">
+          <!-- ★ 本体と同じ構造・同じクラス。IDだけ Dock 用に -->
+          <div class="bar big">
+            <div id="fill-critOn-dock" class="fill critOn"></div>
+            <div id="fill-expected-dock" class="fill expected"></div>
+            <div id="fill-noCrit-dock" class="fill noCrit"></div>
+          </div>
+          <div class="legend">
+            <span class="leg leg-noCrit">🟦 通常ダメージ <strong id="leg-noCrit-dock">0</strong></span>
+            <span class="leg leg-expected">🟩 平均ダメージ(期待値) <strong id="leg-expected-dock">0</strong></span>
+            <span class="leg leg-critOn">🟥 会心ダメージ <strong id="leg-critOn-dock">0</strong></span>
+          </div>
         </div>
-        <div class="footer-item">
-          <span class="label">期待値</span>
-          <span id="fixedExpected" class="value">0</span>
-        </div>
-      </div>
+      </section>
     </div>
-  </footer>
+  </div>
 </body>
 </html>

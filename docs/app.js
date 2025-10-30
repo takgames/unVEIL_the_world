@@ -121,6 +121,19 @@ function flashButtonFeedback(btnId, okText = '✓ 完了', duration = 1200){
   }, duration);
 }
 
+function initResultDockObserver(){
+  const dock = document.getElementById('resultDock');
+  const target = document.getElementById('resultCard'); // ★ 明示
+  if (!dock || !target) return;
+
+  const io = new IntersectionObserver(([entry])=>{
+    if (entry?.isIntersecting) dock.classList.remove('show');
+    else dock.classList.add('show');
+  }, { threshold: 0.1, rootMargin: '0px 0px -80px 0px' });
+
+  io.observe(target);
+}
+
 /* ---------------------------------------------------------
    折りたたみカード
 --------------------------------------------------------- */
@@ -366,9 +379,9 @@ function render(res, noAnim) {
   const [vNo, vCrit, vExp] = [res.noCrit, res.critOn, res.expected];
 
   updateStackedBars(vNo, vCrit, vExp);
-  $('leg-noCrit').textContent = Math.floor(vNo);
-  $('leg-critOn').textContent = Math.floor(vCrit);
-  $('leg-expected').textContent = Math.floor(vExp);
+  $('leg-noCrit').textContent     = Math.floor(vNo).toLocaleString('ja-JP');
+  $('leg-critOn').textContent     = Math.floor(vCrit).toLocaleString('ja-JP');
+  $('leg-expected').textContent   = Math.floor(vExp).toLocaleString('ja-JP');
 
   const tb = $('breakdown-body');
   tb.innerHTML = '';
@@ -380,6 +393,40 @@ function render(res, noAnim) {
     rb.classList.remove('changed');
     requestAnimationFrame(() => rb.classList.add('changed'));
     setTimeout(() => rb.classList.remove('changed'), 420);
+  }
+  
+  if (document.getElementById('fixedNormal')) {
+    const fmt = (v) => Math.floor(v ?? 0).toLocaleString('ja-JP');
+    document.getElementById('fixedNormal').textContent   = fmt(res.noCrit);
+    document.getElementById('fixedCrit').textContent     = fmt(res.critOn);
+    document.getElementById('fixedExpected').textContent = fmt(res.expected);
+  }
+  
+  // ===== Dock（下部固定カード）へも反映 =====
+  const nf = (v) => (v != null && !isNaN(v)) ? Math.floor(v).toLocaleString('ja-JP') : '-';
+  {
+    const n = res.noCrit ?? 0;
+    const c = res.critOn ?? 0;
+    const e = res.expected ?? 0;
+    const max = Math.max(n, c, e, 1);
+
+    // 幅更新（本体と同じ割合）
+    const setW = (id, pct) => {
+      const el = document.getElementById(id);
+      if (el) el.style.width = pct + '%';
+    };
+    setW('fill-noCrit-dock',   (n / max) * 100);
+    setW('fill-expected-dock', (e / max) * 100);
+    setW('fill-critOn-dock',   (c / max) * 100);
+
+    // 数値表示（凡例）
+    const setT = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = nf(val);
+    };
+    setT('leg-noCrit-dock',   n);
+    setT('leg-expected-dock', e);
+    setT('leg-critOn-dock',   c);
   }
 }
 
@@ -701,6 +748,12 @@ window.addEventListener('DOMContentLoaded', () => {
   updatePresetSelect(false);
   initEquipMainState();
   initMobileKeyboardsAndZeroClear();
+  initResultDockObserver();
+
+  ['fixedNormal','fixedCrit','fixedExpected'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.textContent = '-';
+  });
 
   if (!tryLoadFromUrl()) calc(true);
 
@@ -734,7 +787,9 @@ window.addEventListener('DOMContentLoaded', () => {
     copyTextAndNotify(`[${name}](${url})`, 'Markdown形式でコピーしました。');
   });
   document.addEventListener('click', e => {
-    if (!document.querySelector('.menu-anchor').contains(e.target)) openShareMenu(false);
+    const anchor = document.querySelector('.menu-anchor');
+    if (!anchor) return;               // ← 追加（存在しなければ何もしない）
+    if (!anchor.contains(e.target)) openShareMenu(false);
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') openShareMenu(false);

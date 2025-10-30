@@ -475,6 +475,10 @@ option:checked{
   grid-template-columns: 120px 170px 120px repeat(4, minmax(120px,1fr));
   gap:.5rem .6rem;
   align-items:center;
+  display: grid;
+  grid-template-columns: 120px 170px 120px repeat(4, minmax(120px,1fr));
+  align-items: center;
+  min-width: 750px; /* ← 横幅を確保してスクロール発生 */
 }
 .equip-head{ font-weight:700; color:var(--muted); padding:.25rem .2rem; }
 .equip-name{ font-weight:700; padding:.25rem .2rem; }
@@ -571,14 +575,7 @@ option:checked{
   overflow-x: auto;
   -webkit-overflow-scrolling: touch; /* スマホ滑らかスクロール */
   padding-bottom: 0.3rem; /* スクロールバーとの間に余白 */
-}
-
-/* スクロール中でも部位名が見えるよう固定 */
-.equip-grid {
-  display: grid;
-  grid-template-columns: 120px 170px 120px repeat(4, minmax(120px,1fr));
-  align-items: center;
-  min-width: 750px; /* ← 横幅を確保してスクロール発生 */
+  position: relative;
 }
 
 .equip-name {
@@ -590,9 +587,11 @@ option:checked{
 }
 .equip-name {
   box-shadow: 4px 0 6px rgba(0,0,0,0.15);
+  border-right: 1px solid rgba(0,0,0,.08);
 }
 [data-theme="light"] .equip-name {
   box-shadow: 4px 0 6px rgba(0,0,0,0.08);
+  border-right-color: rgba(0,0,0,.06);
 }
 
 /* スクロールバーのスタイル（見やすく） */
@@ -626,6 +625,7 @@ option:checked{
   z-index: 100;
   background: rgba(30, 30, 40, 0.92);
   backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border-top: 1px solid rgba(255,255,255,0.1);
   padding: 0.4rem 1rem;
   color: var(--text);
@@ -689,4 +689,61 @@ option:checked{
   .footer-values {
     gap: 0.8rem;
   }
+}
+
+/* 固定フッターのぶんだけ本文に余白を確保 */
+body { padding-bottom: 72px; }
+@media (max-width: 600px){
+  body { padding-bottom: 88px; } /* モバイルは少し多め */
+}
+
+@media (prefers-reduced-motion: reduce){
+  .bar.big .fill { transition: none !important; }
+  #result-body.changed { animation: none !important; }
+}
+
+/* ===== 結果ドック（固定表示） ===== */
+/* ドックの外側：本文と同じ最大幅・左右パディング */
+.result-dock{
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 110;
+  display: none;                    /* IOで切替 */
+  background: transparent;
+  padding: .5rem var(--content-pad); /* ★ 本文と同じ左右余白 */
+  pointer-events: none;
+}
+.result-dock.show{ display: block; }
+
+.result-dock-inner{
+  width: min(var(--content-max), 100%);  /* ★ 本文と同じ最大幅 */
+  margin-inline: auto;
+  pointer-events: auto;
+}
+
+/* ドック内カードは“本体カードと同じ”見た目（圧縮しない） */
+.result-dock .card{
+  margin: 0;
+  /* 背景・ボーダー・シャドウなどは .card の既定をそのまま利用 */
+  /* 背景が透けるレイヤにしたい場合だけ下の2行を残す */
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* ドック内ヘッダーの矢印を確実に消す（念のため） */
+.result-dock .card-header::after{ content: none !important; }
+
+/* iOS Safari ぼかし */
+.result-dock .card{ -webkit-backdrop-filter: blur(6px); }
+
+/* ドックが被らないための本文下余白（高さに合わせて調整） */
+body{ padding-bottom: 96px; }
+@media (max-width: 600px){ body{ padding-bottom: 108px; } }
+
+/* 折りたたみ不可カード（data-nocollapse）の矢印を消してクリック無効化 */
+.card[data-nocollapse="1"] .card-header{
+  cursor: default;
+}
+.card[data-nocollapse="1"] .card-header::after{
+  content: none !important;
 }
