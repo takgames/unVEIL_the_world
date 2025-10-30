@@ -63,20 +63,39 @@ function initEquipMainState(){
   });
 }
 
-function initZeroAutoClear(){
-  // 数値入力にテンキー＆0オートクリア
-  document.querySelectorAll('input[type="number"]').forEach(el=>{
-    el.setAttribute('inputmode','numeric');  // テンキー
-    el.setAttribute('pattern','\\d*');       // iOS向け
-    el.addEventListener('focus', ()=>{
-      if (el.value === '0') el.value = '';   // ★ 0なら消す
+// 置き換え：テンキー設定 + 0オートクリア（小数欄は decimal）
+function initMobileKeyboardsAndZeroClear(){
+  // 小数を扱う候補：stepが小数 or 0.1/0.5 など、または data-decimal="1" が付いているもの
+  const isDecimalField = (el) => {
+    if (el.dataset.decimal === '1') return true;
+    const step = (el.getAttribute('step') || '').trim();
+    // stepが空ならブラウザ既定（整数扱いとみなす）
+    if (!step) return false;
+    // 小数ステップなら decimal
+    return step.includes('.') || step.includes(',');
+  };
+
+  document.querySelectorAll('input[type="number"]').forEach(el => {
+    // まず過去に設定した属性をクリア
+    el.removeAttribute('pattern');
+    el.removeAttribute('inputmode');
+
+    // 小数が必要な欄だけ decimal、それ以外は numeric（任意）
+    if (isDecimalField(el)) {
+      el.setAttribute('inputmode', 'decimal');     // iOS/Androidで小数点付きキーボード
+    } else {
+      // 数字のみで良い欄は残したい場合のみ。全撤去したいなら下行を消してください。
+      el.setAttribute('inputmode', 'numeric');
+    }
+
+    // 0オートクリアは継続
+    el.addEventListener('focus', () => {
+      if (el.value === '0') el.value = '';
     });
-    el.addEventListener('blur', ()=>{
-      // メイン値については updateMainFieldState が管理するので何もしない
-      // それ以外の空欄は 0 を戻しておく（お好みで）
+    el.addEventListener('blur', () => {
       const isMainVal = /eq_.*_mainVal$/.test(el.id);
+      // メイン値は updateMainFieldState が管理。その他の空欄は 0 に戻す運用なら以下を残す
       if (!isMainVal && el.value === '') el.value = '0';
-      // mainVal は「その他」の時は disabled なので blur は来ない
     });
   });
 }
@@ -681,7 +700,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initCollapsibles();
   updatePresetSelect(false);
   initEquipMainState();
-  initZeroAutoClear();
+  initMobileKeyboardsAndZeroClear();
 
   if (!tryLoadFromUrl()) calc(true);
 

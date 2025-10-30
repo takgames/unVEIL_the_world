@@ -616,3 +616,77 @@ option:checked{
   opacity: 0.6;
   pointer-events: none;
 }
+
+/* ==== 結果の固定バー ==== */
+#resultFooter {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(30, 30, 40, 0.92);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding: 0.4rem 1rem;
+  color: var(--text);
+  font-size: 0.95rem;
+  transition: background 0.3s;
+}
+
+[data-theme="light"] #resultFooter {
+  background: rgba(255,255,255,0.92);
+  border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-label {
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 3.5rem;
+}
+
+.footer-values {
+  display: flex;
+  gap: 1.2rem;
+  align-items: center;
+}
+
+.footer-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 4.5rem;
+}
+
+.footer-item .label {
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.footer-item .value {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+/* スマホ最適化 */
+@media (max-width: 600px) {
+  #resultFooter {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.6rem;
+  }
+  .footer-values {
+    gap: 0.8rem;
+  }
+}
