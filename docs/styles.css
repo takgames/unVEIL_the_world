@@ -1,0 +1,129 @@
+:root {
+  --bg: #0b0c10;
+  --fg: #eaf0f1;
+  --muted: #9aa6ac;
+  --card: #14161b;
+  --card-subtle: #111318;
+  --border: #242834;
+  --accent: #6ea8fe;
+  --accent-2: #a78bfa;
+  --normal: #5dd39e; /* 通常=緑 */
+  --avg: #ffd166;    /* 平均=黄 */
+  --crit: #ff6b6b;   /* 会心=赤 */
+  --danger: #ff6b6b;
+  --ok: #5dd39e;
+  --shadow: 0 6px 18px rgba(0,0,0,.3);
+}
+
+html[data-theme="light"] {
+  --bg: #fafafa;
+  --fg: #122023;
+  --muted: #607078;
+  --card: #ffffff;
+  --card-subtle: #f4f6f8;
+  --border: #e5e8ec;
+  --accent: #2b6cb0;
+  --accent-2: #6b46c1;
+  --shadow: 0 6px 16px rgba(0,0,0,.08);
+}
+
+* { box-sizing: border-box }
+html,body { height: 100% }
+body {
+  margin: 0;
+  color: var(--fg);
+  background: var(--bg);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans JP", sans-serif;
+}
+.container { width: min(1100px, 100% - 24px); margin: 0 auto; }
+.small { font-size: 12px }
+.muted { color: var(--muted) }
+.row { display: flex; align-items: center }
+.wrap { flex-wrap: wrap }
+.space-between { justify-content: space-between }
+.align-center { align-items: center }
+.gap { gap: 12px }
+.gap-sm { gap: 8px }
+.two-cols { grid-template-columns: repeat(2, minmax(0,1fr)) }
+
+.app-header { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 16px 0; }
+.app-header h1 { margin: 0; font-size: clamp(18px, 2.3vw, 24px) }
+.header-actions { display: flex; gap: 8px; }
+
+.btn { cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--fg);
+  border-radius: 10px; padding: 8px 12px; box-shadow: var(--shadow); }
+.btn:hover { filter: brightness(1.06) }
+.btn.primary { border-color: var(--accent); }
+.btn.danger { border-color: var(--danger); color: #fff; background: linear-gradient(180deg, #ff6b6b, #d94848); }
+
+.main-grid { display: grid; gap: 16px; padding-bottom: 220px; }
+.card { border: 1px solid var(--border); border-radius: 14px; background: var(--card); box-shadow: var(--shadow); }
+.card > summary { padding: 12px 16px; cursor: pointer; font-weight: 700; list-style: none; }
+.card > summary::-webkit-details-marker { display: none }
+.card[open] > summary { border-bottom: 1px solid var(--border) }
+.card-body { padding: 16px }
+.card.subtle { background: var(--card-subtle) }
+
+.grid { display: grid }
+.stack { display: grid; gap: 6px }
+label > input:not([type=checkbox]):not([type=radio]),
+label > select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg) }
+legend { padding: 0 6px }
+
+/* 装備レイアウト */
+.equip-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px }
+.equip-card { border: 1px dashed var(--border); border-radius: 10px; padding: 8px; }
+.subgrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-top: 8px; }
+
+/* 無効化されたメイン値の見た目 */
+input.mainVal:disabled { opacity: .6; background: var(--card-subtle); cursor: not-allowed; }
+
+.totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 6px; padding: 12px }
+.totals-row { display: flex; justify-content: space-between; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card) }
+
+/* 内訳 */
+.breakdown-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px }
+.breakdown-grid > div { display: flex; justify-content: space-between; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px }
+
+/* 結果固定バー */
+.results { position: sticky; bottom: 0; z-index: 20; background: linear-gradient(180deg, transparent, rgba(0,0,0,.25)); }
+html[data-theme="light"] .results { background: linear-gradient(180deg, transparent, rgba(255,255,255,.6)); }
+.results-inner { border: 1px solid var(--border); border-radius: 14px; margin: 10px auto; padding: 12px; background: var(--card); box-shadow: var(--shadow); }
+.results-head { margin-bottom: 8px }
+.legend .chip { border-radius: 999px; padding: 2px 8px; font-size: 12px; border: 1px solid var(--border); }
+
+/* 凡例はバー色と一致 */
+.chip-normal { background: color-mix(in oklab, var(--normal) 35%, transparent); }
+.chip-avg { background: color-mix(in oklab, var(--avg) 35%, transparent); }
+.chip-crit { background: color-mix(in oklab, var(--crit) 45%, transparent); }
+
+.chart { position: relative; height: 22px; border: 1px solid var(--border); border-radius: 1000px; background: linear-gradient(90deg, transparent 0, transparent 100%); overflow: hidden; }
+.bar { position: absolute; top: 0; bottom: 0; width: 0; transition: width .2s ease, left .2s ease; mix-blend-mode: normal; }
+.bar-normal { left: 0; background: var(--normal); opacity: .95 }
+.bar-avg { background: var(--avg); opacity: .95 }
+.bar-crit { background: var(--crit); opacity: .95 }
+.chart-scale { position: absolute; inset: 0; background-image: linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px); background-size: 10% 100%; pointer-events: none; }
+
+/* ライトモードで色が飛ばないように */
+html[data-theme="light"] .chart-scale { background-image: linear-gradient(90deg, rgba(0,0,0,.06) 1px, transparent 1px); }
+
+.results-values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px }
+.results-values > div { display: flex; justify-content: space-between; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--card-subtle) }
+
+.app-footer { padding: 24px 0 40px; color: var(--muted); }
+
+/* ダイアログ */
+dialog { border: none; border-radius: 12px; padding: 0; background: transparent; }
+.dialog-card { background: var(--card); color: var(--fg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: min(90vw, 420px); box-shadow: var(--shadow) }
+dialog::backdrop { backdrop-filter: blur(2px) brightness(.8) }
+
+/* トースト */
+#toast { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
+  background: var(--card); color: var(--fg); border: 1px solid var(--border); padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow);
+  opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+#toast.show { opacity: 1 }
+
+@media (max-width: 720px) {
+  .two-cols { grid-template-columns: 1fr }
+  .results-values { grid-template-columns: 1fr }
+}
