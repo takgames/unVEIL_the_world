@@ -28,6 +28,29 @@ function initCollapsePersistence() {
   });
 }
 
+// 0 のとき編集しやすくする（フォーカスで一時的に空白化）
+function initZeroFriendlyInputs() {
+  $$('input[type="number"]').forEach((el) => {
+    el.addEventListener('focus', () => {
+      if (el.value === '0') {
+        el.dataset.wasZero = '1';
+        el.value = '';                // 一時的に空白
+        el.placeholder = '0';         // 0 を目安表示（任意）
+      }
+    });
+    el.addEventListener('blur', () => {
+      // 何も入れずにフォーカスを外したら 0 に戻す
+      if ((el.value === '' || el.value == null) && el.dataset.wasZero === '1') {
+        el.value = '0';
+        // 状態を更新させる（inputリスナーに拾わせる）
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      el.placeholder = '';
+      delete el.dataset.wasZero;
+    });
+  });
+}
+
 // ====== デフォルト値 ======
 const DEFAULTS = {
   baseAtk: 5000,
@@ -496,4 +519,5 @@ window.addEventListener('DOMContentLoaded', () => {
   initShare();
   initPresets();
   initReset();
+  initZeroFriendlyInputs();
 });

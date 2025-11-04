@@ -116,7 +116,22 @@ input.mainVal:disabled { opacity: .6; background: var(--card-subtle); cursor: no
 /* 結果固定バー */
 .results { position: sticky; bottom: 0; z-index: 20; background: linear-gradient(180deg, transparent, rgba(0,0,0,.25)); }
 html[data-theme="light"] .results { background: linear-gradient(180deg, transparent, rgba(255,255,255,.6)); }
-.results-inner { border: 1px solid var(--border); border-radius: 14px; margin: 10px auto; padding: 12px; background: var(--card); box-shadow: var(--shadow); }
+/* 結果固定バーのカードをほんの少しだけ強調 */
+.results-inner {
+  position: relative;
+  margin: 10px auto;
+  padding: 12px;
+  border: 1px solid color-mix(in oklab, var(--accent) 28%, var(--border)); /* 枠を控えめにアクセント寄りへ */
+  border-radius: 14px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--accent) 7%, var(--card)) 0%,
+    var(--card) 60%
+  ); /* 上側にうっすらアクセントをブレンド */
+  box-shadow:
+    var(--shadow),
+    0 0 0 2px color-mix(in oklab, var(--accent) 10%, transparent); /* 薄い外環で際立たせる */
+}
 .results-head { margin-bottom: 8px }
 .legend .chip { border-radius: 999px; padding: 2px 8px; font-size: 12px; border: 1px solid var(--border); }
 
@@ -130,10 +145,23 @@ html[data-theme="light"] .results { background: linear-gradient(180deg, transpar
 .bar-normal { left: 0; background: var(--normal); opacity: .95 }
 .bar-avg { background: var(--avg); opacity: .95 }
 .bar-crit { background: var(--crit); opacity: .95 }
-.chart-scale { position: absolute; inset: 0; background-image: linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px); background-size: 10% 100%; pointer-events: none; }
+
+/* ダークモード：10%刻み(薄)＋20%刻み(濃)の二層で、はっきり見える */
+.chart-scale {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px), /* 20%ごとの太目盛 */
+    linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px); /* 10%ごとの細目盛 */
+  background-size: 20% 100%, 10% 100%;
+}
 
 /* ライトモードで色が飛ばないように */
-html[data-theme="light"] .chart-scale { background-image: linear-gradient(90deg, rgba(0,0,0,.06) 1px, transparent 1px); }
+html[data-theme="light"] .chart-scale {
+  background-image: linear-gradient(90deg, rgba(0,0,0,.06) 1px, transparent 1px);
+  background-size: 10% 100%;
+}
 
 .results-values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px }
 .results-values > div { display: flex; justify-content: space-between; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--card-subtle) }
@@ -152,7 +180,7 @@ dialog:focus { outline: none; }
 
 /* ←ここを変更：初期の枠色を border に、ホバー時だけ accent に */
 .dialog-card .btn.primary { 
-  border-color: var(--border);       /* もともと var(--accent) だった */
+  border-color: var(--border);
   background: var(--card);
 }
 .dialog-card .btn.primary:hover { 

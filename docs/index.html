@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <title>unVEIL the world ダメージシミュレーター</title>
+    <title>(非公式) unVEIL the world ダメージシミュレーター</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -24,7 +24,7 @@
           <div class="grid two-cols">
             <label class="stack">
               <span>プリセット名</span>
-              <input id="presetName" type="text" placeholder="例) アタッカー汎用" />
+              <input id="presetName" type="text" placeholder="例) バフもりもり奥義汎用" />
             </label>
             <label class="stack">
               <span>プリセット一覧</span>
@@ -35,7 +35,6 @@
             <button id="savePreset" class="btn">保存/上書き</button>
             <button id="renamePreset" class="btn">名前変更</button>
             <button id="deletePreset" class="btn danger">削除</button>
-            <span class="muted" id="presetHint">ローカル保存 (ブラウザ内)</span>
           </div>
         </div>
       </details>
@@ -59,7 +58,7 @@
             <!-- グローブ -->
             <fieldset class="equip-card"><legend>グローブ</legend>
               <div class="grid two-cols gap">
-                <label class="stack"><span>メイン (攻撃力 固定)</span><input type="number" data-main-type="atk" data-slot="glove" class="mainVal" min="0" step="1"></label>
+                <label class="stack"><span>メイン (攻撃力)</span><input type="number" data-main-type="atk" data-slot="glove" class="mainVal" min="0" step="1"></label>
                 <div></div>
               </div>
               <div class="subgrid">
@@ -73,7 +72,7 @@
             <!-- 服 -->
             <fieldset class="equip-card"><legend>服</legend>
               <div class="grid two-cols gap">
-                <label class="stack"><span>メイン (その他 固定)</span><input type="number" data-main-type="other" data-slot="armor" class="mainVal" min="0" step="1" placeholder="—"></label>
+                <label class="stack"><span>メイン (その他)</span><input type="number" data-main-type="other" data-slot="armor" class="mainVal" min="0" step="1" placeholder="—"></label>
                 <div></div>
               </div>
               <div class="subgrid">
