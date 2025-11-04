@@ -13,8 +13,9 @@
   --danger: #ff6b6b;
   --ok: #5dd39e;
   --shadow: 0 6px 18px rgba(0,0,0,.3);
-  /* 数値入力用フォントサイズ（iOS拡大防止の16px以上） */
-  --input-fz: clamp(16px, 3.6vw, 20px);
+  --input-fz: clamp(16px, 3.6vw, 20px);   /* 入力/選択のフォントサイズ */
+  --result-fz: clamp(18px, 4.2vw, 24px);  /* 結果数値のフォントサイズ */
+  --equip-accent: color-mix(in oklab, var(--accent) 38%, transparent); /* 装備カード用アクセント */
 }
 
 html[data-theme="light"] {
@@ -70,14 +71,36 @@ body {
 .stack { display: grid; gap: 6px }
 /* 入力要素 */
 label > input:not([type=checkbox]):not([type=radio]) { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); font-size: var(--input-fz); }
-label > select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg) }
+label > select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); font-size: var(--input-fz); }
+/* 一部ブラウザでドロップダウンにも反映されます */
+select option { font-size: var(--input-fz); }
 /* 数値入力の可読性向上 */
 input[type=number] { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 legend { padding: 0 6px }
 
-/* 装備レイアウト */
-.equip-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px }
-.equip-card { border: 1px dashed var(--border); border-radius: 10px; padding: 8px; }
+/* 装備レイアウト - 確定版 */
+.equip-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.equip-card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px 12px;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--card) 94%, transparent), var(--card));
+  box-shadow: 0 1px 3px rgba(0,0,0,.12);
+}
+.equip-card::before {
+  content:"";
+  position:absolute; left:0; top:0; bottom:0;
+  width: 3px;
+  background: var(--equip-accent);
+  border-top-left-radius: inherit; border-bottom-left-radius: inherit;
+}
+.equip-card > legend {
+  font-weight: 700; padding: 0 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
 .subgrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-top: 8px; }
 
 /* 無効化されたメイン値の見た目 */
@@ -114,6 +137,7 @@ html[data-theme="light"] .chart-scale { background-image: linear-gradient(90deg,
 
 .results-values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px }
 .results-values > div { display: flex; justify-content: space-between; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--card-subtle) }
+.results-values output { font-size: var(--result-fz); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 
 .app-footer { padding: 24px 0 40px; color: var(--muted); }
 
@@ -121,10 +145,29 @@ html[data-theme="light"] .chart-scale { background-image: linear-gradient(90deg,
 dialog { border: none; border-radius: 12px; padding: 0; background: transparent; }
 .dialog-card { background: var(--card); color: var(--fg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: min(90vw, 420px); box-shadow: var(--shadow) }
 dialog::backdrop { backdrop-filter: blur(2px) brightness(.8) }
+dialog:focus { outline: none; }
+
+/* 共有ダイアログ内のボタンは初期強調しない */
+.dialog-card .btn { box-shadow: none; transition: background-color .2s, color .2s, border-color .2s; }
+
+/* ←ここを変更：初期の枠色を border に、ホバー時だけ accent に */
+.dialog-card .btn.primary { 
+  border-color: var(--border);       /* もともと var(--accent) だった */
+  background: var(--card);
+}
+.dialog-card .btn.primary:hover { 
+  border-color: var(--accent); 
+  background: color-mix(in oklab, var(--accent) 16%, var(--card));
+  filter: none;
+}
+
+/* フォーカスリングは出さない（必要なら外してOK） */
+.dialog-card .btn:focus,
+.dialog-card .btn:focus-visible { outline: none; box-shadow: none; }
 
 /* トースト */
-#toast { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
-  background: var(--card); color: var(--fg); border: 1px solid var(--border); padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow);
+#toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top)); transform: translateX(-50%);
+  z-index: 1000; background: var(--card); color: var(--fg); border: 1px solid var(--border); padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow);
   opacity: 0; pointer-events: none; transition: opacity .25s ease; }
 #toast.show { opacity: 1 }
 

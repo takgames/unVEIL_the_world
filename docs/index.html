@@ -255,17 +255,17 @@
       <div class="muted small">本シミュレーターは実測検証に基づいた近似値の推測を目的としているため、実際のゲームプレイにおける結果と一致することを保証するものではありません。</div>
     </footer>
 
-    <!-- 共有ダイアログ（2ボタン方式） -->
-    <dialog id="shareDialog">
-      <form method="dialog" class="dialog-card">
-        <h3>共有URLをコピー</h3>
-        <p class="muted small">コピー形式を選んでください（圧縮は自動適用）</p>
+    <!-- 共有URLダイアログ -->
+    <dialog id="shareDialog" aria-labelledby="shareTitle" tabindex="-1">
+      <div class="dialog-card">
+        <h3 id="shareTitle">共有URLをコピー</h3>
+        <p class="muted small">コピー形式を選んでください</p>
         <div class="row gap">
-          <button id="copyUrl" value="default" class="btn primary">URLをコピー</button>
-          <button id="copyMd" value="default" class="btn">Markdownをコピー</button>
-          <button value="cancel" class="btn">閉じる</button>
+          <button id="copyUrl" type="button" class="btn primary">URLをコピー</button>
+          <button id="copyMd"  type="button" class="btn">Markdownをコピー</button>
+          <button id="closeShare" type="button" class="btn">閉じる</button>
         </div>
-      </form>
+      </div>
     </dialog>
 
     <!-- トースト -->

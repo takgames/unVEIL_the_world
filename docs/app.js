@@ -7,6 +7,27 @@ const fmtInt = (n) => Math.floor(n).toLocaleString('ja-JP');
 const fmtPct = (n) => (Math.round(n * 100) / 100).toFixed(2);
 const fmt2 = (n) => (Math.round(n * 100) / 100).toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+// ====== 折りたたみ状態 永続化 ======
+const COLLAPSE_KEY = 'uvt-collapse-v1';
+function initCollapsePersistence() {
+  // 既存の保存内容を読む
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '{}'); } catch {}
+  // details[id] を対象に復元＆監視
+  $$('details.card[id]').forEach(d => {
+    // 既に保存があればそれを反映（なければHTMLの既定openを尊重）
+    if (Object.prototype.hasOwnProperty.call(saved, d.id)) {
+      d.open = !!saved[d.id];
+    }
+    // 開閉が変わるたびに保存
+    d.addEventListener('toggle', () => {
+      const cur = (() => { try { return JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '{}'); } catch { return {}; }})();
+      cur[d.id] = d.open;
+      localStorage.setItem(COLLAPSE_KEY, JSON.stringify(cur));
+    });
+  });
+}
+
 // ====== デフォルト値 ======
 const DEFAULTS = {
   baseAtk: 5000,
@@ -297,7 +318,7 @@ const LZString = (function(){
     decompressFromBase64: function (input) { if (input == null) return ""; if (input === "") return null; let buffer = 0, bc = 0, idx = 0, v; input = input.replace(/[^A-Za-z0-9\+\/\=]/g, ""); return LZ._decompress(input.length, 32, function(){ if (bc % 4 === 0) v = keyStrBase64.indexOf(input.charAt(idx++)); buffer = (buffer << 6) | v; bc = (bc + 1) % 4; return (buffer >> (bc*2)) & 0x3F; }); },
     _compress: function (uncompressed, bitsPerChar, getCharFromInt) {
       if (uncompressed == null) return ""; let i, value, dict = {}, dictToCreate = {}, c = "", wc = "", w = "", enlargeIn = 2, dictSize = 3, numBits = 2, data = [], data_val = 0, data_pos = 0, ii;
-      for (ii = 0; ii < uncompressed.length; ii++) { c = uncompressed.charAt(ii); if (!Object.prototype.hasOwnProperty.call(dict, c)) { dict[c] = dictSize++; dictToCreate[c] = true; } wc = w + c; if (Object.prototype.hasOwnProperty.call(dict, wc)) w = wc; else { if (Object.prototype.hasOwnProperty.call(dictToCreate, w)) { if (w.charCodeAt(0) < 256) { for (i=0;i<numBits;i++){ data_val <<= 1; if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; } value = w.charCodeAt(0); for (i=0;i<8;i++){ data_val = (data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } else { value = 1; for (i=0;i<numBits;i++){ data_val = (data_val<<1) | value; if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value = 0; } value = w.charCodeAt(0); for (i=0;i<16;i++){ data_val = (data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } enlargeIn--; if (enlargeIn==0){enlargeIn=Math.pow(2,numBits); numBits++; } delete dictToCreate[w]; } else { value = dict[w]; for (i=0;i<numBits;i++){ data_val=(data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } enlargeIn--; if (enlargeIn==0){enlargeIn=Math.pow(2,numBits); numBits++; } dict[wc] = dictSize++; w = String(c); } }
+      for (ii = 0; ii < uncompressed.length; ii++) { c = uncompressed.charAt(ii); if (!Object.prototype.hasOwnProperty.call(dict, c)) { dict[c] = dictSize++; dictToCreate[c] = true; } wc = w + c; if (Object.prototype.hasOwnProperty.call(dict, wc)) w = wc; else { if (Object.prototype.hasOwnProperty.call(dictToCreate, w)) { if (w.charCodeAt(0) < 256) { for (i=0;i<numBits;i++){ data_val <<= 1; if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; } value = w.charCodeAt(0); for (i=0;i<8;i++){ data_val = (data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } else { value = 1; for (i=0;i<numBits;i++){ data_val=(data_val<<1) | value; if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value = 0; } value = w.charCodeAt(0); for (i=0;i<16;i++){ data_val=(data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } enlargeIn--; if (enlargeIn==0){enlargeIn=Math.pow(2,numBits); numBits++; } delete dictToCreate[w]; } else { value = dict[w]; for (i=0;i<numBits;i++){ data_val=(data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } enlargeIn--; if (enlargeIn==0){enlargeIn=Math.pow(2,numBits); numBits++; } dict[wc] = dictSize++; w = String(c); } }
       if (w !== "") { if (Object.prototype.hasOwnProperty.call(dictToCreate, w)) { if (w.charCodeAt(0) < 256) { for (i=0;i<numBits;i++){ data_val<<=1; if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; } value = w.charCodeAt(0); for (i=0;i<8;i++){ data_val=(data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } else { value = 1; for (i=0;i<numBits;i++){ data_val=(data_val<<1) | value; if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value = 0; } value = w.charCodeAt(0); for (i=0;i<16;i++){ data_val=(data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } enlargeIn--; if (enlargeIn==0){enlargeIn=Math.pow(2,numBits); numBits++; } delete dictToCreate[w]; } else { value = dict[w]; for (i=0;i<numBits;i++){ data_val=(data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } }
       value = 2; for (i=0;i<numBits;i++){ data_val=(data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; }
       while (true) { data_val <<= 1; if (data_pos==bitsPerChar-1){ data.push(getCharFromInt(data_val)); break; } else data_pos++; }
@@ -331,16 +352,31 @@ function decodeStateShort(b64) { try { const txt = LZString.decompressFromBase64
 
 function initShare() {
   const dlg = $('#shareDialog');
-  $('#shareBtn').addEventListener('click', () => dlg.showModal());
+  const openerBtn = $('#shareBtn');
+
+  openerBtn.addEventListener('click', () => {
+    dlg.showModal();
+    // 直ちにダイアログへフォーカス（ボタンのフォーカスを避ける）
+    if (!dlg.hasAttribute('tabindex')) dlg.setAttribute('tabindex', '-1');
+    openerBtn.blur();
+    dlg.focus({ preventScroll: true });
+  });
+
   const makeUrl = () => `${location.origin}${location.pathname}?z=${encodeURIComponent(encodeStateShort(state))}`;
   const copy = (fmt) => {
     const url = makeUrl();
     const text = fmt === 'md' ? `[unVEIL the world: ダメージシミュレーター](${url})` : url;
-    navigator.clipboard?.writeText(text).then(() => { toast('クリップボードにコピーしました'); dlg.close(); })
+    navigator.clipboard?.writeText(text)
+      .then(() => { toast('クリップボードにコピーしました'); dlg.close(); })
       .catch(() => { window.prompt('コピーしてください', text); dlg.close(); });
   };
   $('#copyUrl').addEventListener('click', (e)=>{ e.preventDefault(); copy('url'); });
   $('#copyMd').addEventListener('click',  (e)=>{ e.preventDefault(); copy('md');  });
+  // 閉じるボタン
+  $('#closeShare').addEventListener('click', () => dlg.close());
+
+  // 閉じたら開いたボタンにフォーカスを戻す
+  dlg.addEventListener('close', () => openerBtn?.focus());
 }
 
 function applyQueryParams(qs) {
@@ -409,6 +445,7 @@ function initPresets() {
   $('#deletePreset').addEventListener('click', () => {
     const cur = $('#presetSelect').value;
     if (!cur) { toast('削除するプリセットを選択してください'); return; }
+    if (!confirm('選択中のプリセットを削除します。よろしいですか？')) return;
     const map = loadPresets(); delete map[cur]; savePresets(map); refreshPresetSelect();
     $('#presetSelect').value = '';
     $('#presetName').value = '';
@@ -443,10 +480,16 @@ function initFromQueryOrDefaults() {
   render();
 }
 
-function initReset() { $('#resetBtn').addEventListener('click', resetAll); }
+function initReset() {
+  $('#resetBtn').addEventListener('click', () => {
+    if (!confirm('すべての入力を初期化します。よろしいですか？')) return;
+    resetAll();
+  });
+}
 
 // Kickoff
 window.addEventListener('DOMContentLoaded', () => {
+  initCollapsePersistence();
   initTheme();
   bindInputs();
   initFromQueryOrDefaults();
