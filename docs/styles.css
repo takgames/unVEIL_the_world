@@ -13,9 +13,9 @@
   --danger: #ff6b6b;
   --ok: #5dd39e;
   --shadow: 0 6px 18px rgba(0,0,0,.3);
-  --input-fz: clamp(16px, 3.6vw, 20px);   /* 入力/選択のフォントサイズ */
-  --result-fz: clamp(18px, 4.2vw, 24px);  /* 結果数値のフォントサイズ */
-  --equip-accent: color-mix(in oklab, var(--accent) 38%, transparent); /* 装備カード用アクセント */
+  --input-fz: clamp(16px, 3.6vw, 20px);
+  --result-fz: clamp(18px, 4.2vw, 24px);
+  --equip-accent: color-mix(in oklab, var(--accent) 26%, transparent);
 }
 
 html[data-theme="light"] {
@@ -69,45 +69,18 @@ body {
 
 .grid { display: grid }
 .stack { display: grid; gap: 6px }
-/* 入力要素 */
 label > input:not([type=checkbox]):not([type=radio]) { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); font-size: var(--input-fz); }
 label > select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); font-size: var(--input-fz); }
-/* 一部ブラウザでドロップダウンにも反映されます */
 select option { font-size: var(--input-fz); }
-/* 数値入力の可読性向上 */
 input[type=number] { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 legend { padding: 0 6px }
 
 /* 装備レイアウト - 確定版 */
 .equip-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
-.equip-card {
-  position: relative;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px 12px 12px;
-  background: linear-gradient(180deg, color-mix(in oklab, var(--card) 94%, transparent), var(--card));
-  box-shadow: 0 1px 3px rgba(0,0,0,.12);
-}
-.equip-card::before {
-  content:"";
-  position:absolute; left:0; top:0; bottom:0;
-  width: 3px;
-  background: var(--equip-accent);
-  border-top-left-radius: inherit; border-bottom-left-radius: inherit;
-}
-.equip-card > legend {
-  font-weight: 700; padding: 0 8px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
+.equip-card { position: relative; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px 12px; background: linear-gradient(180deg, color-mix(in oklab, var(--card) 94%, transparent), var(--card)); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.equip-card::before { content:""; position:absolute; left:0; top:0; bottom:0; width: 3px; background: var(--equip-accent); border-top-left-radius: inherit; border-bottom-left-radius: inherit; }
+.equip-card > legend { font-weight: 700; padding: 0 8px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }
 .subgrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-top: 8px; }
-
-/* 無効化されたメイン値の見た目 */
-input.mainVal:disabled { opacity: .6; background: var(--card-subtle); cursor: not-allowed; }
-
-.totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 6px; padding: 12px }
-.totals-row { display: flex; justify-content: space-between; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card) }
 
 /* 内訳 */
 .breakdown-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px }
@@ -116,22 +89,7 @@ input.mainVal:disabled { opacity: .6; background: var(--card-subtle); cursor: no
 /* 結果固定バー */
 .results { position: sticky; bottom: 0; z-index: 20; background: linear-gradient(180deg, transparent, rgba(0,0,0,.25)); }
 html[data-theme="light"] .results { background: linear-gradient(180deg, transparent, rgba(255,255,255,.6)); }
-/* 結果固定バーのカードをほんの少しだけ強調 */
-.results-inner {
-  position: relative;
-  margin: 10px auto;
-  padding: 12px;
-  border: 1px solid color-mix(in oklab, var(--accent) 28%, var(--border)); /* 枠を控えめにアクセント寄りへ */
-  border-radius: 14px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--accent) 7%, var(--card)) 0%,
-    var(--card) 60%
-  ); /* 上側にうっすらアクセントをブレンド */
-  box-shadow:
-    var(--shadow),
-    0 0 0 2px color-mix(in oklab, var(--accent) 10%, transparent); /* 薄い外環で際立たせる */
-}
+.results-inner { position: relative; border: 1px solid color-mix(in oklab, var(--accent) 28%, var(--border)); border-radius: 14px; margin: 10px auto; padding: 12px; background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 7%, var(--card)) 0%, var(--card) 60%); box-shadow: var(--shadow), 0 0 0 2px color-mix(in oklab, var(--accent) 10%, transparent); }
 .results-head { margin-bottom: 8px }
 .legend .chip { border-radius: 999px; padding: 2px 8px; font-size: 12px; border: 1px solid var(--border); }
 
@@ -145,27 +103,11 @@ html[data-theme="light"] .results { background: linear-gradient(180deg, transpar
 .bar-normal { left: 0; background: var(--normal); opacity: .95 }
 .bar-avg { background: var(--avg); opacity: .95 }
 .bar-crit { background: var(--crit); opacity: .95 }
-
-/* ダークモード：10%刻み(薄)＋20%刻み(濃)の二層で、はっきり見える */
-.chart-scale {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px), /* 20%ごとの太目盛 */
-    linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px); /* 10%ごとの細目盛 */
-  background-size: 20% 100%, 10% 100%;
-}
-
-/* ライトモードで色が飛ばないように */
-html[data-theme="light"] .chart-scale {
-  background-image: linear-gradient(90deg, rgba(0,0,0,.06) 1px, transparent 1px);
-  background-size: 10% 100%;
-}
+.chart-scale { position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px); background-size: 20% 100%, 10% 100%; }
+html[data-theme="light"] .chart-scale { background-image: linear-gradient(90deg, rgba(0,0,0,.06) 1px, transparent 1px); background-size: 10% 100%; }
 
 .results-values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px }
 .results-values > div { display: flex; justify-content: space-between; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--card-subtle) }
-.results-values output { font-size: var(--result-fz); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 
 .app-footer { padding: 24px 0 40px; color: var(--muted); }
 
@@ -174,32 +116,38 @@ dialog { border: none; border-radius: 12px; padding: 0; background: transparent;
 .dialog-card { background: var(--card); color: var(--fg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: min(90vw, 420px); box-shadow: var(--shadow) }
 dialog::backdrop { backdrop-filter: blur(2px) brightness(.8) }
 dialog:focus { outline: none; }
+/* 共有ダイアログ内のボタンは初期強調しない（ホバーのみ色変化） */
+.dialog-card .btn { box-shadow: none; transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
+.dialog-card .btn.primary { border-color: var(--border); background: var(--card); }
+.dialog-card .btn.primary:hover { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 16%, var(--card)); filter: none; }
+.dialog-card .btn:focus, .dialog-card .btn:focus-visible { outline: none; box-shadow: none; }
 
-/* 共有ダイアログ内のボタンは初期強調しない */
-.dialog-card .btn { box-shadow: none; transition: background-color .2s, color .2s, border-color .2s; }
-
-/* ←ここを変更：初期の枠色を border に、ホバー時だけ accent に */
-.dialog-card .btn.primary { 
-  border-color: var(--border);
-  background: var(--card);
-}
-.dialog-card .btn.primary:hover { 
-  border-color: var(--accent); 
-  background: color-mix(in oklab, var(--accent) 16%, var(--card));
-  filter: none;
-}
-
-/* フォーカスリングは出さない（必要なら外してOK） */
-.dialog-card .btn:focus,
-.dialog-card .btn:focus-visible { outline: none; box-shadow: none; }
-
-/* トースト */
-#toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top)); transform: translateX(-50%);
-  z-index: 1000; background: var(--card); color: var(--fg); border: 1px solid var(--border); padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow);
-  opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+/* トースト：上部に表示 */
+#toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top)); transform: translateX(-50%); z-index: 1000; background: var(--card); color: var(--fg); border: 1px solid var(--border); padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
 #toast.show { opacity: 1 }
 
 @media (max-width: 720px) {
   .two-cols { grid-template-columns: 1fr }
   .results-values { grid-template-columns: 1fr }
 }
+
+/* アイコンボタンのレイアウトを中央揃えに（歪み防止） */
+.header-actions .btn.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; height: 40px; /* タップしやすい最小44px相当でもOK */
+  padding: 0;
+}
+
+/* 絵文字サイズと位置の微調整（OS差吸収） */
+.btn.icon-btn .emoji {
+  font-size: 20px;         /* 18〜22でお好み調整 */
+  line-height: 1;
+  display: block;
+  transform: translateY(1px); /* 絵文字のベースライン補正 */
+}
+
+/* ホバー/フォーカスでわずかにトーンアップ（既存の .btn:hover にも連動） */
+.btn.icon-btn:hover { filter: brightness(1.06); }
+.btn.icon-btn:focus-visible { outline: 2px solid color-mix(in oklab, var(--accent) 50%, transparent); outline-offset: 2px; }

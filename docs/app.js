@@ -7,48 +7,38 @@ const fmtInt = (n) => Math.floor(n).toLocaleString('ja-JP');
 const fmtPct = (n) => (Math.round(n * 100) / 100).toFixed(2);
 const fmt2 = (n) => (Math.round(n * 100) / 100).toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// ====== 折りたたみ状態 永続化 ======
-const COLLAPSE_KEY = 'uvt-collapse-v1';
-function initCollapsePersistence() {
-  // 既存の保存内容を読む
-  let saved = {};
-  try { saved = JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '{}'); } catch {}
-  // details[id] を対象に復元＆監視
-  $$('details.card[id]').forEach(d => {
-    // 既に保存があればそれを反映（なければHTMLの既定openを尊重）
-    if (Object.prototype.hasOwnProperty.call(saved, d.id)) {
-      d.open = !!saved[d.id];
-    }
-    // 開閉が変わるたびに保存
-    d.addEventListener('toggle', () => {
-      const cur = (() => { try { return JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '{}'); } catch { return {}; }})();
-      cur[d.id] = d.open;
-      localStorage.setItem(COLLAPSE_KEY, JSON.stringify(cur));
-    });
-  });
+// ====== 変更検知（未保存の編集の有無） ======
+let baselineJSON = '';
+let currentPresetName = ''; // 現在選択中のプリセット名（未選択は ''）
+
+const captureBaseline = () => { baselineJSON = JSON.stringify(state); };
+const isDirty = () => JSON.stringify(state) !== baselineJSON;
+
+// ====== バッチレンダー (#10) ======
+let rafId = 0;
+function scheduleRender() {
+  if (rafId) return;
+  rafId = requestAnimationFrame(() => { rafId = 0; render(); });
 }
 
-// 0 のとき編集しやすくする（フォーカスで一時的に空白化）
-function initZeroFriendlyInputs() {
-  $$('input[type="number"]').forEach((el) => {
-    el.addEventListener('focus', () => {
-      if (el.value === '0') {
-        el.dataset.wasZero = '1';
-        el.value = '';                // 一時的に空白
-        el.placeholder = '0';         // 0 を目安表示（任意）
+// ====== ストレージ版数管理 (#12) ======
+const STORAGE_VERSION = 1;
+const STORAGE_VERSION_KEY = 'uvt-storage-version';
+function ensureStorageMigrations() {
+  const v = +(localStorage.getItem(STORAGE_VERSION_KEY) || 0);
+  if (v < 1) {
+    try {
+      if (localStorage.getItem('uvt-presets') && !localStorage.getItem('uvt-presets-v1')) {
+        localStorage.setItem('uvt-presets-v1', localStorage.getItem('uvt-presets'));
+        localStorage.removeItem('uvt-presets');
       }
-    });
-    el.addEventListener('blur', () => {
-      // 何も入れずにフォーカスを外したら 0 に戻す
-      if ((el.value === '' || el.value == null) && el.dataset.wasZero === '1') {
-        el.value = '0';
-        // 状態を更新させる（inputリスナーに拾わせる）
-        el.dispatchEvent(new Event('input', { bubbles: true }));
+      if (localStorage.getItem('uvt-collapse') && !localStorage.getItem('uvt-collapse-v1')) {
+        localStorage.setItem('uvt-collapse-v1', localStorage.getItem('uvt-collapse'));
+        localStorage.removeItem('uvt-collapse');
       }
-      el.placeholder = '';
-      delete el.dataset.wasZero;
-    });
-  });
+    } catch {}
+    localStorage.setItem(STORAGE_VERSION_KEY, String(STORAGE_VERSION));
+  }
 }
 
 // ====== デフォルト値 ======
@@ -120,11 +110,11 @@ function bindInputs() {
   ];
   map.forEach(([sel, key]) => {
     const el = $(sel);
-    el.addEventListener('input', () => { state[key] = toNum(el.value); render(); });
+    el.addEventListener('input', () => { state[key] = toNum(el.value); scheduleRender(); });
   });
 
-  $('#affinity').addEventListener('change', (e) => { state.affinity = e.target.value; render(); });
-  $('#isBreak').addEventListener('change', (e) => { state.isBreak = !!e.target.checked; render(); });
+  $('#affinity').addEventListener('change', (e) => { state.affinity = e.target.value; scheduleRender(); });
+  $('#isBreak').addEventListener('change', (e) => { state.isBreak = !!e.target.checked; scheduleRender(); });
 
   // 装備: メイン種別
   $$('.mainType').forEach((sel) => {
@@ -132,7 +122,7 @@ function bindInputs() {
       const slot = sel.dataset.slot;
       state.equip[slot].mainType = sel.value;
       updateMainValState(slot);
-      render();
+      scheduleRender();
     });
   });
   // 装備: メイン値
@@ -141,14 +131,16 @@ function bindInputs() {
       const slot = inp.dataset.slot;
       const fixedType = inp.dataset.mainType; // glove/armor 固定
       if (fixedType) state.equip[slot].mainType = fixedType;
-      state.equip[slot].mainVal = toNum(inp.value); render();
+      state.equip[slot].mainVal = toNum(inp.value);
+      scheduleRender();
     });
   });
   // 装備: サブ
   $$('input[data-sub]').forEach((inp) => {
     inp.addEventListener('input', () => {
       const slot = inp.dataset.slot; const k = inp.dataset.sub;
-      state.equip[slot].sub[k] = toNum(inp.value); render();
+      state.equip[slot].sub[k] = toNum(inp.value);
+      scheduleRender();
     });
   });
 }
@@ -170,7 +162,7 @@ function updateMainValState(slot) {
 function calcAll(s) {
   // 装備 合計
   const sum = { atk: 0, atkPct: 0, critRate: 0, critDmg: 0, elemDmgPct: 0 };
-  for (const [slot, gear] of Object.entries(s.equip)) {
+  for (const [, gear] of Object.entries(s.equip)) {
     const type = gear.mainType;
     const val = toNum(gear.mainVal);
     if (type === 'atk') sum.atk += val;
@@ -324,66 +316,345 @@ function setInputsFromState(s) {
 // ====== リセット ======
 function resetAll() {
   state = structuredClone(DEFAULTS);
-  // 開閉状態は変更しない
   setInputsFromState(state);
   render();
+  // プリセットUIを空白に
+  const sel = $('#presetSelect');
+  const name = $('#presetName');
+  if (sel) { sel.value = ''; sel.selectedIndex = 0; }
+  if (name) name.value = '';
+  currentPresetName = '';
+  captureBaseline(); // リセット直後は未編集扱い
   toast('初期化しました');
 }
 
-// ====== 共有URL（Base64圧縮を強制） ======
+// ====== 共有URL（Base64圧縮を強制） & ダイアログUX (#1) ======
 // LZ-String（簡易組込み）
 const LZString = (function(){
   const f = String.fromCharCode;
   const keyStrBase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-  const getBaseValue = (alphabet, character) => alphabet.indexOf(character);
   const LZ = {
-    compressToBase64: function (input) { if (input == null) return ""; let res = LZ._compress(input, 6, a=>keyStrBase64.charAt(a)); switch (res.length % 4) { default: case 0: return res; case 1: return res + "==="; case 2: return res + "=="; case 3: return res + "="; } },
-    decompressFromBase64: function (input) { if (input == null) return ""; if (input === "") return null; let buffer = 0, bc = 0, idx = 0, v; input = input.replace(/[^A-Za-z0-9\+\/\=]/g, ""); return LZ._decompress(input.length, 32, function(){ if (bc % 4 === 0) v = keyStrBase64.indexOf(input.charAt(idx++)); buffer = (buffer << 6) | v; bc = (bc + 1) % 4; return (buffer >> (bc*2)) & 0x3F; }); },
+    compressToBase64: function (input) {
+      if (input == null) return "";
+      let res = LZ._compress(input, 6, a=>keyStrBase64.charAt(a));
+      switch (res.length % 4) { default: case 0: return res; case 1: return res + "==="; case 2: return res + "=="; case 3: return res + "="; }
+    },
+    decompressFromBase64: function (input) {
+      if (input == null) return "";
+      if (input === "") return null;
+      let buffer = 0, bc = 0, idx = 0, v;
+      input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+      return LZ._decompress(input.length, 32, function(){
+        if (bc % 4 === 0) v = keyStrBase64.indexOf(input.charAt(idx++));
+        buffer = (buffer << 6) | v;
+        bc = (bc + 1) % 4;
+        return (buffer >> (bc*2)) & 0x3F;
+      });
+    },
     _compress: function (uncompressed, bitsPerChar, getCharFromInt) {
-      if (uncompressed == null) return ""; let i, value, dict = {}, dictToCreate = {}, c = "", wc = "", w = "", enlargeIn = 2, dictSize = 3, numBits = 2, data = [], data_val = 0, data_pos = 0, ii;
-      for (ii = 0; ii < uncompressed.length; ii++) { c = uncompressed.charAt(ii); if (!Object.prototype.hasOwnProperty.call(dict, c)) { dict[c] = dictSize++; dictToCreate[c] = true; } wc = w + c; if (Object.prototype.hasOwnProperty.call(dict, wc)) w = wc; else { if (Object.prototype.hasOwnProperty.call(dictToCreate, w)) { if (w.charCodeAt(0) < 256) { for (i=0;i<numBits;i++){ data_val <<= 1; if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; } value = w.charCodeAt(0); for (i=0;i<8;i++){ data_val = (data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } else { value = 1; for (i=0;i<numBits;i++){ data_val=(data_val<<1) | value; if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value = 0; } value = w.charCodeAt(0); for (i=0;i<16;i++){ data_val=(data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } enlargeIn--; if (enlargeIn==0){enlargeIn=Math.pow(2,numBits); numBits++; } delete dictToCreate[w]; } else { value = dict[w]; for (i=0;i<numBits;i++){ data_val=(data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } enlargeIn--; if (enlargeIn==0){enlargeIn=Math.pow(2,numBits); numBits++; } dict[wc] = dictSize++; w = String(c); } }
-      if (w !== "") { if (Object.prototype.hasOwnProperty.call(dictToCreate, w)) { if (w.charCodeAt(0) < 256) { for (i=0;i<numBits;i++){ data_val<<=1; if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; } value = w.charCodeAt(0); for (i=0;i<8;i++){ data_val=(data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } else { value = 1; for (i=0;i<numBits;i++){ data_val=(data_val<<1) | value; if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value = 0; } value = w.charCodeAt(0); for (i=0;i<16;i++){ data_val=(data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } enlargeIn--; if (enlargeIn==0){enlargeIn=Math.pow(2,numBits); numBits++; } delete dictToCreate[w]; } else { value = dict[w]; for (i=0;i<numBits;i++){ data_val=(data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; } } }
-      value = 2; for (i=0;i<numBits;i++){ data_val=(data_val<<1) | (value&1); if (data_pos==bitsPerChar-1){data_pos=0; data.push(getCharFromInt(data_val)); data_val=0;} else data_pos++; value >>= 1; }
-      while (true) { data_val <<= 1; if (data_pos==bitsPerChar-1){ data.push(getCharFromInt(data_val)); break; } else data_pos++; }
-      return data.join('');
+      if (uncompressed == null) return "";
+      let i, value,
+        context_dictionary= {},
+        context_dictionaryToCreate= {},
+        context_c="",
+        context_wc="",
+        context_w="",
+        context_enlargeIn= 2,
+        context_dictSize= 3,
+        context_numBits= 2,
+        context_data=[],
+        context_data_val=0,
+        context_data_position=0,
+        ii;
+
+      for (ii = 0; ii < uncompressed.length; ii += 1) {
+        context_c = uncompressed.charAt(ii);
+        if (!Object.prototype.hasOwnProperty.call(context_dictionary,context_c)) {
+          context_dictionary[context_c] = context_dictSize++;
+          context_dictionaryToCreate[context_c] = true;
+        }
+        context_wc = context_w + context_c;
+        if (Object.prototype.hasOwnProperty.call(context_dictionary,context_wc)) {
+          context_w = context_wc;
+        } else {
+          if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate,context_w)) {
+            if (context_w.charCodeAt(0)<256) {
+              for (i=0 ; i<context_numBits ; i++) {
+                context_data_val = (context_data_val << 1);
+                if (context_data_position == bitsPerChar-1) {
+                  context_data_position = 0;
+                  context_data.push(getCharFromInt(context_data_val));
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+              }
+              value = context_w.charCodeAt(0);
+              for (i=0 ; i<8 ; i++) {
+                context_data_val = (context_data_val << 1) | (value&1);
+                if (context_data_position == bitsPerChar-1) {
+                  context_data_position = 0;
+                  context_data.push(getCharFromInt(context_data_val));
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+                value = value >> 1;
+              }
+            } else {
+              value = 1;
+              for (i=0 ; i<context_numBits ; i++) {
+                context_data_val = (context_data_val << 1) | value;
+                if (context_data_position == bitsPerChar-1) {
+                  context_data_position = 0;
+                  context_data.push(getCharFromInt(context_data_val));
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+                value = 0;
+              }
+              value = context_w.charCodeAt(0);
+              for (i=0 ; i<16 ; i++) {
+                context_data_val = (context_data_val << 1) | (value&1);
+                if (context_data_position == bitsPerChar-1) {
+                  context_data_position = 0;
+                  context_data.push(getCharFromInt(context_data_val));
+                  context_data_val = 0;
+                } else {
+                  context_data_position++;
+                }
+                value = value >> 1;
+              }
+            }
+            context_enlargeIn--;
+            if (context_enlargeIn == 0) {
+              context_enlargeIn = Math.pow(2, context_numBits);
+              context_numBits++;
+            }
+            delete context_dictionaryToCreate[context_w];
+          } else {
+            value = context_dictionary[context_w];
+            for (i=0 ; i<context_numBits ; i++) {
+              context_data_val = (context_data_val << 1) | (value&1);
+              if (context_data_position == bitsPerChar-1) {
+                context_data_position = 0;
+                context_data.push(getCharFromInt(context_data_val));
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+              value = value >> 1;
+            }
+          }
+          context_enlargeIn--;
+          if (context_enlargeIn == 0) {
+            context_enlargeIn = Math.pow(2, context_numBits);
+            context_numBits++;
+          }
+          context_dictionary[context_wc] = context_dictSize++;
+          context_w = String(context_c);
+        }
+      }
+
+      if (context_w !== "") {
+        if (Object.prototype.hasOwnProperty.call(context_dictionaryToCreate,context_w)) {
+          if (context_w.charCodeAt(0)<256) {
+            for (i=0 ; i<context_numBits ; i++) {
+              context_data_val = (context_data_val << 1);
+              if (context_data_position == bitsPerChar-1) {
+                context_data_position = 0;
+                context_data.push(getCharFromInt(context_data_val));
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+            }
+            value = context_w.charCodeAt(0);
+            for (i=0 ; i<8 ; i++) {
+              context_data_val = (context_data_val << 1) | (value&1);
+              if (context_data_position == bitsPerChar-1) {
+                context_data_position = 0;
+                context_data.push(getCharFromInt(context_data_val));
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+              value = value >> 1;
+            }
+          } else {
+            value = 1;
+            for (i=0 ; i<context_numBits ; i++) {
+              context_data_val = (context_data_val << 1) | value;
+              if (context_data_position == bitsPerChar-1) {
+                context_data_position = 0;
+                context_data.push(getCharFromInt(context_data_val));
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+              value = 0;
+            }
+            value = context_w.charCodeAt(0);
+            for (i=0 ; i<16 ; i++) {
+              context_data_val = (context_data_val << 1) | (value&1);
+              if (context_data_position == bitsPerChar-1) {
+                context_data_position = 0;
+                context_data.push(getCharFromInt(context_data_val));
+                context_data_val = 0;
+              } else {
+                context_data_position++;
+              }
+              value = value >> 1;
+            }
+          }
+          context_enlargeIn--;
+          if (context_enlargeIn == 0) {
+            context_enlargeIn = Math.pow(2, context_numBits);
+            context_numBits++;
+          }
+          delete context_dictionaryToCreate[context_w];
+        } else {
+          value = context_dictionary[context_w];
+          for (i=0 ; i<context_numBits ; i++) {
+            context_data_val = (context_data_val << 1) | (value&1);
+            if (context_data_position == bitsPerChar-1) {
+              context_data_position = 0;
+              context_data.push(getCharFromInt(context_data_val));
+              context_data_val = 0;
+            } else {
+              context_data_position++;
+            }
+            value = value >> 1;
+          }
+        }
+      }
+      value = 2;
+      for (i=0 ; i<context_numBits ; i++) {
+        context_data_val = (context_data_val << 1) | (value&1);
+        if (context_data_position == bitsPerChar-1) {
+          context_data_position = 0;
+          context_data.push(getCharFromInt(context_data_val));
+          context_data_val = 0;
+        } else {
+          context_data_position++;
+        }
+      }
+
+      while (true) {
+        context_data_val = (context_data_val << 1);
+        if (context_data_position == bitsPerChar-1) {
+          context_data.push(getCharFromInt(context_data_val));
+          break;
+        } else {
+          context_data_position++;
+        }
+      }
+      return context_data.join('');
     },
     _decompress: function (length, resetValue, getNextValue) {
-      const dictionary = []; let next, enlargeIn = 4, dictSize = 4, numBits = 3, entry = "", result = [], bits, resb, maxpower, power;
+      const dictionary = [];
+      let next, enlargeIn = 4, dictSize = 4, numBits = 3, entry = "", result = [], bits, resb, maxpower, power;
       const data = { val: getNextValue(0), position: resetValue, index: 1 };
-      for (let i = 0; i < 3; i++) dictionary[i] = i;
-      let c = 0; switch ((function(){ let maxpower=Math.pow(2,2), power=1, bits=0, resb; while(power!=maxpower){ resb=data.val & data.position; data.position >>= 1; if(data.position==0){ data.position=resetValue; data.val=getNextValue(data.index++);} bits |= (resb>0?1:0)*power; power <<= 1;} return bits; })()) { case 0: { let maxpower=Math.pow(2,8), power=1, bits=0, resb; while(power!=maxpower){ resb=data.val & data.position; data.position >>= 1; if(data.position==0){ data.position=resetValue; data.val=getNextValue(data.index++);} bits |= (resb>0?1:0)*power; power <<= 1;} c = String.fromCharCode(bits); break;} case 1: { let maxpower=Math.pow(2,16), power=1, bits=0, resb; while(power!=maxpower){ resb=data.val & data.position; data.position >>= 1; if(data.position==0){ data.position=resetValue; data.val=getNextValue(data.index++);} bits |= (resb>0?1:0)*power; power <<= 1;} c = String.fromCharCode(bits); break;} case 2: return ""; }
-      dictionary[3] = c; let w = c; result.push(c);
+
+      for (let i = 0; i < 3; i += 1) { dictionary[i] = i; }
+
+      maxpower = Math.pow(2,2); power = 1; bits = 0;
+      while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++);} bits |= (resb>0 ? 1:0) * power; power <<= 1; }
+      switch (next = bits) {
+        case 0:
+          maxpower = Math.pow(2,8); power = 1; bits = 0;
+          while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++);} bits |= (resb>0 ? 1:0) * power; power <<= 1; }
+          entry = f(bits);
+          break;
+        case 1:
+          maxpower = Math.pow(2,16); power = 1; bits = 0;
+          while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++);} bits |= (resb>0 ? 1:0) * power; power <<= 1; }
+          entry = f(bits);
+          break;
+        case 2:
+          return "";
+      }
+
+      dictionary[3] = entry;
+      let w = entry;
+      result.push(entry);
+
       while (true) {
         if (data.index > length) return "";
-        const cc = (function(){ let maxpower=Math.pow(2,numBits), power=1, bits=0, resb; while(power!=maxpower){ resb=data.val & data.position; data.position >>= 1; if(data.position==0){ data.position=resetValue; data.val=getNextValue(data.index++);} bits |= (resb>0?1:0)*power; power <<= 1;} return bits; })();
-        switch (next = cc) {
-          case 0: { let maxpower=Math.pow(2,8), power=1, bits=0, resb; while(power!=maxpower){ resb=data.val & data.position; data.position >>= 1; if(data.position==0){ data.position=resetValue; data.val=getNextValue(data.index++);} bits |= (resb>0?1:0)*power; power <<= 1;} dictionary[dictSize++] = String.fromCharCode(bits); next = dictSize - 1; enlargeIn--; break; }
-          case 1: { let maxpower=Math.pow(2,16), power=1, bits=0, resb; while(power!=maxpower){ resb=data.val & data.position; data.position >>= 1; if(data.position==0){ data.position=resetValue; data.val=getNextValue(data.index++);} bits |= (resb>0?1:0)*power; power <<= 1;} dictionary[dictSize++] = String.fromCharCode(bits); next = dictSize - 1; enlargeIn--; break; }
-          case 2: return result.join('');
+        maxpower = Math.pow(2,numBits); power = 1; bits = 0;
+        while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++);} bits |= (resb>0 ? 1:0) * power; power <<= 1; }
+        switch (next = bits) {
+          case 0:
+            maxpower = Math.pow(2,8); power = 1; bits = 0;
+            while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++);} bits |= (resb>0 ? 1:0) * power; power <<= 1; }
+            dictionary[dictSize++] = f(bits); next = dictSize - 1; enlargeIn--;
+            break;
+          case 1:
+            maxpower = Math.pow(2,16); power = 1; bits = 0;
+            while (power != maxpower) { resb = data.val & data.position; data.position >>= 1; if (data.position == 0) { data.position = resetValue; data.val = getNextValue(data.index++);} bits |= (resb>0 ? 1:0) * power; power <<= 1; }
+            dictionary[dictSize++] = f(bits); next = dictSize - 1; enlargeIn--;
+            break;
+          case 2:
+            return result.join('');
         }
         if (enlargeIn == 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
-        let c2; if (dictionary[next]) c2 = dictionary[next]; else if (next === dictSize) c2 = w + w.charAt(0); else return "";
-        result.push(c2); dictionary[dictSize++] = w + c2.charAt(0); enlargeIn--; w = c2; if (enlargeIn == 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
+        let c;
+        if (dictionary[next]) c = dictionary[next];
+        else if (next === dictSize) c = w + w.charAt(0);
+        else return "";
+
+        result.push(c);
+        dictionary[dictSize++] = w + c.charAt(0);
+        enlargeIn--;
+        w = c;
+        if (enlargeIn == 0) { enlargeIn = Math.pow(2, numBits); numBits++; }
       }
     }
   };
-  return { compressToBase64: LZ.compressToBase64, decompressFromBase64: (b64)=>{ const res = LZ.decompressFromBase64(b64); return res == null ? '' : res; } };
+  return {
+    compressToBase64: LZ.compressToBase64,
+    decompressFromBase64: (b64) => { const res = LZ.decompressFromBase64(b64); return res == null ? '' : res; }
+  };
 })();
 
 function encodeStateShort(s) { try { return LZString.compressToBase64(JSON.stringify(s)); } catch { return ''; } }
 function decodeStateShort(b64) { try { const txt = LZString.decompressFromBase64(b64); return JSON.parse(txt); } catch { return null; } }
 
+function enhanceDialog(dlg) {
+  if (!dlg) return; // ← 追加（nullガード）
+
+  // ESC で閉じる
+  dlg.addEventListener('keydown', (e) => { if (e.key === 'Escape') dlg.close(); });
+  // 背景クリックで閉じる
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+  // フォーカストラップ
+  dlg.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const focusables = dlg.querySelectorAll('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    const list = Array.from(focusables).filter(el => !el.disabled && el.offsetParent !== null);
+    if (!list.length) return;
+    const first = list[0];
+    const last = list[list.length - 1];
+    if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
+    else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
+  });
+}
+
 function initShare() {
   const dlg = $('#shareDialog');
   const openerBtn = $('#shareBtn');
+  if (!dlg || !openerBtn) return; // ← 追加（どちらか無ければ何もしない）
+
+  enhanceDialog(dlg);
 
   openerBtn.addEventListener('click', () => {
     dlg.showModal();
-    // 直ちにダイアログへフォーカス（ボタンのフォーカスを避ける）
     if (!dlg.hasAttribute('tabindex')) dlg.setAttribute('tabindex', '-1');
     openerBtn.blur();
     dlg.focus({ preventScroll: true });
   });
+  $('#closeShare')?.addEventListener('click', () => dlg.close());
 
   const makeUrl = () => `${location.origin}${location.pathname}?z=${encodeURIComponent(encodeStateShort(state))}`;
   const copy = (fmt) => {
@@ -395,11 +666,20 @@ function initShare() {
   };
   $('#copyUrl').addEventListener('click', (e)=>{ e.preventDefault(); copy('url'); });
   $('#copyMd').addEventListener('click',  (e)=>{ e.preventDefault(); copy('md');  });
-  // 閉じるボタン
-  $('#closeShare').addEventListener('click', () => dlg.close());
+}
 
-  // 閉じたら開いたボタンにフォーカスを戻す
-  dlg.addEventListener('close', () => openerBtn?.focus());
+function initHelp() {
+  const dlg = $('#helpDialog');
+  const btn = $('#helpBtn');
+  if (!dlg || !btn) return;
+  enhanceDialog(dlg);
+  btn.addEventListener('click', () => {
+    dlg.showModal();
+    if (!dlg.hasAttribute('tabindex')) dlg.setAttribute('tabindex','-1');
+    btn.blur();
+    dlg.focus({ preventScroll: true });
+  });
+  $('#closeHelp')?.addEventListener('click', () => dlg.close());
 }
 
 function applyQueryParams(qs) {
@@ -430,6 +710,21 @@ function applyQueryParams(qs) {
   }
 }
 
+// ====== 折りたたみ状態 永続化 ======
+const COLLAPSE_KEY = 'uvt-collapse-v1';
+function initCollapsePersistence() {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '{}'); } catch {}
+  $$('details.card[id]').forEach(d => {
+    if (Object.prototype.hasOwnProperty.call(saved, d.id)) d.open = !!saved[d.id];
+    d.addEventListener('toggle', () => {
+      const cur = (() => { try { return JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '{}'); } catch { return {}; }})();
+      cur[d.id] = d.open;
+      localStorage.setItem(COLLAPSE_KEY, JSON.stringify(cur));
+    });
+  });
+}
+
 // ====== プリセット ======
 const STORAGE_KEY = 'uvt-presets-v1';
 function loadPresets() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; } }
@@ -438,10 +733,28 @@ function refreshPresetSelect() {
   const sel = $('#presetSelect');
   const map = loadPresets();
   sel.innerHTML = '';
-  const blank = document.createElement('option'); blank.value = ''; blank.textContent = '';
-  sel.appendChild(blank);
-  Object.keys(map).sort().forEach((k) => { const o = document.createElement('option'); o.value = k; o.textContent = k; sel.appendChild(o); });
-  sel.value = '';
+
+  // 非表示のプレースホルダ（選択はできない／リストにも出ない）
+  const ph = document.createElement('option');
+  ph.value = '';
+  ph.textContent = '';
+  ph.disabled = true;
+  ph.hidden = true;
+  sel.appendChild(ph);
+
+  Object.keys(map).sort().forEach((k) => {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = k;
+    sel.appendChild(o);
+  });
+
+  // 現在の選択に合わせて表示
+  if (currentPresetName && map[currentPresetName]) {
+    sel.value = currentPresetName;
+  } else {
+    sel.value = '';
+    sel.selectedIndex = 0; // プレースホルダを表示
+  }
 }
 function initPresets() {
   refreshPresetSelect();
@@ -450,8 +763,12 @@ function initPresets() {
     let name = $('#presetName').value.trim();
     if (!name) { toast('プリセット名を入力してください'); return; }
     const map = loadPresets();
-    map[name] = state; savePresets(map); refreshPresetSelect();
-    $('#presetSelect').value = name; toast('プリセットを保存しました');
+    map[name] = state; savePresets(map);
+    currentPresetName = name;
+    refreshPresetSelect();
+    $('#presetSelect').value = name;
+    captureBaseline(); // 保存した内容を基準に
+    toast('プリセットを保存しました');
   });
 
   $('#renamePreset').addEventListener('click', () => {
@@ -461,26 +778,81 @@ function initPresets() {
     if (!name) { toast('新しい名前を入力してください'); return; }
     const map = loadPresets();
     if (!map[cur]) { toast('指定のプリセットが見つかりません'); return; }
-    map[name] = map[cur]; delete map[cur]; savePresets(map); refreshPresetSelect();
-    $('#presetSelect').value = name; toast('名前を変更しました');
+    map[name] = map[cur]; delete map[cur]; savePresets(map);
+    currentPresetName = name;
+    refreshPresetSelect();
+    $('#presetSelect').value = name;
+    captureBaseline(); // 状態は同じなので基準据え置き
+    toast('名前を変更しました');
   });
 
   $('#deletePreset').addEventListener('click', () => {
     const cur = $('#presetSelect').value;
     if (!cur) { toast('削除するプリセットを選択してください'); return; }
     if (!confirm('選択中のプリセットを削除します。よろしいですか？')) return;
-    const map = loadPresets(); delete map[cur]; savePresets(map); refreshPresetSelect();
+    const map = loadPresets(); delete map[cur]; savePresets(map);
+    refreshPresetSelect();
     $('#presetSelect').value = '';
     $('#presetName').value = '';
+    currentPresetName = '';
+    captureBaseline(); // 現在の画面状態を基準扱いに
     toast('削除しました');
   });
 
   $('#presetSelect').addEventListener('change', (e) => {
-    const name = e.target.value; const map = loadPresets();
-    if (!name || !map[name]) { $('#presetName').value = ''; return; }
-    state = structuredClone(map[name]);
-    $('#presetName').value = name;
-    setInputsFromState(state); render(); toast('プリセットを読み込みました');
+    const sel = e.target;
+    const newName = sel.value;
+    const map = loadPresets();
+
+    // 同じ選択なら何もしない
+    if (newName === currentPresetName) return;
+
+    // 未保存の変更があれば確認
+    if (isDirty()) {
+      const ok = confirm('未保存の変更があります。破棄して切り替えますか？');
+      if (!ok) {
+        // 選択を元に戻す
+        if (currentPresetName && map[currentPresetName]) {
+          sel.value = currentPresetName;
+        } else {
+          sel.value = '';
+          sel.selectedIndex = 0;
+        }
+        return;
+      }
+    }
+
+    // 実際の切替
+    if (!newName || !map[newName]) {
+      // （通常はplaceholderは選べない想定。ここは念のため）
+      $('#presetName').value = '';
+      currentPresetName = '';
+      refreshPresetSelect();
+      return;
+    }
+
+    state = structuredClone(map[newName]);
+    $('#presetName').value = newName;
+    currentPresetName = newName;
+    setInputsFromState(state);
+    render();
+    captureBaseline(); // 読み込んだ内容を基準に
+    toast('プリセットを読み込みました');
+  });
+}
+
+// ====== 0フレンドリー入力 ======
+function initZeroFriendlyInputs() {
+  $$('input[type="number"]').forEach((el) => {
+    el.addEventListener('focus', () => {
+      if (el.value === '0') { el.dataset.wasZero = '1'; el.value = ''; el.placeholder = '0'; }
+    });
+    el.addEventListener('blur', () => {
+      if ((el.value === '' || el.value == null) && el.dataset.wasZero === '1') {
+        el.value = '0'; el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      el.placeholder = ''; delete el.dataset.wasZero;
+    });
   });
 }
 
@@ -490,17 +862,13 @@ function initFromQueryOrDefaults() {
   if (qs) {
     const p = new URLSearchParams(qs);
     const z = p.get('z');
-    if (z) {
-      const decoded = decodeStateShort(z);
-      if (decoded) state = decoded; else applyQueryParams(qs);
-    } else {
-      applyQueryParams(qs);
-    }
-  } else {
-    state = structuredClone(DEFAULTS);
-  }
+    if (z) { const decoded = decodeStateShort(z); if (decoded) state = decoded; else applyQueryParams(qs); }
+    else { applyQueryParams(qs); }
+  } else { state = structuredClone(DEFAULTS); }
   setInputsFromState(state);
   render();
+  currentPresetName = '';   // 起動直後はプリセット未選択として扱う
+  captureBaseline();        // 現状を基準に（未編集）
 }
 
 function initReset() {
@@ -512,11 +880,13 @@ function initReset() {
 
 // Kickoff
 window.addEventListener('DOMContentLoaded', () => {
+  ensureStorageMigrations();
   initCollapsePersistence();
   initTheme();
   bindInputs();
   initFromQueryOrDefaults();
   initShare();
+  initHelp();
   initPresets();
   initReset();
   initZeroFriendlyInputs();

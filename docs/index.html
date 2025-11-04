@@ -3,16 +3,25 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <title>(非公式) unVEIL the world ダメージシミュレーター</title>
+    <title>unVEIL the world ダメージシミュレーター</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="app-header container">
       <h1>unVEIL the world ダメージシミュレーター</h1>
       <div class="header-actions">
-        <button id="resetBtn" class="btn" aria-label="リセット">リセット</button>
-        <button id="shareBtn" class="btn" aria-haspopup="dialog" aria-controls="shareDialog">共有URL</button>
-        <button id="themeBtn" class="btn" aria-label="テーマ切替">ライト/ダーク</button>
+        <button id="resetBtn" class="btn icon-btn danger" aria-label="リセット" title="リセット">
+          <span class="emoji">↺</span>
+        </button>
+        <button id="shareBtn" class="btn icon-btn" aria-label="共有" title="共有URL">
+          <span class="emoji">🔗</span>
+        </button>
+        <button id="themeBtn" class="btn icon-btn" aria-label="テーマ切替" title="ライト/ダーク切替">
+          <span class="emoji">🌓</span>
+        </button>
+        <button id="helpBtn" class="btn icon-btn" aria-label="ヘルプ" title="ヘルプ / 計算式">
+          <span class="emoji">❔</span>
+        </button>
       </div>
     </header>
 
@@ -24,7 +33,7 @@
           <div class="grid two-cols">
             <label class="stack">
               <span>プリセット名</span>
-              <input id="presetName" type="text" placeholder="例) バフもりもり奥義汎用" />
+              <input id="presetName" type="text" placeholder="例) アタッカー汎用" />
             </label>
             <label class="stack">
               <span>プリセット一覧</span>
@@ -35,6 +44,7 @@
             <button id="savePreset" class="btn">保存/上書き</button>
             <button id="renamePreset" class="btn">名前変更</button>
             <button id="deletePreset" class="btn danger">削除</button>
+            
           </div>
         </div>
       </details>
@@ -203,22 +213,22 @@
         <summary>計算の内訳</summary>
         <div class="card-body">
           <div class="breakdown-grid">
-            <div><span class="muted">装備補正攻撃力</span><output id="outEquipAdjAtk">0</output></div>
-            <div><span class="muted">最終攻撃力</span><output id="outFinalAtk">0</output></div>
-            <div><span class="muted">スキル倍率 適用後</span><output id="outAfterSkillMult">0</output></div>
-            <div><span class="muted">スキル固定値 加算後</span><output id="outAfterSkillAdd">0</output></div>
-            <div><span class="muted">ダメージアップ % 適用後</span><output id="outAfterDmgUp">0</output></div>
-            <div><span class="muted">カードダメージアップ % 適用後</span><output id="outAfterCardUp">0</output></div>
-            <div><span class="muted">総 属性ダメージ %</span><output id="outAllElemPct">0</output></div>
-            <div><span class="muted">属性ダメージ % 適用後</span><output id="outAfterElemUp">0</output></div>
-            <div><span class="muted">属性相性 倍率</span><output id="outAffinity">1.00</output></div>
-            <div><span class="muted">属性相性 適用後</span><output id="outAfterAffinity">0</output></div>
-            <div><span class="muted">ブレイク 倍率</span><output id="outBreak">1.00</output></div>
-            <div><span class="muted">ブレイク 適用後</span><output id="outAfterBreak">0</output></div>
-            <div><span class="muted">防御係数</span><output id="outDefCoeff">1.00</output></div>
-            <div><span class="muted">防御係数 適用後（基礎ダメージ）</span><output id="outAfterDefense">0</output></div>
-            <div><span class="muted">総 会心率 % (上限100)</span><output id="outAllCritRate">0</output></div>
-            <div><span class="muted">総 会心ダメージ %</span><output id="outAllCritDmg">0</output></div>
+            <div><span title="装備の攻撃/攻撃%を基礎攻撃力に反映した合算">装備補正攻撃力</span><strong id="outEquipAdjAtk">0</strong></div>
+            <div><span title="(基礎+補正+装備補正) × (1+攻撃力アップ%)">最終攻撃力</span><strong id="outFinalAtk">0</strong></div>
+            <div><span title="最終攻撃力 × (1+スキル攻撃%)">スキル倍率適用後</span><strong id="outAfterSkillMult">0</strong></div>
+            <div><span title="(上記) + スキル固定値">スキル固定値加算後</span><strong id="outAfterSkillAdd">0</strong></div>
+            <div><span title="(上記) × (1+ダメージアップ%)">ダメージUP適用後</span><strong id="outAfterDmgUp">0</strong></div>
+            <div><span title="(上記) × (1+カードダメージアップ%)">カードダメUP適用後</span><strong id="outAfterCardUp">0</strong></div>
+            <div><span title="属性ダメ%（戦闘中+装備）合算">属性ダメ合算%</span><strong id="outAllElemPct">0</strong></div>
+            <div><span title="(上記) × (1+属性ダメ合算%)">属性ダメ適用後</span><strong id="outAfterElemUp">0</strong></div>
+            <div><span title="有利1.25/不利0.85/なし1.00">属性相性倍率</span><strong id="outAffinity">1.00</strong></div>
+            <div><span title="(上記) × 属性相性">属性相性適用後</span><strong id="outAfterAffinity">0</strong></div>
+            <div><span title="ブレイク時1.3/通常1.0">ブレイク倍率</span><strong id="outBreak">1.00</strong></div>
+            <div><span title="(上記) × ブレイク倍率">ブレイク適用後</span><strong id="outAfterBreak">0</strong></div>
+            <div><span title="exp(-0.001058×防御 + 0.000000715×防御^2)">防御係数</span><strong id="outDefCoeff">1.0000</strong></div>
+            <div><span title="(上記) × 防御係数">防御適用後</span><strong id="outAfterDefense">0</strong></div>
+            <div><span title="会心率（装備込み、上限100%）">最終会心率%</span><strong id="outAllCritRate">0</strong></div>
+            <div><span title="会心ダメ（装備込み）">最終会心ダメ%</span><strong id="outAllCritDmg">0</strong></div>
           </div>
         </div>
       </details>
@@ -254,21 +264,77 @@
       <div class="muted small">本シミュレーターは実測検証に基づいた近似値の推測を目的としているため、実際のゲームプレイにおける結果と一致することを保証するものではありません。</div>
     </footer>
 
-    <!-- 共有URLダイアログ -->
+    <!-- 共有ダイアログ（2ボタン方式） -->
     <dialog id="shareDialog" aria-labelledby="shareTitle" tabindex="-1">
       <div class="dialog-card">
         <h3 id="shareTitle">共有URLをコピー</h3>
         <p class="muted small">コピー形式を選んでください</p>
         <div class="row gap">
           <button id="copyUrl" type="button" class="btn primary">URLをコピー</button>
-          <button id="copyMd"  type="button" class="btn">Markdownをコピー</button>
+          <button id="copyMd"  type="button" class="btn">Markdownでコピー</button>
           <button id="closeShare" type="button" class="btn">閉じる</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- ヘルプダイアログ -->
+    <dialog id="helpDialog" aria-labelledby="helpTitle" tabindex="-1">
+      <div class="dialog-card" style="max-height:min(70vh,640px); overflow:auto">
+        <h3 id="helpTitle">ヘルプ / 計算式</h3>
+        <p class="muted small">このシミュレーターの計算式とヒント</p>
+        <h4>計算式</h4>
+        <pre class="subtle card" style="padding:12px; overflow:auto"><code>
+    [装備補正攻撃力] = Σ装備攻撃力 + (基礎攻撃力 × (1 + Σ装備攻撃力補正% / 100))
+    [最終攻撃力] = (基礎攻撃力 + 補正攻撃力 + 装備補正攻撃力) × (1 + 攻撃力アップ% / 100)
+    [属性相性] = なし:1.00 / 有利:1.25 / 不利:0.85
+    [ブレイク値] = ブレイク時:1.3 / 通常:1.0
+    [防御係数] = e^-(0.001058×防御 − 0.000000715×防御^2)
+    [通常ダメ] = (((最終攻撃力 × (1+スキル%)) + スキル固定) × (1+ダメ%) × (1+カード%) × (1+属性%) × 属性相性 × ブレイク × 防御係数)
+    [会心ダメ] = 通常ダメ × (1 + 会心ダメ% / 100)
+    [平均ダメ] = 通常ダメ × (1 + (会心ダメ% / 100) × (会心率% / 100))
+    ※ 会心率は上限100%
+        </code></pre>
+        <h4>Tips</h4>
+        <ul>
+          <li>「その他」のメインは値入力できません（空白）。</li>
+          <li>数値が<code>0</code>のフィールドは、フォーカス時に一時的に空白化します（フォーカスアウトで<code>0</code>に戻ります）。</li>
+          <li>共有URLはBase64圧縮で<code>?z=...</code>に埋め込みます。</li>
+        </ul>
+        <div class="row gap" style="margin-top:12px">
+          <button id="closeHelp" type="button" class="btn">閉じる</button>
         </div>
       </div>
     </dialog>
 
     <!-- トースト -->
     <div id="toast" role="status" aria-live="polite"></div>
+
+    <!-- SVG Sprite (minimal) -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+      <!-- reset-ccw -->
+      <symbol id="reset-ccw" viewBox="0 0 24 24">
+        <path d="M3 4v6h6" />
+        <path d="M3.5 10A8.5 8.5 0 1 0 7 5.5" />
+      </symbol>
+      <!-- link-2 -->
+      <symbol id="link-2" viewBox="0 0 24 24">
+        <path d="M15 7h2.5a4.5 4.5 0 1 1 0 9H15" />
+        <path d="M9 16H6.5a4.5 4.5 0 1 1 0-9H9" />
+        <path d="M8 12h8" />
+      </symbol>
+      <!-- sun-moon -->
+      <symbol id="sun-moon" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+        <path d="M21 12.6A9 9 0 0 1 11.4 3" />
+      </symbol>
+      <!-- help-circle -->
+      <symbol id="help-circle" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M9 9c0-2 2-3 3-3s3 1 3 3c0 2-2 2-2 3v1" />
+        <path d="M12 17h.01" />
+      </symbol>
+    </svg>
 
     <script src="app.js" defer></script>
   </body>
