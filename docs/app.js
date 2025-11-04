@@ -178,7 +178,8 @@ function calcAll(s) {
   }
 
   // 装備補正攻撃力
-  const equipAdjAtk = sum.atk + (s.baseAtk * (1 + (sum.atkPct / 100)));
+  const equipAdjAtk = sum.atk + (s.baseAtk * (sum.atkPct / 100));
+
   // 最終攻撃力
   const finalAtk = (s.baseAtk + s.bonusAtk + equipAdjAtk) * (1 + (s.atkUpPct / 100));
 
@@ -192,7 +193,7 @@ function calcAll(s) {
   const allElemPct = s.elemDmgUpPct + sum.elemDmgPct;
 
   // 中間項
-  const afterSkillMult = finalAtk * (1 + (s.skillPct / 100));
+  const afterSkillMult = finalAtk * (s.skillPct / 100);
   const afterSkillAdd  = afterSkillMult + s.skillFlat;
   const afterDmgUp     = afterSkillAdd * (1 + (s.dmgUpPct / 100));
   const afterCardUp    = afterDmgUp * (1 + (s.cardDmgUpPct / 100));
