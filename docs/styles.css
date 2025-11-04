@@ -13,6 +13,8 @@
   --danger: #ff6b6b;
   --ok: #5dd39e;
   --shadow: 0 6px 18px rgba(0,0,0,.3);
+  /* 数値入力用フォントサイズ（iOS拡大防止の16px以上） */
+  --input-fz: clamp(16px, 3.6vw, 20px);
 }
 
 html[data-theme="light"] {
@@ -66,8 +68,11 @@ body {
 
 .grid { display: grid }
 .stack { display: grid; gap: 6px }
-label > input:not([type=checkbox]):not([type=radio]),
+/* 入力要素 */
+label > input:not([type=checkbox]):not([type=radio]) { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); font-size: var(--input-fz); }
 label > select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg) }
+/* 数値入力の可読性向上 */
+input[type=number] { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 legend { padding: 0 6px }
 
 /* 装備レイアウト */
