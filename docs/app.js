@@ -7,32 +7,8 @@ const fmtInt = (n) => Math.floor(n).toLocaleString('ja-JP');
 const fmtPct = (n) => (Math.round(n * 100) / 100).toFixed(2);
 const fmt2 = (n) => (Math.round(n * 100) / 100).toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// ====== モーダル時スクロール固定（iOS Safari 含む） ======
-let __scrollLockY = 0;
-function lockScroll() {
-  if (document.documentElement.classList.contains('modal-open')) return;
-  __scrollLockY = window.scrollY || document.documentElement.scrollTop || 0;
-  document.documentElement.classList.add('modal-open');
-  // 背景を固定
-  document.body.style.position = 'fixed';
-  document.body.style.top = `-${__scrollLockY}px`;
-  document.body.style.left = '0';
-  document.body.style.right = '0';
-  document.body.style.width = '100%';
-  document.body.style.overflow = 'hidden';
-}
-function unlockScroll() {
-  if (!document.documentElement.classList.contains('modal-open')) return;
-  document.documentElement.classList.remove('modal-open');
-  document.body.style.position = '';
-  document.body.style.top = '';
-  document.body.style.left = '';
-  document.body.style.right = '';
-  document.body.style.width = '';
-  document.body.style.overflow = '';
-  // もとの位置へ復帰
-  window.scrollTo(0, __scrollLockY);
-}
+// iOS / iPadOS 判定
+const IS_IOS = /iP(hone|ad)/.test(navigator.userAgent);
 
 // ====== 変更検知（未保存の編集の有無） ======
 let baselineJSON = '';
@@ -195,7 +171,7 @@ function openComparePicker(mode /* 'A' | 'B' */) {
           refreshCompareSelect();
           updateCompareBadges();
           scheduleRender();
-          dlg.close();
+          closeDlg(dlg);
         } else {
           // Aに読み込み：未保存なら確認 → Aを置換、旧AをBに回す
           if (typeof isDirty === 'function' && isDirty()) {
@@ -225,7 +201,7 @@ function openComparePicker(mode /* 'A' | 'B' */) {
           refreshPresetSelect();
           refreshCompareSelect();
           updateCompareBadges();
-          dlg.close();
+          closeDlg(dlg);
         }
       });
       li.appendChild(btn);
@@ -247,13 +223,12 @@ function openComparePicker(mode /* 'A' | 'B' */) {
         updateCompareBadges();
         scheduleRender();
       }
-      dlg.close();
+      closeDlg(dlg);
     };
   }
-  if (btnClose) btnClose.onclick = () => dlg.close();
-  
-  lockScroll();
-  dlg.showModal();
+  if (btnClose) btnClose.onclick = () => closeDlg(dlg);
+
+  showModalTop(dlg, IS_IOS ? 'sheet-top' : '')
   dlg.focus({ preventScroll:true });
 }
 
@@ -908,13 +883,12 @@ function encodeStateShort(s) { try { return LZString.compressToBase64(JSON.strin
 function decodeStateShort(b64) { try { const txt = LZString.decompressFromBase64(b64); return JSON.parse(txt); } catch { return null; } }
 
 function enhanceDialog(dlg) {
-  if (!dlg) return;
-  dlg.addEventListener('close', () => { unlockScroll(); });
+  if (!dlg) return; // ← 追加（nullガード）
 
   // ESC で閉じる
-  dlg.addEventListener('keydown', (e) => { if (e.key === 'Escape') dlg.close(); });
+  dlg.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDlg(dlg); });
   // 背景クリックで閉じる
-  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) closeDlg(dlg); });
   // フォーカストラップ
   dlg.addEventListener('keydown', (e) => {
     if (e.key !== 'Tab') return;
@@ -926,6 +900,31 @@ function enhanceDialog(dlg) {
     if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
     else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
   });
+}
+
+function showModalTop(dlg, extraClass = '') {
+  if (!dlg) return;
+  if (IS_IOS) dlg.classList.add('top-modal'); // iOSでは上寄せクラス
+  if (extraClass) dlg.classList.add(extraClass);
+  dlg.showModal();
+}
+
+function closeDlg(dlg) {
+  if (!dlg) return;
+  dlg.close();
+  // 片付け
+  dlg.classList.remove('top-modal', 'sheet-top');
+  if (IS_IOS) {
+    // レイアウトを軽く刺激して再合成させる（stickyズレ抑制）
+    requestAnimationFrame(() => {
+      document.body.style.willChange = 'transform';
+      document.body.style.transform = 'translateZ(0)';
+      requestAnimationFrame(() => {
+        document.body.style.transform = '';
+        document.body.style.willChange = '';
+      });
+    });
+  }
 }
 
 function buildSharePayload() {
@@ -943,13 +942,12 @@ function initShare() {
   enhanceDialog(dlg);
 
   openerBtn.addEventListener('click', () => {
-    lockScroll();
-    dlg.showModal();
+    showModalTop(dlg);
     if (!dlg.hasAttribute('tabindex')) dlg.setAttribute('tabindex', '-1');
     openerBtn.blur();
     dlg.focus({ preventScroll: true });
   });
-  $('#closeShare')?.addEventListener('click', () => dlg.close());
+  $('#closeShare')?.addEventListener('click', () => closeDlg(dlg));
 
   const makeUrl = () => {
     const payload = buildSharePayload();
@@ -959,8 +957,8 @@ function initShare() {
     const url = makeUrl();
     const text = fmt === 'md' ? `[unVEIL the world: ダメージシミュレーター](${url})` : url;
     navigator.clipboard?.writeText(text)
-      .then(() => { toast('クリップボードにコピーしました'); dlg.close(); })
-      .catch(() => { window.prompt('コピーしてください', text); dlg.close(); });
+      .then(() => { toast('クリップボードにコピーしました'); closeDlg(dlg); })
+      .catch(() => { window.prompt('コピーしてください', text); closeDlg(dlg); });
   };
   $('#copyUrl').addEventListener('click', (e)=>{ e.preventDefault(); copy('url'); });
   $('#copyMd').addEventListener('click',  (e)=>{ e.preventDefault(); copy('md');  });
@@ -972,13 +970,12 @@ function initHelp() {
   if (!dlg || !btn) return;
   enhanceDialog(dlg);
   btn.addEventListener('click', () => {
-    lockScroll();
-    dlg.showModal();
+    showModalTop(dlg);
     if (!dlg.hasAttribute('tabindex')) dlg.setAttribute('tabindex','-1');
     btn.blur();
     dlg.focus({ preventScroll: true });
   });
-  $('#closeHelp')?.addEventListener('click', () => dlg.close());
+  $('#closeHelp')?.addEventListener('click', () => closeDlg(dlg));
 }
 
 function applyQueryParams(qs) {
@@ -1282,6 +1279,8 @@ function initReset() {
 
 // Kickoff
 window.addEventListener('DOMContentLoaded', () => {
+  document.documentElement.classList.toggle('is-ios', IS_IOS);
+
   ensureStorageMigrations();
   initCollapsePersistence();
   initTheme();

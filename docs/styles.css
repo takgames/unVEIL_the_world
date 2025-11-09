@@ -265,26 +265,27 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); }
 }
 #cmpList li + li button { margin-top:6px; }
 
-/* ❶ dialog をビューポートに固定（iOSでの相対ズレを抑止） */
-dialog.sheet {
-  position: fixed;          /* 追加 */
-  bottom: 0; left: 0; right: 0; /* 追加（insetでも可） */
+/* iOS：モーダルを“上寄せ”に（中央/下配置を避けてズレ回避） */
+html.is-ios dialog.top-modal {
+  position: fixed;      /* UA既定の absolute を上書き */
+  inset: calc(env(safe-area-inset-top) + 8px) auto auto 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  width: min(720px, 92vw);
+  max-height: calc(100vh - env(safe-area-inset-top) - 24px);
+  border-radius: 12px;
 }
 
-/* ❷ シート内でのみ慣性スクロール＆スクロール連鎖を遮断 */
-.sheet-inner {
-  -webkit-overflow-scrolling: touch; /* iOS慣性 */
-  overscroll-behavior: contain;      /* 背景に伝播させない */
-  padding-bottom: calc(12px + env(safe-area-inset-bottom)); /* 下部安全余白 */
+/* iOS：比較ピッカーを“トップシート”に（従来はボトムシート） */
+html.is-ios dialog.sheet.sheet-top {
+  position: fixed;
+  inset: calc(env(safe-area-inset-top) + 8px) 0 auto 0;
+  margin: 0;
+  width: 100%;
+  max-height: calc(100vh - env(safe-area-inset-top) - 24px);
+  border-radius: 12px 12px 16px 16px; /* 上を角丸、下も少しだけ */
 }
-dialog::backdrop { overscroll-behavior: contain; } /* バックドロップでも連鎖遮断 */
 
-/* ❸ モーダル開時はページ全体をロック */
-html.modal-open { overflow: hidden; height: 100%; }
-html.modal-open body { overflow: hidden; }
+/* backdrop はそのまま利用（必要なら濃さ調整） */
+dialog::backdrop { background: rgba(0,0,0,.35); }
 
-/* ❹ モーダル開時は結果バーを sticky→fixed に一時的に切替え（ズレ防止・安全側） */
-html.modal-open .results {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
-}
-.results-inner { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
