@@ -221,11 +221,6 @@ dialog:focus { outline: none; }
   line-height: 1;
 }
 
-/* iOSのフォントメトリクス差でまだ気になる場合は微調整（下に0.5px） */
-.badge-btn .name {
-  transform: translateY(0.5px); /* 気にならなければ 0px にしてOK */
-}
-
 /* 既存：名前の省略表示 */
 .badgeA .name, .badgeB .name {
   display: inline-block;
@@ -252,6 +247,9 @@ dialog:focus { outline: none; }
   .badgeA .name, .badgeB .name { max-width: 40vw; }
 }
 
+/* Bが未選択のとき薄め表示（でもタップ可能） */
+.badgeB.empty { opacity: .7; }
+
 /* ボトムシート（iOSに馴染むUI） */
 dialog.sheet { border:none; padding:0; width:100%; max-width:100%; inset:auto 0 0 0; border-radius:16px 16px 0 0; }
 dialog.sheet::backdrop { background: rgba(0,0,0,.35); }
@@ -267,5 +265,26 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); }
 }
 #cmpList li + li button { margin-top:6px; }
 
-/* Bが未選択のとき薄め表示（でもタップ可能） */
-.badgeB.empty { opacity: .7; }
+/* ❶ dialog をビューポートに固定（iOSでの相対ズレを抑止） */
+dialog.sheet {
+  position: fixed;          /* 追加 */
+  bottom: 0; left: 0; right: 0; /* 追加（insetでも可） */
+}
+
+/* ❷ シート内でのみ慣性スクロール＆スクロール連鎖を遮断 */
+.sheet-inner {
+  -webkit-overflow-scrolling: touch; /* iOS慣性 */
+  overscroll-behavior: contain;      /* 背景に伝播させない */
+  padding-bottom: calc(12px + env(safe-area-inset-bottom)); /* 下部安全余白 */
+}
+dialog::backdrop { overscroll-behavior: contain; } /* バックドロップでも連鎖遮断 */
+
+/* ❸ モーダル開時はページ全体をロック */
+html.modal-open { overflow: hidden; height: 100%; }
+html.modal-open body { overflow: hidden; }
+
+/* ❹ モーダル開時は結果バーを sticky→fixed に一時的に切替え（ズレ防止・安全側） */
+html.modal-open .results {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+}
+.results-inner { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }

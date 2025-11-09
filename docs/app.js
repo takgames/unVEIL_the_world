@@ -7,6 +7,33 @@ const fmtInt = (n) => Math.floor(n).toLocaleString('ja-JP');
 const fmtPct = (n) => (Math.round(n * 100) / 100).toFixed(2);
 const fmt2 = (n) => (Math.round(n * 100) / 100).toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+// ====== モーダル時スクロール固定（iOS Safari 含む） ======
+let __scrollLockY = 0;
+function lockScroll() {
+  if (document.documentElement.classList.contains('modal-open')) return;
+  __scrollLockY = window.scrollY || document.documentElement.scrollTop || 0;
+  document.documentElement.classList.add('modal-open');
+  // 背景を固定
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${__scrollLockY}px`;
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
+  document.body.style.overflow = 'hidden';
+}
+function unlockScroll() {
+  if (!document.documentElement.classList.contains('modal-open')) return;
+  document.documentElement.classList.remove('modal-open');
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
+  document.body.style.overflow = '';
+  // もとの位置へ復帰
+  window.scrollTo(0, __scrollLockY);
+}
+
 // ====== 変更検知（未保存の編集の有無） ======
 let baselineJSON = '';
 let currentPresetName = ''; // 現在選択中のプリセット名（未選択は ''）
@@ -224,7 +251,8 @@ function openComparePicker(mode /* 'A' | 'B' */) {
     };
   }
   if (btnClose) btnClose.onclick = () => dlg.close();
-
+  
+  lockScroll();
   dlg.showModal();
   dlg.focus({ preventScroll:true });
 }
@@ -880,7 +908,8 @@ function encodeStateShort(s) { try { return LZString.compressToBase64(JSON.strin
 function decodeStateShort(b64) { try { const txt = LZString.decompressFromBase64(b64); return JSON.parse(txt); } catch { return null; } }
 
 function enhanceDialog(dlg) {
-  if (!dlg) return; // ← 追加（nullガード）
+  if (!dlg) return;
+  dlg.addEventListener('close', () => { unlockScroll(); });
 
   // ESC で閉じる
   dlg.addEventListener('keydown', (e) => { if (e.key === 'Escape') dlg.close(); });
@@ -914,6 +943,7 @@ function initShare() {
   enhanceDialog(dlg);
 
   openerBtn.addEventListener('click', () => {
+    lockScroll();
     dlg.showModal();
     if (!dlg.hasAttribute('tabindex')) dlg.setAttribute('tabindex', '-1');
     openerBtn.blur();
@@ -942,6 +972,7 @@ function initHelp() {
   if (!dlg || !btn) return;
   enhanceDialog(dlg);
   btn.addEventListener('click', () => {
+    lockScroll();
     dlg.showModal();
     if (!dlg.hasAttribute('tabindex')) dlg.setAttribute('tabindex','-1');
     btn.blur();
