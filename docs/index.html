@@ -299,6 +299,9 @@
       <div class="muted small">本シミュレーターは実測検証に基づいた近似値の推測を目的としているため、実際のゲームプレイにおける結果と一致することを保証するものではありません。</div>
     </footer>
 
+    <!-- トースト -->
+    <div id="toast" role="status" aria-live="polite"></div>
+
     <!-- 共有ダイアログ（2ボタン方式） -->
     <dialog id="shareDialog" aria-labelledby="shareTitle" tabindex="-1">
       <div class="dialog-card">
@@ -341,8 +344,19 @@
       </div>
     </dialog>
 
-    <!-- トースト -->
-    <div id="toast" role="status" aria-live="polite"></div>
+    <!-- 比較先ピッカー（iPhone縦向けのボトムシート） -->
+    <dialog id="comparePicker" class="sheet" aria-labelledby="cmpTitle">
+      <div class="sheet-inner">
+        <div class="sheet-handle"></div>
+        <h3 id="cmpTitle">比較先を選択</h3>
+        <input id="cmpSearch" class="input" type="search" placeholder="プリセットを検索" autocomplete="off">
+        <ul id="cmpList" class="list"></ul>
+        <div class="row gap" style="margin-top:8px">
+          <button id="cmpClear" class="btn xs">比較なし</button>
+          <button id="cmpClose" class="btn xs">閉じる</button>
+        </div>
+      </div>
+    </dialog>
 
     <!-- SVG Sprite (minimal) -->
     <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
@@ -370,20 +384,6 @@
         <path d="M12 17h.01" />
       </symbol>
     </svg>
-
-    <!-- 比較先ピッカー（iPhone縦向けのボトムシート） -->
-    <dialog id="comparePicker" class="sheet" aria-labelledby="cmpTitle">
-      <div class="sheet-inner">
-        <div class="sheet-handle"></div>
-        <h3 id="cmpTitle">比較先を選択</h3>
-        <input id="cmpSearch" class="input" type="search" placeholder="プリセットを検索" autocomplete="off">
-        <ul id="cmpList" class="list"></ul>
-        <div class="row gap" style="margin-top:8px">
-          <button id="cmpClear" class="btn xs">比較なし</button>
-          <button id="cmpClose" class="btn xs">閉じる</button>
-        </div>
-      </div>
-    </dialog>
 
     <script src="app.js" defer></script>
   </body>
