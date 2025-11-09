@@ -208,7 +208,19 @@ function openComparePicker(mode /* 'A' | 'B' */) {
     dlg.setAttribute('aria-modal', 'true');
     dlg.show();                 // ← ここが showModal() からの差し替え
     // 検索にフォーカス
-    q.value = ''; build(''); q.focus({ preventScroll: true });
+    q.value = '';
+    build('');
+    // 表示直後のフォーカス（iOSはズーム回避のため16pxを担保してから）
+    const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent);
+    if (isIOS) {
+      const fs = parseFloat(getComputedStyle(q).fontSize) || 0;
+      if (fs < 16) q.style.fontSize = '16px';  // 一時的に上書き（CSSと一致）
+    }
+    // レイアウトが落ち着いてからフォーカス
+    requestAnimationFrame(() => {
+      q.focus({ preventScroll: true });
+      q.select(); // 既存テキストがあれば選択
+    });
 
     // 念のため sticky を一度リフロー
     forceStickyRelayout();
