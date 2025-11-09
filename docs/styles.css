@@ -207,22 +207,8 @@ dialog:focus { outline: none; }
 /* “（比較なし）”っぽく見せる（任意） */
 .actions-inline select option[value=""] { color: var(--muted); }
 
-/* バッジを押せる＋中央揃えで縦ズレ防止 */
-.badge-btn{
-  display:inline-flex;
-  align-items:center;      /* ← baseline → center に変更 */
-  gap:6px;
-  cursor:pointer;
-  user-select:none;
-  line-height:1.2;
-}
-.badge-btn .label-full,
-.badge-btn .label-short,
-.badge-btn .name{
-  display:inline-block;
-  line-height:1;          /* 行間の違いでのズレ防止 */
-}
-.badge-btn .label-short{ font-weight:600; }
+/* バッジを“押せる”UIにし、名前は省幅で省略表示 */
+.badge-btn { cursor: pointer; user-select: none; }
 .badgeA .name, .badgeB .name {
   display:inline-block; max-width: 34vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
@@ -258,23 +244,3 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); }
 
 /* Bが未選択のとき薄め表示（でもタップ可能） */
 .badgeB.empty { opacity: .7; }
-
-/* デフォルトは従来どおり（他OS/PC） */
-.results-card{
-  position: sticky;
-  bottom: 8px;
-}
-
-/* iOS では fixed に切り替え（env(safe-area-inset-bottom)対応） */
-html.ios .results-card{
-  position: fixed;
-  left: var(--page-gutter, 12px);
-  right: var(--page-gutter, 12px);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
-  z-index: 2000;
-}
-
-/* コンテンツがカードの下に隠れないように、下余白を確保する */
-main, .page{
-  padding-bottom: calc(var(--results-h, 160px) + env(safe-area-inset-bottom, 0px));
-}
