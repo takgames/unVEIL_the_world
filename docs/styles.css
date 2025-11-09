@@ -285,3 +285,20 @@ dialog.sheet[open] {
 /* iOSのsticky崩れリセット用 微小変換（JSで一瞬付け外し） */
 .results.reflow { transform: translateZ(0.1px); }
 
+/* iOSの自動ズーム対策：検索欄は常に16px以上 */
+#cmpSearch { font-size: var(--input-fz); line-height: 1.2; }
+
+/* さらに保険（小さい画面では強制16px） */
+@media (max-width: 430px) {
+  #cmpSearch { font-size: 16px; }
+}
+
+/* 既存: シート内入力の見た目 */
+#cmpSearch {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--fg);
+}
