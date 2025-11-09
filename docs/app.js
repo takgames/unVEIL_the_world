@@ -1249,6 +1249,27 @@ function initReset() {
   });
 }
 
+(function(){
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isIOS) document.documentElement.classList.add('ios');
+})();
+
+// 結果カードの高さを監視して --results-h を更新（隠れ防止）
+function initResultsDockMeasure(){
+  const el = document.querySelector('.results-card'); // ← 対象の固定カード
+  if(!el) return;
+  const apply = () => {
+    const h = el.offsetHeight || 160;
+    document.documentElement.style.setProperty('--results-h', (h + 12) + 'px');
+  };
+  apply();
+  const ro = new ResizeObserver(apply);
+  ro.observe(el);
+  window.addEventListener('orientationchange', apply, { passive:true });
+  window.addEventListener('resize', apply, { passive:true });
+}
+
 // Kickoff
 window.addEventListener('DOMContentLoaded', () => {
   ensureStorageMigrations();
@@ -1263,4 +1284,5 @@ window.addEventListener('DOMContentLoaded', () => {
   initComparePicker();
   initReset();
   initZeroFriendlyInputs();
+  initResultsDockMeasure();
 });
