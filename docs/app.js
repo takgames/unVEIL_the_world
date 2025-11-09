@@ -82,20 +82,23 @@ function refreshCompareSelect() {
   updateCompareBadges();
 }
 
-function updateCompareBadges() {
-  const b = $('#badgeB');
-  if (!b) return;
-  if (!compareCtx) {
-    b.hidden = true;
-    b.textContent = 'B: 未選択';
-  } else {
-    b.hidden = false;
-    b.textContent = `B: ${compareCtx.name}`;
-  }
-}
-
 // A側の表示名（現在＝未保存時は「現在」、保存/選択中ならプリセット名）
 const getAName = () => currentPresetName ? currentPresetName : '現在';
+
+function updateCompareBadges() {
+  const a = $('#badgeAName');
+  const bWrap = $('#badgeB');
+  const bName = $('#badgeBName');
+  if (a) a.textContent = getAName();
+  if (!bWrap || !bName) return;
+  if (!compareCtx) {
+    bWrap.hidden = true;
+    bName.textContent = '未選択';
+  } else {
+    bWrap.hidden = false;
+    bName.textContent = compareCtx.name;
+  }
+}
 
 function updateCompareBadges() {
   const a = $('#badgeA');
@@ -122,6 +125,82 @@ function setDeltaChip(el, baseVal, cmpVal) {
   el.textContent = `${sign}${absVal} (${pctStr})`;
   el.className = 'delta-chip ' + (diff > 0 ? 'delta-pos' : diff < 0 ? 'delta-neg' : 'delta-zero');
   el.hidden = false;
+}
+
+function openComparePicker() {
+  const dlg = $('#comparePicker');
+  if (!dlg) return;
+  enhanceDialog(dlg);
+
+  const listEl = $('#cmpList');
+  const q = $('#cmpSearch');
+  const map = loadPresets();
+
+  // リスト構築（compareCtxの一時プリセットも含める）
+  const build = (filterText='') => {
+    const kw = filterText.trim().toLowerCase();
+    const names = Object.keys(map).sort()
+      .filter(n => !kw || n.toLowerCase().includes(kw));
+    listEl.innerHTML = '';
+    if (compareCtx && !map[compareCtx.name] &&
+        (!kw || compareCtx.name.toLowerCase().includes(kw))) {
+      names.push(compareCtx.name + '（URL）');
+    }
+    if (names.length === 0) {
+      const li = document.createElement('li');
+      li.innerHTML = '<button type="button" disabled>プリセットがありません</button>';
+      listEl.appendChild(li);
+    } else {
+      names.forEach(displayName => {
+        // 実名を抽出（URL表記は見出しだけ）
+        const realName = displayName.replace(/（URL）$/, '');
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = displayName;
+        btn.addEventListener('click', () => {
+          if (map[realName]) {
+            compareCtx = { name: realName, state: structuredClone(map[realName]), transient: false };
+            $('#compareSave')?.setAttribute('hidden','');
+          } else if (compareCtx && compareCtx.name === realName) {
+            // URL一時比較をそのまま採用
+            compareCtx = { ...compareCtx, transient: true };
+            $('#compareSave')?.removeAttribute('hidden');
+          }
+          refreshCompareSelect();
+          scheduleRender();
+          dlg.close();
+        });
+        li.appendChild(btn);
+        listEl.appendChild(li);
+      });
+    }
+  };
+
+  // 初期構築
+  build('');
+  q.value = '';
+  q.oninput = () => build(q.value);
+
+  // “比較なし”/閉じる
+  $('#cmpClear').onclick = () => { compareCtx = null; refreshCompareSelect(); scheduleRender(); dlg.close(); };
+  $('#cmpClose').onclick = () => dlg.close();
+
+  // 表示
+  dlg.showModal();
+  dlg.focus({ preventScroll:true });
+}
+
+function initComparePicker() {
+  // Bバッジ（比較先）タップでピッカーを開く
+  const b = $('#badgeB');
+  if (b) {
+    const open = (e)=>{ e.preventDefault(); openComparePicker(); };
+    b.addEventListener('click', open);
+    b.addEventListener('keydown', (e) => { if (e.key==='Enter' || e.key===' ') open(e); });
+  }
+  // Aバッジ（比較元）は押しても何もしない（=現在の状態を表す専用）
+  // 将来的に「A側もプリセットから素早く選ぶ」動線を入れるならここに追加可能。
 }
 
 // ====== デフォルト値 ======
@@ -460,8 +539,8 @@ function resetAll() {
   if (name) name.value = '';
   currentPresetName = '';
   captureBaseline();
-  updateCompareBadges();
   refreshCompareSelect();
+  updateCompareBadges();
   toast('初期化しました');
 }
 
@@ -916,8 +995,8 @@ function initPresets() {
     refreshPresetSelect();
     $('#presetSelect').value = name;
     captureBaseline();
-    updateCompareBadges();
     refreshCompareSelect();
+    updateCompareBadges();
     toast('プリセットを保存しました');
   });
 
@@ -933,8 +1012,8 @@ function initPresets() {
     refreshPresetSelect();
     $('#presetSelect').value = name;
     captureBaseline();
-    updateCompareBadges();
     refreshCompareSelect();
+    updateCompareBadges();
     toast('名前を変更しました');
   });
 
@@ -948,8 +1027,8 @@ function initPresets() {
     $('#presetName').value = '';
     currentPresetName = '';
     captureBaseline();
-    updateCompareBadges();
     refreshCompareSelect();
+    updateCompareBadges();
     toast('削除しました');
   });
 
@@ -991,8 +1070,8 @@ function initPresets() {
     setInputsFromState(state);
     render();
     captureBaseline();
-    updateCompareBadges();
     refreshCompareSelect();
+    updateCompareBadges();
     toast('プリセットを読み込みました');
   });
 }
@@ -1139,6 +1218,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initHelp();
   initPresets();
   initCompare();
+  initComparePicker();
   initReset();
   initZeroFriendlyInputs();
 });

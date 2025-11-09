@@ -206,3 +206,38 @@ dialog:focus { outline: none; }
 
 /* “（比較なし）”っぽく見せる（任意） */
 .actions-inline select option[value=""] { color: var(--muted); }
+
+/* バッジを“押せる”UIにし、名前は省幅で省略表示 */
+.badge-btn { cursor: pointer; user-select: none; }
+.badgeA .name, .badgeB .name {
+  display:inline-block; max-width: 34vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+/* ヘッダ右のアクション群 */
+.actions-inline { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+
+/* ラベルは狭いとき短縮表示（A:/B:） */
+.label-short { display:none; }
+@media (max-width: 420px) {
+  .label-full { display:none; }
+  .label-short { display:inline; }
+  /* iPhone縦：セレクトは隠してバッジで選ぶ */
+  #compareSelect { display:none; }
+  .actions-inline { gap:6px; }
+  .badgeA .name, .badgeB .name { max-width: 40vw; }
+}
+
+/* ボトムシート（iOSに馴染むUI） */
+dialog.sheet { border:none; padding:0; width:100%; max-width:100%; inset:auto 0 0 0; border-radius:16px 16px 0 0; }
+dialog.sheet::backdrop { background: rgba(0,0,0,.35); }
+.sheet-inner { background: var(--card); color: var(--fg); padding:12px; max-height: 65vh; overflow:auto; border-radius:16px 16px 0 0; }
+.sheet-handle { width:44px; height:4px; background: var(--border-strong); border-radius:2px; margin:6px auto 8px; opacity:.8; }
+
+#cmpSearch { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--fg); }
+#cmpList { list-style:none; padding:0; margin:8px 0 0; }
+#cmpList li { margin:0; }
+#cmpList li button {
+  width:100%; text-align:left; padding:10px 12px; border:1px solid var(--border);
+  border-radius:10px; background:var(--card-subtle); color:var(--fg);
+}
+#cmpList li + li button { margin-top:6px; }

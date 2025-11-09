@@ -240,13 +240,22 @@
         <div class="results-head row space-between align-center">
           <strong>結果</strong>
           <div class="actions-inline">
-            <span id="badgeA" class="badgeA">比較元: 現在</span>
-            <span id="badgeB" class="badgeB" hidden>比較先: 未選択</span>
+            <span id="badgeA" class="badgeA badge-btn" role="button" tabindex="0" aria-label="比較元">
+              <span class="label-full">比較元:</span><span class="label-short">A:</span>
+              <span id="badgeAName" class="name">現在</span>
+            </span>
 
-            <select id="compareSelect" title="比較対象を選択"></select>
+            <span id="badgeB" class="badgeB badge-btn" role="button" tabindex="0" aria-label="比較先" hidden>
+              <span class="label-full">比較先:</span><span class="label-short">B:</span>
+              <span id="badgeBName" class="name">未選択</span>
+            </span>
+
+            <!-- 比較先セレクト（PC/横画面用）。縦画面では自動で非表示にします -->
+            <select id="compareSelect" title="比較先を選択"></select>
+
             <button id="compareSwap"  class="btn xs" type="button" title="入替">↔︎</button>
             <button id="compareClear" class="btn xs" type="button" title="解除">×</button>
-            <button id="compareSave"  class="btn xs" type="button" title="比較対象を保存" hidden>保存</button>
+            <button id="compareSave"  class="btn xs" type="button" title="比較先を保存" hidden>保存</button>
           </div>
         </div>
         <div class="chart" role="img" aria-label="ダメージチャート">
@@ -361,6 +370,20 @@
         <path d="M12 17h.01" />
       </symbol>
     </svg>
+
+    <!-- 比較先ピッカー（iPhone縦向けのボトムシート） -->
+    <dialog id="comparePicker" class="sheet" aria-labelledby="cmpTitle">
+      <div class="sheet-inner">
+        <div class="sheet-handle"></div>
+        <h3 id="cmpTitle">比較先を選択</h3>
+        <input id="cmpSearch" class="input" type="search" placeholder="プリセットを検索" autocomplete="off">
+        <ul id="cmpList" class="list"></ul>
+        <div class="row gap" style="margin-top:8px">
+          <button id="cmpClear" class="btn xs">比較なし</button>
+          <button id="cmpClose" class="btn xs">閉じる</button>
+        </div>
+      </div>
+    </dialog>
 
     <script src="app.js" defer></script>
   </body>
