@@ -207,10 +207,35 @@ dialog:focus { outline: none; }
 /* “（比較なし）”っぽく見せる（任意） */
 .actions-inline select option[value=""] { color: var(--muted); }
 
-/* バッジを“押せる”UIにし、名前は省幅で省略表示 */
-.badge-btn { cursor: pointer; user-select: none; }
+/* バッジの縦ズレ対策：ベースライン揃え＋1行高で統一 */
+.badge-btn {
+  display: inline-flex;
+  align-items: baseline;        /* ← ここが効きます */
+  gap: 6px;
+}
+
+/* 中の要素は行高を揃える */
+.badge-btn .label-full,
+.badge-btn .label-short,
+.badge-btn .name {
+  line-height: 1;
+}
+
+/* iOSのフォントメトリクス差でまだ気になる場合は微調整（下に0.5px） */
+.badge-btn .name {
+  transform: translateY(0.5px); /* 気にならなければ 0px にしてOK */
+}
+
+/* 既存：名前の省略表示 */
 .badgeA .name, .badgeB .name {
-  display:inline-block; max-width: 34vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  display: inline-block;
+  max-width: 34vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 420px) {
+  .badgeA .name, .badgeB .name { max-width: 40vw; }
 }
 
 /* ヘッダ右のアクション群 */
@@ -227,9 +252,6 @@ dialog:focus { outline: none; }
   .badgeA .name, .badgeB .name { max-width: 40vw; }
 }
 
-/* Bが未選択のとき薄め表示（でもタップ可能） */
-.badgeB.empty { opacity: .7; }
-
 /* ボトムシート（iOSに馴染むUI） */
 dialog.sheet { border:none; padding:0; width:100%; max-width:100%; inset:auto 0 0 0; border-radius:16px 16px 0 0; }
 dialog.sheet::backdrop { background: rgba(0,0,0,.35); }
@@ -244,3 +266,6 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); }
   border-radius:10px; background:var(--card-subtle); color:var(--fg);
 }
 #cmpList li + li button { margin-top:6px; }
+
+/* Bが未選択のとき薄め表示（でもタップ可能） */
+.badgeB.empty { opacity: .7; }
