@@ -7,9 +7,6 @@ const fmtInt = (n) => Math.floor(n).toLocaleString('ja-JP');
 const fmtPct = (n) => (Math.round(n * 100) / 100).toFixed(2);
 const fmt2 = (n) => (Math.round(n * 100) / 100).toLocaleString('ja-JP', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// iOS / iPadOS 判定
-const IS_IOS = /iP(hone|ad)/.test(navigator.userAgent);
-
 // ====== 変更検知（未保存の編集の有無） ======
 let baselineJSON = '';
 let currentPresetName = ''; // 現在選択中のプリセット名（未選択は ''）
@@ -118,6 +115,13 @@ function setDeltaChip(el, baseVal, cmpVal) {
   el.hidden = false;
 }
 
+function forceStickyRelayout() {
+  const r = $('.results');
+  if (!r) return;
+  r.classList.add('reflow');
+  requestAnimationFrame(() => r.classList.remove('reflow'));
+}
+
 function openComparePicker(mode /* 'A' | 'B' */) {
   const dlg = $('#comparePicker');
   if (!dlg) return;
@@ -130,7 +134,7 @@ function openComparePicker(mode /* 'A' | 'B' */) {
   const btnClose = $('#cmpClose');
   const map = loadPresets();
 
-  // タイトルと「比較なし」ボタンの可視性
+  // タイトルと「比較なし」可視性
   if (title) title.textContent = (mode === 'A') ? '比較元を選択' : '比較先を選択';
   if (btnClear) btnClear.style.display = (mode === 'B') ? '' : 'none';
 
@@ -139,19 +143,16 @@ function openComparePicker(mode /* 'A' | 'B' */) {
     const names = Object.keys(map).sort().filter(n => !kw || n.toLowerCase().includes(kw));
     listEl.innerHTML = '';
 
-    // URL由来の一時比較を候補に含める（Bモードのみ推奨）
     if (mode === 'B' && compareCtx && !map[compareCtx.name] &&
         (!kw || compareCtx.name.toLowerCase().includes(kw))) {
       names.push(compareCtx.name + '（URL）');
     }
-
     if (names.length === 0) {
       const li = document.createElement('li');
       li.innerHTML = '<button type="button" disabled>プリセットがありません</button>';
       listEl.appendChild(li);
       return;
     }
-
     names.forEach(displayName => {
       const realName = displayName.replace(/（URL）$/, '');
       const li = document.createElement('li');
@@ -160,7 +161,6 @@ function openComparePicker(mode /* 'A' | 'B' */) {
       btn.textContent = displayName;
       btn.addEventListener('click', () => {
         if (mode === 'B') {
-          // Bに設定（現在は不変）
           if (map[realName]) {
             compareCtx = { name: realName, state: structuredClone(map[realName]), transient: false };
             $('#compareSave')?.setAttribute('hidden','');
@@ -168,12 +168,9 @@ function openComparePicker(mode /* 'A' | 'B' */) {
             compareCtx = { ...compareCtx, transient: true };
             $('#compareSave')?.removeAttribute('hidden');
           }
-          refreshCompareSelect();
-          updateCompareBadges();
-          scheduleRender();
-          closeDlg(dlg);
+          refreshCompareSelect(); updateCompareBadges(); scheduleRender();
+          closeSheet();
         } else {
-          // Aに読み込み：未保存なら確認 → Aを置換、旧AをBに回す
           if (typeof isDirty === 'function' && isDirty()) {
             const ok = confirm('未保存の変更があります。破棄して置き換えますか？');
             if (!ok) return;
@@ -181,27 +178,15 @@ function openComparePicker(mode /* 'A' | 'B' */) {
           const prevState = structuredClone(state);
           const prevAName = getAName();
 
-          // 新しいAを適用
-          if (map[realName]) {
-            state = structuredClone(map[realName]);
-            currentPresetName = realName;
-          } else {
-            // URLなど未保存ソース：Aは“一時状態”として読み込み（名前は「現在」に据え置き）
-            state = compareCtx?.state ? structuredClone(compareCtx.state) : state;
-            currentPresetName = '';
-          }
-          setInputsFromState(state);
-          render();
-          captureBaseline?.();
+          if (map[realName]) { state = structuredClone(map[realName]); currentPresetName = realName; }
+          else { state = compareCtx?.state ? structuredClone(compareCtx.state) : state; currentPresetName = ''; }
+          setInputsFromState(state); render(); captureBaseline?.();
 
-          // 旧Aを比較先Bへ
           compareCtx = { name: prevAName, state: prevState, transient: false };
           $('#compareSave')?.setAttribute('hidden','');
 
-          refreshPresetSelect();
-          refreshCompareSelect();
-          updateCompareBadges();
-          closeDlg(dlg);
+          refreshPresetSelect(); refreshCompareSelect(); updateCompareBadges();
+          closeSheet();
         }
       });
       li.appendChild(btn);
@@ -209,27 +194,39 @@ function openComparePicker(mode /* 'A' | 'B' */) {
     });
   };
 
-  // 検索と表示
-  build('');
-  q.value = '';
-  q.oninput = () => build(q.value);
+  // —— ここから “非モーダルシート” 表示制御 ——
+  const backdrop = $('#cmpBackdrop');
 
-  // 比較なし（Bモードのみ）
-  if (btnClear) {
-    btnClear.onclick = () => {
-      if (mode === 'B') {
-        compareCtx = null;
-        refreshCompareSelect();
-        updateCompareBadges();
-        scheduleRender();
-      }
-      closeDlg(dlg);
-    };
+  function openSheet() {
+    // バックドロップ表示
+    if (backdrop) {
+      backdrop.hidden = false;
+      const onBdClick = () => closeSheet();
+      backdrop.addEventListener('click', onBdClick, { once: true });
+    }
+    // 非モーダルで開く（iOS showModalバグ回避）
+    dlg.setAttribute('aria-modal', 'true');
+    dlg.show();                 // ← ここが showModal() からの差し替え
+    // 検索にフォーカス
+    q.value = ''; build(''); q.focus({ preventScroll: true });
+
+    // 念のため sticky を一度リフロー
+    forceStickyRelayout();
   }
-  if (btnClose) btnClose.onclick = () => closeDlg(dlg);
 
-  showModalTop(dlg, IS_IOS ? 'sheet-top' : '')
-  dlg.focus({ preventScroll:true });
+  function closeSheet() {
+    dlg.close();
+    if (backdrop) backdrop.hidden = true;
+    // 閉じたあとも sticky を再リフロー（iOS対策）
+    forceStickyRelayout();
+  }
+
+  // 検索と表示
+  build(''); q.oninput = () => build(q.value);
+  if (btnClear) btnClear.onclick = () => { if (mode === 'B') { compareCtx = null; refreshCompareSelect(); updateCompareBadges(); scheduleRender(); } closeSheet(); };
+  if (btnClose) btnClose.onclick = () => closeSheet();
+
+  openSheet();
 }
 
 function initComparePicker() {
@@ -886,9 +883,9 @@ function enhanceDialog(dlg) {
   if (!dlg) return; // ← 追加（nullガード）
 
   // ESC で閉じる
-  dlg.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDlg(dlg); });
+  dlg.addEventListener('keydown', (e) => { if (e.key === 'Escape') dlg.close(); });
   // 背景クリックで閉じる
-  dlg.addEventListener('click', (e) => { if (e.target === dlg) closeDlg(dlg); });
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
   // フォーカストラップ
   dlg.addEventListener('keydown', (e) => {
     if (e.key !== 'Tab') return;
@@ -900,31 +897,6 @@ function enhanceDialog(dlg) {
     if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
     else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
   });
-}
-
-function showModalTop(dlg, extraClass = '') {
-  if (!dlg) return;
-  if (IS_IOS) dlg.classList.add('top-modal'); // iOSでは上寄せクラス
-  if (extraClass) dlg.classList.add(extraClass);
-  dlg.showModal();
-}
-
-function closeDlg(dlg) {
-  if (!dlg) return;
-  dlg.close();
-  // 片付け
-  dlg.classList.remove('top-modal', 'sheet-top');
-  if (IS_IOS) {
-    // レイアウトを軽く刺激して再合成させる（stickyズレ抑制）
-    requestAnimationFrame(() => {
-      document.body.style.willChange = 'transform';
-      document.body.style.transform = 'translateZ(0)';
-      requestAnimationFrame(() => {
-        document.body.style.transform = '';
-        document.body.style.willChange = '';
-      });
-    });
-  }
 }
 
 function buildSharePayload() {
@@ -942,12 +914,12 @@ function initShare() {
   enhanceDialog(dlg);
 
   openerBtn.addEventListener('click', () => {
-    showModalTop(dlg);
+    dlg.showModal();
     if (!dlg.hasAttribute('tabindex')) dlg.setAttribute('tabindex', '-1');
     openerBtn.blur();
     dlg.focus({ preventScroll: true });
   });
-  $('#closeShare')?.addEventListener('click', () => closeDlg(dlg));
+  $('#closeShare')?.addEventListener('click', () => dlg.close());
 
   const makeUrl = () => {
     const payload = buildSharePayload();
@@ -957,8 +929,8 @@ function initShare() {
     const url = makeUrl();
     const text = fmt === 'md' ? `[unVEIL the world: ダメージシミュレーター](${url})` : url;
     navigator.clipboard?.writeText(text)
-      .then(() => { toast('クリップボードにコピーしました'); closeDlg(dlg); })
-      .catch(() => { window.prompt('コピーしてください', text); closeDlg(dlg); });
+      .then(() => { toast('クリップボードにコピーしました'); dlg.close(); })
+      .catch(() => { window.prompt('コピーしてください', text); dlg.close(); });
   };
   $('#copyUrl').addEventListener('click', (e)=>{ e.preventDefault(); copy('url'); });
   $('#copyMd').addEventListener('click',  (e)=>{ e.preventDefault(); copy('md');  });
@@ -970,12 +942,12 @@ function initHelp() {
   if (!dlg || !btn) return;
   enhanceDialog(dlg);
   btn.addEventListener('click', () => {
-    showModalTop(dlg);
+    dlg.showModal();
     if (!dlg.hasAttribute('tabindex')) dlg.setAttribute('tabindex','-1');
     btn.blur();
     dlg.focus({ preventScroll: true });
   });
-  $('#closeHelp')?.addEventListener('click', () => closeDlg(dlg));
+  $('#closeHelp')?.addEventListener('click', () => dlg.close());
 }
 
 function applyQueryParams(qs) {
@@ -1279,8 +1251,6 @@ function initReset() {
 
 // Kickoff
 window.addEventListener('DOMContentLoaded', () => {
-  document.documentElement.classList.toggle('is-ios', IS_IOS);
-
   ensureStorageMigrations();
   initCollapsePersistence();
   initTheme();

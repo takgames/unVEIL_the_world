@@ -265,27 +265,23 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); }
 }
 #cmpList li + li button { margin-top:6px; }
 
-/* iOS：モーダルを“上寄せ”に（中央/下配置を避けてズレ回避） */
-html.is-ios dialog.top-modal {
-  position: fixed;      /* UA既定の absolute を上書き */
-  inset: calc(env(safe-area-inset-top) + 8px) auto auto 50%;
-  transform: translateX(-50%);
-  margin: 0;
-  width: min(720px, 92vw);
-  max-height: calc(100vh - env(safe-area-inset-top) - 24px);
-  border-radius: 12px;
-}
-
-/* iOS：比較ピッカーを“トップシート”に（従来はボトムシート） */
-html.is-ios dialog.sheet.sheet-top {
+/* 比較ピッカー用：非モーダルでも下固定 */
+dialog.sheet[open] {
   position: fixed;
-  inset: calc(env(safe-area-inset-top) + 8px) 0 auto 0;
+  left: 0; right: 0; bottom: 0; top: auto;
   margin: 0;
-  width: 100%;
-  max-height: calc(100vh - env(safe-area-inset-top) - 24px);
-  border-radius: 12px 12px 16px 16px; /* 上を角丸、下も少しだけ */
+  z-index: 1000;
 }
 
-/* backdrop はそのまま利用（必要なら濃さ調整） */
-dialog::backdrop { background: rgba(0,0,0,.35); }
+/* 手動バックドロップ */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(2px) brightness(.8);
+  z-index: 999;
+}
+
+/* iOSのsticky崩れリセット用 微小変換（JSで一瞬付け外し） */
+.results.reflow { transform: translateZ(0.1px); }
 
