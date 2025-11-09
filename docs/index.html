@@ -239,22 +239,48 @@
       <div class="container results-inner">
         <div class="results-head row space-between align-center">
           <strong>結果</strong>
-          <div class="row gap-sm legend">
-            <span class="chip chip-normal">通常</span>
-            <span class="chip chip-avg">平均</span>
-            <span class="chip chip-crit">会心</span>
+          <div class="actions-inline">
+            <span id="badgeA" class="badgeA">比較元: 現在</span>
+            <span id="badgeB" class="badgeB" hidden>比較先: 未選択</span>
+
+            <select id="compareSelect" title="比較対象を選択"></select>
+            <button id="compareSwap"  class="btn xs" type="button" title="入替">↔︎</button>
+            <button id="compareClear" class="btn xs" type="button" title="解除">×</button>
+            <button id="compareSave"  class="btn xs" type="button" title="比較対象を保存" hidden>保存</button>
           </div>
         </div>
         <div class="chart" role="img" aria-label="ダメージチャート">
-          <div class="bar bar-normal" id="barNormal"></div>
-          <div class="bar bar-avg" id="barAvg"></div>
-          <div class="bar bar-crit" id="barCrit"></div>
-          <div class="chart-scale" id="chartScale"></div>
+          <!-- 奥側：B（比較）ストライプ -->
+          <div id="barBNormal" class="bar barB barB-normal"></div>
+          <div id="barBAvg"    class="bar barB barB-avg"></div>
+          <div id="barBCrit"   class="bar barB barB-crit"></div>
+
+          <!-- 手前：A（現状）既存の3本がこの後に来る -->
+          <div id="barNormal"  class="bar bar-normal"></div>
+          <div id="barAvg"     class="bar bar-avg"></div>
+          <div id="barCrit"    class="bar bar-crit"></div>
+
+          <!-- 最前面：A>B のとき差分を“赤ストライプ”で可視化 -->
+          <div id="barDefNormal" class="bar barDef barDef-normal"></div>
+          <div id="barDefAvg"    class="bar barDef barDef-avg"></div>
+          <div id="barDefCrit"   class="bar barDef barDef-crit"></div>
         </div>
         <div class="results-values">
-          <div><span class="muted">通常</span><output id="outNormal">0</output></div>
-          <div><span class="muted">平均</span><output id="outAverage">0</output></div>
-          <div><span class="muted">会心</span><output id="outCrit">0</output></div>
+          <div>
+            <span class="chip chip-normal">通常</span>
+            <strong id="outNormal"></strong>
+            <span id="deltaNormal" class="delta-chip" hidden></span>
+          </div>
+          <div>
+            <span class="chip chip-avg">平均</span>
+            <strong id="outAverage"></strong>
+            <span id="deltaAverage" class="delta-chip" hidden></span>
+          </div>
+          <div>
+            <span class="chip chip-crit">会心</span>
+            <strong id="outCrit"></strong>
+            <span id="deltaCrit" class="delta-chip" hidden></span>
+          </div>
         </div>
       </div>
     </section>

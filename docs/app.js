@@ -41,6 +41,78 @@ function ensureStorageMigrations() {
   }
 }
 
+// ====== 比較機能 ======
+let compareCtx = null; // { name: string, state: StateObject, transient: boolean }
+
+function refreshCompareSelect() {
+  const sel = $('#compareSelect');
+  if (!sel) return;
+  const map = loadPresets();
+  sel.innerHTML = '';
+
+  const ph = document.createElement('option');
+  ph.value = '';
+  ph.textContent = '（比較なし）';
+  sel.appendChild(ph);
+
+  Object.keys(map).sort().forEach((name) => {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name;
+    sel.appendChild(o);
+  });
+
+  if (compareCtx && !map[compareCtx.name]) {
+    const o = document.createElement('option');
+    o.value = compareCtx.name; o.textContent = `${compareCtx.name}（URL）`;
+    sel.appendChild(o);
+  }
+
+  sel.value = compareCtx ? compareCtx.name : '';
+  updateCompareBadges(); // ★ A/B両方更新
+}
+
+function updateCompareBadges() {
+  const b = $('#badgeB');
+  if (!b) return;
+  if (!compareCtx) {
+    b.hidden = true;
+    b.textContent = 'B: 未選択';
+  } else {
+    b.hidden = false;
+    b.textContent = `B: ${compareCtx.name}`;
+  }
+}
+
+// A側の表示名（現在＝未保存時は「現在」、保存/選択中ならプリセット名）
+const getAName = () => currentPresetName ? currentPresetName : '現在';
+
+function updateCompareBadges() {
+  const a = $('#badgeA');
+  const b = $('#badgeB');
+  if (a) a.textContent = `比較元: ${getAName()}`;
+  if (!b) return;
+  if (!compareCtx) {
+    b.hidden = true;
+    b.textContent = '比較先: 未選択';
+  } else {
+    b.hidden = false;
+    b.textContent = `比較先: ${compareCtx.name}`;
+  }
+}
+
+function setDeltaChip(el, baseVal, cmpVal) {
+  if (!el || !compareCtx || !isFinite(baseVal) || !isFinite(cmpVal)) { if (el) el.hidden = true; return; }
+  const diff = Math.floor(cmpVal) - Math.floor(baseVal);
+  const pct = (diff / Math.max(1, Math.floor(baseVal))) * 100;
+  const sign = diff > 0 ? '+' : diff < 0 ? '−' : '±';
+  const absVal = Math.abs(diff).toLocaleString('ja-JP');
+  const pctStr = (diff > 0 ? '+' : diff < 0 ? '−' : '') + Math.round(Math.abs(pct)) + '%';
+
+  el.textContent = `${sign}${absVal} (${pctStr})`;
+  el.className = 'delta-chip ' + (diff > 0 ? 'delta-pos' : diff < 0 ? 'delta-neg' : 'delta-zero');
+  el.hidden = false;
+}
+
 // ====== デフォルト値 ======
 const DEFAULTS = {
   baseAtk: 5000,
@@ -235,47 +307,98 @@ function calcAll(s) {
 
 // ====== 描画 ======
 function render() {
-  const r = calcAll(state);
+  const rA = calcAll(state);
+  const rB = compareCtx ? calcAll(compareCtx.state) : null;
 
-  // 合計表示
-  $('#sumEquipAtk').textContent = fmtInt(r.sums.atk);
-  $('#sumEquipAtkPct').textContent = fmtPct(r.sums.atkPct);
-  $('#sumEquipCritRate').textContent = fmtPct(r.sums.critRate);
-  $('#sumEquipCritDmg').textContent = fmtPct(r.sums.critDmg);
-  $('#sumEquipElemDmgPct').textContent = fmtPct(r.sums.elemDmgPct);
+  // 合計表示（既存）
+  $('#sumEquipAtk').textContent = fmtInt(rA.sums.atk);
+  $('#sumEquipAtkPct').textContent = fmtPct(rA.sums.atkPct);
+  $('#sumEquipCritRate').textContent = fmtPct(rA.sums.critRate);
+  $('#sumEquipCritDmg').textContent = fmtPct(rA.sums.critDmg);
+  $('#sumEquipElemDmgPct').textContent = fmtPct(rA.sums.elemDmgPct);
 
-  // 内訳
-  $('#outEquipAdjAtk').textContent = fmtInt(r.equipAdjAtk);
-  $('#outFinalAtk').textContent = fmtInt(r.finalAtk);
-  $('#outAfterSkillMult').textContent = fmt2(r.afterSkillMult);
-  $('#outAfterSkillAdd').textContent = fmt2(r.afterSkillAdd);
-  $('#outAfterDmgUp').textContent = fmt2(r.afterDmgUp);
-  $('#outAfterCardUp').textContent = fmt2(r.afterCardUp);
-  $('#outAllElemPct').textContent = fmtPct(r.allElemPct);
-  $('#outAfterElemUp').textContent = fmt2(r.afterElemUp);
-  $('#outAffinity').textContent = r.affinity.toFixed(2);
-  $('#outAfterAffinity').textContent = fmt2(r.afterAffinity);
-  $('#outBreak').textContent = r.breakMul.toFixed(2);
-  $('#outAfterBreak').textContent = fmt2(r.afterBreak);
-  $('#outDefCoeff').textContent = r.defCoeff.toFixed(4);
-  $('#outAfterDefense').textContent = fmt2(r.afterDefense);
-  $('#outAllCritRate').textContent = fmtPct(r.allCritRate);
-  $('#outAllCritDmg').textContent = fmtPct(r.allCritDmg);
+  // 内訳（既存）
+  $('#outEquipAdjAtk').textContent = fmtInt(rA.equipAdjAtk);
+  $('#outFinalAtk').textContent = fmtInt(rA.finalAtk);
+  $('#outAfterSkillMult').textContent = fmt2(rA.afterSkillMult);
+  $('#outAfterSkillAdd').textContent = fmt2(rA.afterSkillAdd);
+  $('#outAfterDmgUp').textContent = fmt2(rA.afterDmgUp);
+  $('#outAfterCardUp').textContent = fmt2(rA.afterCardUp);
+  $('#outAllElemPct').textContent = fmtPct(rA.allElemPct);
+  $('#outAfterElemUp').textContent = fmt2(rA.afterElemUp);
+  $('#outAffinity').textContent = rA.affinity.toFixed(2);
+  $('#outAfterAffinity').textContent = fmt2(rA.afterAffinity);
+  $('#outBreak').textContent = rA.breakMul.toFixed(2);
+  $('#outAfterBreak').textContent = fmt2(rA.afterBreak);
+  $('#outDefCoeff').textContent = rA.defCoeff.toFixed(4);
+  $('#outAfterDefense').textContent = fmt2(rA.afterDefense);
+  $('#outAllCritRate').textContent = fmtPct(rA.allCritRate);
+  $('#outAllCritDmg').textContent = fmtPct(rA.allCritDmg);
 
   // 結果値
-  $('#outNormal').textContent = fmtInt(r.normal);
-  $('#outAverage').textContent = fmtInt(r.average);
-  $('#outCrit').textContent = fmtInt(r.crit);
+  $('#outNormal').textContent = fmtInt(rA.normal);
+  $('#outAverage').textContent = fmtInt(rA.average);
+  $('#outCrit').textContent = fmtInt(rA.crit);
 
-  // チャート（セグメント表示：通常→平均→会心）
-  const max = Math.max(1, r.crit, r.average, r.normal);
-  const wNormal = (r.normal / max) * 100;
-  const wAvg = Math.max(0, (r.average - r.normal) / max) * 100;
-  const wCrit = Math.max(0, (r.crit - r.average) / max) * 100;
-  const set = (el, left, width) => { el.style.left = left + '%'; el.style.width = width + '%'; };
-  set($('#barNormal'), 0, wNormal);
-  set($('#barAvg'), wNormal, wAvg);
-  set($('#barCrit'), wNormal + wAvg, wCrit);
+  // 差分チップ
+  const dN = rB ? ((rB.normal  - rA.normal ) / Math.max(1, rA.normal ) * 100) : NaN;
+  const dA = rB ? ((rB.average - rA.average) / Math.max(1, rA.average) * 100) : NaN;
+  const dC = rB ? ((rB.crit    - rA.crit   ) / Math.max(1, rA.crit   ) * 100) : NaN;
+  setDeltaChip($('#deltaNormal'),  rA.normal,  rB ? rB.normal  : NaN);
+  setDeltaChip($('#deltaAverage'), rA.average, rB ? rB.average : NaN);
+  setDeltaChip($('#deltaCrit'),    rA.crit,    rB ? rB.crit    : NaN);
+
+  // チャート（A=手前, B=奥）
+  const max = Math.max(
+    1,
+    rA.normal, rA.average, rA.crit,
+    rB ? rB.normal  : 0,
+    rB ? rB.average : 0,
+    rB ? rB.crit    : 0
+  );
+  const seg = (x) => (x / max) * 100;
+
+  // B（奥）
+  if (rB) {
+    const bN = seg(rB.normal);
+    const bA = Math.max(0, seg(rB.average) - bN);
+    const bC = Math.max(0, seg(rB.crit) - (bN + bA));
+    const set = (el, left, width) => { el.style.left = left + '%'; el.style.width = width + '%'; };
+    set($('#barBNormal'), 0, bN);
+    set($('#barBAvg'),    bN, bA);
+    set($('#barBCrit'),   bN + bA, bC);
+
+    // A（手前）
+    const aN = seg(rA.normal);
+    const aA = Math.max(0, seg(rA.average) - aN);
+    const aC = Math.max(0, seg(rA.crit) - (aN + aA));
+    const setA = (el, left, width) => { el.style.left = left + '%'; el.style.width = width + '%'; };
+    setA($('#barNormal'), 0, aN);
+    setA($('#barAvg'),    aN, aA);
+    setA($('#barCrit'),   aN + aA, aC);
+
+    // A > B の部分だけ赤ストライプで可視化（Deficit）
+    const defN_left = bN,                defN_w = Math.max(0, aN - bN);
+    const defA_left = bN + bA,           defA_w = Math.max(0, (aN + aA) - (bN + bA));
+    const defC_left = bN + bA + bC,      defC_w = Math.max(0, (aN + aA + aC) - (bN + bA + bC));
+    const setD = (el, left, width) => { el.style.left = left + '%'; el.style.width = width + '%'; };
+
+    setD($('#barDefNormal'), defN_left, defN_w);
+    setD($('#barDefAvg'),    defA_left, defA_w);
+    setD($('#barDefCrit'),   defC_left, defC_w);
+  } else {
+    // 比較なし：B/Defは0幅に
+    ['#barBNormal','#barBAvg','#barBCrit','#barDefNormal','#barDefAvg','#barDefCrit']
+      .forEach(sel => { const el = $(sel); if (el) { el.style.width = '0%'; el.style.left = '0%'; }});
+    // A（手前）だけ描く
+    const aN = seg(rA.normal);
+    const aA = Math.max(0, seg(rA.average) - aN);
+    const aC = Math.max(0, seg(rA.crit) - (aN + aA));
+    const setA = (el, left, width) => { el.style.left = left + '%'; el.style.width = width + '%'; };
+    setA($('#barNormal'), 0, aN);
+    setA($('#barAvg'),    aN, aA);
+    setA($('#barCrit'),   aN + aA, aC);
+  }
 }
 
 // ====== 値のセット/取得（入力UIへ反映） ======
@@ -325,7 +448,8 @@ function resetAll() {
   if (sel) { sel.value = ''; sel.selectedIndex = 0; }
   if (name) name.value = '';
   currentPresetName = '';
-  captureBaseline(); // リセット直後は未編集扱い
+  captureBaseline();
+  updateCompareBadges();
   toast('初期化しました');
 }
 
@@ -642,6 +766,13 @@ function enhanceDialog(dlg) {
   });
 }
 
+function buildSharePayload() {
+  // 後方互換: 旧URLは state だけ（baseAtk 等を直持ち）
+  const payload = { s: state };
+  if (compareCtx) payload.cmp = { name: compareCtx.name, s: compareCtx.state };
+  return payload;
+}
+
 function initShare() {
   const dlg = $('#shareDialog');
   const openerBtn = $('#shareBtn');
@@ -657,7 +788,10 @@ function initShare() {
   });
   $('#closeShare')?.addEventListener('click', () => dlg.close());
 
-  const makeUrl = () => `${location.origin}${location.pathname}?z=${encodeURIComponent(encodeStateShort(state))}`;
+  const makeUrl = () => {
+    const payload = buildSharePayload();
+    return `${location.origin}${location.pathname}?z=${encodeURIComponent(encodeStateShort(payload))}`;
+  };
   const copy = (fmt) => {
     const url = makeUrl();
     const text = fmt === 'md' ? `[unVEIL the world: ダメージシミュレーター](${url})` : url;
@@ -757,6 +891,7 @@ function refreshPresetSelect() {
     sel.selectedIndex = 0; // プレースホルダを表示
   }
 }
+
 function initPresets() {
   refreshPresetSelect();
 
@@ -768,7 +903,8 @@ function initPresets() {
     currentPresetName = name;
     refreshPresetSelect();
     $('#presetSelect').value = name;
-    captureBaseline(); // 保存した内容を基準に
+    captureBaseline();
+    updateCompareBadges();
     toast('プリセットを保存しました');
   });
 
@@ -783,7 +919,8 @@ function initPresets() {
     currentPresetName = name;
     refreshPresetSelect();
     $('#presetSelect').value = name;
-    captureBaseline(); // 状態は同じなので基準据え置き
+    captureBaseline();
+    updateCompareBadges();
     toast('名前を変更しました');
   });
 
@@ -796,7 +933,8 @@ function initPresets() {
     $('#presetSelect').value = '';
     $('#presetName').value = '';
     currentPresetName = '';
-    captureBaseline(); // 現在の画面状態を基準扱いに
+    captureBaseline();
+    updateCompareBadges();
     toast('削除しました');
   });
 
@@ -837,8 +975,78 @@ function initPresets() {
     currentPresetName = newName;
     setInputsFromState(state);
     render();
-    captureBaseline(); // 読み込んだ内容を基準に
+    captureBaseline();
+    updateCompareBadges();
     toast('プリセットを読み込みました');
+  });
+}
+
+function initCompare() {
+  refreshCompareSelect();
+
+  $('#compareSelect')?.addEventListener('change', (e) => {
+    const name = e.target.value;
+    const map = loadPresets();
+    if (!name) { // 比較なし
+      compareCtx = null;
+      $('#compareSave')?.setAttribute('hidden','');
+      refreshCompareSelect();
+      scheduleRender();
+      return;
+    }
+    if (!map[name]) return;
+    compareCtx = { name, state: structuredClone(map[name]), transient: false };
+    $('#compareSave')?.setAttribute('hidden','');
+    refreshCompareSelect();
+    scheduleRender();
+  });
+
+  $('#compareClear')?.addEventListener('click', () => {
+    compareCtx = null;
+    $('#compareSave')?.setAttribute('hidden','');
+    refreshCompareSelect(); // ← セレクトを（比較なし）へ
+    scheduleRender();
+  });
+
+  $('#compareSwap')?.addEventListener('click', () => {
+    if (!compareCtx) { toast('比較対象を選択してください'); return; }
+    // いまのA名称を確保 → AとBの「表示名」を入替
+    const prevAName = getAName();
+
+    // 状態を入替
+    const tmp = structuredClone(compareCtx.state);
+    compareCtx.state = structuredClone(state);
+    state = tmp;
+
+    // A側の“現在プリセット名”をBの名前に、B側の名前を旧A名に差し替え
+    currentPresetName = compareCtx.name || '';
+    compareCtx.name = prevAName;
+
+    setInputsFromState(state);
+    render();
+    captureBaseline?.();        // 使っていれば
+    refreshCompareSelect();     // セレクト/バッジも更新
+  });
+
+  $('#compareSave')?.addEventListener('click', () => {
+    if (!compareCtx) return;
+    const map = loadPresets();
+    let name = compareCtx.name || '共有プリセット';
+    if (map[name]) {
+      if (!confirm(`「${name}」は既に存在します。上書きしますか？`)) {
+        const alt = prompt('別名で保存', name + ' (1)');
+        if (!alt) return;
+        name = alt;
+      }
+    }
+    map[name] = compareCtx.state;
+    savePresets(map);
+    compareCtx.name = name;
+    compareCtx.transient = false;
+    refreshPresetSelect();
+    refreshCompareSelect();
+    $('#compareSave')?.setAttribute('hidden','');
+    toast('比較対象を保存しました');
   });
 }
 
@@ -863,13 +1071,38 @@ function initFromQueryOrDefaults() {
   if (qs) {
     const p = new URLSearchParams(qs);
     const z = p.get('z');
-    if (z) { const decoded = decodeStateShort(z); if (decoded) state = decoded; else applyQueryParams(qs); }
-    else { applyQueryParams(qs); }
-  } else { state = structuredClone(DEFAULTS); }
+    if (z) {
+      const decoded = decodeStateShort(z);
+      if (decoded) {
+        // 互換: 旧形式か新形式か
+        if (decoded.baseAtk !== undefined) {
+          state = decoded;               // 旧：stateのみ
+          compareCtx = null;
+        } else if (decoded.s) {
+          state = decoded.s;             // 新：{ s, cmp? }
+          if (decoded.cmp && decoded.cmp.s) {
+            compareCtx = { name: decoded.cmp.name || '共有プリセット', state: decoded.cmp.s, transient: true };
+            $('#compareSave')?.removeAttribute('hidden'); // 保存ボタンを出す
+          } else {
+            compareCtx = null;
+            $('#compareSave')?.setAttribute('hidden','');
+          }
+        }
+      } else {
+        applyQueryParams(qs); // フォールバック
+      }
+    } else {
+      state = structuredClone(DEFAULTS);
+    }
+  } else {
+    state = structuredClone(DEFAULTS);
+  }
   setInputsFromState(state);
   render();
   currentPresetName = '';   // 起動直後はプリセット未選択として扱う
   captureBaseline();        // 現状を基準に（未編集）
+  refreshCompareSelect();
+  updateCompareBadges();
 }
 
 function initReset() {
@@ -889,6 +1122,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initShare();
   initHelp();
   initPresets();
+  initCompare();
   initReset();
   initZeroFriendlyInputs();
 });
