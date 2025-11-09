@@ -92,25 +92,13 @@ function updateCompareBadges() {
   if (a) a.textContent = getAName();
   if (!bWrap || !bName) return;
   if (!compareCtx) {
-    bWrap.hidden = true;
-    bName.textContent = '未選択';
+    bWrap.hidden = false;
+    bWrap.classList.add('empty');
+    bName.textContent = 'なし';
   } else {
     bWrap.hidden = false;
+    bWrap.classList.remove('empty');
     bName.textContent = compareCtx.name;
-  }
-}
-
-function updateCompareBadges() {
-  const a = $('#badgeA');
-  const b = $('#badgeB');
-  if (a) a.textContent = `比較元: ${getAName()}`;
-  if (!b) return;
-  if (!compareCtx) {
-    b.hidden = true;
-    b.textContent = '比較先: 未選択';
-  } else {
-    b.hidden = false;
-    b.textContent = `比較先: ${compareCtx.name}`;
   }
 }
 
@@ -127,80 +115,134 @@ function setDeltaChip(el, baseVal, cmpVal) {
   el.hidden = false;
 }
 
-function openComparePicker() {
+function openComparePicker(mode /* 'A' | 'B' */) {
   const dlg = $('#comparePicker');
   if (!dlg) return;
   enhanceDialog(dlg);
 
+  const title = $('#cmpTitle');
   const listEl = $('#cmpList');
   const q = $('#cmpSearch');
+  const btnClear = $('#cmpClear');
+  const btnClose = $('#cmpClose');
   const map = loadPresets();
 
-  // リスト構築（compareCtxの一時プリセットも含める）
+  // タイトルと「比較なし」ボタンの可視性
+  if (title) title.textContent = (mode === 'A') ? '比較元を選択' : '比較先を選択';
+  if (btnClear) btnClear.style.display = (mode === 'B') ? '' : 'none';
+
   const build = (filterText='') => {
     const kw = filterText.trim().toLowerCase();
-    const names = Object.keys(map).sort()
-      .filter(n => !kw || n.toLowerCase().includes(kw));
+    const names = Object.keys(map).sort().filter(n => !kw || n.toLowerCase().includes(kw));
     listEl.innerHTML = '';
-    if (compareCtx && !map[compareCtx.name] &&
+
+    // URL由来の一時比較を候補に含める（Bモードのみ推奨）
+    if (mode === 'B' && compareCtx && !map[compareCtx.name] &&
         (!kw || compareCtx.name.toLowerCase().includes(kw))) {
       names.push(compareCtx.name + '（URL）');
     }
+
     if (names.length === 0) {
       const li = document.createElement('li');
       li.innerHTML = '<button type="button" disabled>プリセットがありません</button>';
       listEl.appendChild(li);
-    } else {
-      names.forEach(displayName => {
-        // 実名を抽出（URL表記は見出しだけ）
-        const realName = displayName.replace(/（URL）$/, '');
-        const li = document.createElement('li');
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.textContent = displayName;
-        btn.addEventListener('click', () => {
+      return;
+    }
+
+    names.forEach(displayName => {
+      const realName = displayName.replace(/（URL）$/, '');
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = displayName;
+      btn.addEventListener('click', () => {
+        if (mode === 'B') {
+          // Bに設定（現在は不変）
           if (map[realName]) {
             compareCtx = { name: realName, state: structuredClone(map[realName]), transient: false };
             $('#compareSave')?.setAttribute('hidden','');
           } else if (compareCtx && compareCtx.name === realName) {
-            // URL一時比較をそのまま採用
             compareCtx = { ...compareCtx, transient: true };
             $('#compareSave')?.removeAttribute('hidden');
           }
           refreshCompareSelect();
+          updateCompareBadges();
           scheduleRender();
           dlg.close();
-        });
-        li.appendChild(btn);
-        listEl.appendChild(li);
+        } else {
+          // Aに読み込み：未保存なら確認 → Aを置換、旧AをBに回す
+          if (typeof isDirty === 'function' && isDirty()) {
+            const ok = confirm('未保存の変更があります。破棄して置き換えますか？');
+            if (!ok) return;
+          }
+          const prevState = structuredClone(state);
+          const prevAName = getAName();
+
+          // 新しいAを適用
+          if (map[realName]) {
+            state = structuredClone(map[realName]);
+            currentPresetName = realName;
+          } else {
+            // URLなど未保存ソース：Aは“一時状態”として読み込み（名前は「現在」に据え置き）
+            state = compareCtx?.state ? structuredClone(compareCtx.state) : state;
+            currentPresetName = '';
+          }
+          setInputsFromState(state);
+          render();
+          captureBaseline?.();
+
+          // 旧Aを比較先Bへ
+          compareCtx = { name: prevAName, state: prevState, transient: false };
+          $('#compareSave')?.setAttribute('hidden','');
+
+          refreshPresetSelect();
+          refreshCompareSelect();
+          updateCompareBadges();
+          dlg.close();
+        }
       });
-    }
+      li.appendChild(btn);
+      listEl.appendChild(li);
+    });
   };
 
-  // 初期構築
+  // 検索と表示
   build('');
   q.value = '';
   q.oninput = () => build(q.value);
 
-  // “比較なし”/閉じる
-  $('#cmpClear').onclick = () => { compareCtx = null; refreshCompareSelect(); scheduleRender(); dlg.close(); };
-  $('#cmpClose').onclick = () => dlg.close();
+  // 比較なし（Bモードのみ）
+  if (btnClear) {
+    btnClear.onclick = () => {
+      if (mode === 'B') {
+        compareCtx = null;
+        refreshCompareSelect();
+        updateCompareBadges();
+        scheduleRender();
+      }
+      dlg.close();
+    };
+  }
+  if (btnClose) btnClose.onclick = () => dlg.close();
 
-  // 表示
   dlg.showModal();
   dlg.focus({ preventScroll:true });
 }
 
 function initComparePicker() {
-  // Bバッジ（比較先）タップでピッカーを開く
+  const openA = (e)=>{ e.preventDefault(); openComparePicker('A'); };
+  const openB = (e)=>{ e.preventDefault(); openComparePicker('B'); };
+
+  const a = $('#badgeA');
   const b = $('#badgeB');
-  if (b) {
-    const open = (e)=>{ e.preventDefault(); openComparePicker(); };
-    b.addEventListener('click', open);
-    b.addEventListener('keydown', (e) => { if (e.key==='Enter' || e.key===' ') open(e); });
+  if (a) {
+    a.addEventListener('click', openA);
+    a.addEventListener('keydown', (e)=>{ if (e.key==='Enter' || e.key===' ') openA(e); });
   }
-  // Aバッジ（比較元）は押しても何もしない（=現在の状態を表す専用）
-  // 将来的に「A側もプリセットから素早く選ぶ」動線を入れるならここに追加可能。
+  if (b) {
+    b.addEventListener('click', openB);
+    b.addEventListener('keydown', (e)=>{ if (e.key==='Enter' || e.key===' ') openB(e); });
+  }
 }
 
 // ====== デフォルト値 ======

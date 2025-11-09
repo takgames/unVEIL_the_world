@@ -241,3 +241,6 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); }
   border-radius:10px; background:var(--card-subtle); color:var(--fg);
 }
 #cmpList li + li button { margin-top:6px; }
+
+/* Bが未選択のとき薄め表示（でもタップ可能） */
+.badgeB.empty { opacity: .7; }
