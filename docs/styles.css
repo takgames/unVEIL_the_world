@@ -200,3 +200,9 @@ dialog:focus { outline: none; }
 .delta-pos  { color: #0f9d58; border-color: #0f9d58; background: color-mix(in oklab, #0f9d58 12%, transparent); }
 .delta-neg  { color: #d93025; border-color: #d93025; background: color-mix(in oklab, #d93025 12%, transparent); }
 .delta-zero { color: var(--muted); }
+
+/* 比較セレクトが極小化されないよう最低幅を確保 */
+.actions-inline select { min-width: 140px; }
+
+/* “（比較なし）”っぽく見せる（任意） */
+.actions-inline select option[value=""] { color: var(--muted); }

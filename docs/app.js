@@ -47,28 +47,39 @@ let compareCtx = null; // { name: string, state: StateObject, transient: boolean
 function refreshCompareSelect() {
   const sel = $('#compareSelect');
   if (!sel) return;
+
   const map = loadPresets();
   sel.innerHTML = '';
 
+  // ① 必ずプレースホルダを追加（iOSでも“オプションなし”回避）
   const ph = document.createElement('option');
   ph.value = '';
   ph.textContent = '（比較なし）';
   sel.appendChild(ph);
 
+  // ② 既存プリセットを投入
   Object.keys(map).sort().forEach((name) => {
     const o = document.createElement('option');
     o.value = name; o.textContent = name;
     sel.appendChild(o);
   });
 
+  // ③ URL由来の一時比較（未保存）も選択肢に出す
   if (compareCtx && !map[compareCtx.name]) {
     const o = document.createElement('option');
     o.value = compareCtx.name; o.textContent = `${compareCtx.name}（URL）`;
     sel.appendChild(o);
   }
 
+  // ④ 選択状態を反映
   sel.value = compareCtx ? compareCtx.name : '';
-  updateCompareBadges(); // ★ A/B両方更新
+
+  // ⑤ 最終保険：それでも0件ならプレースホルダをもう一度追加
+  if (sel.options.length === 0) {
+    sel.add(new Option('（比較なし）', ''));
+  }
+
+  updateCompareBadges();
 }
 
 function updateCompareBadges() {
@@ -450,6 +461,7 @@ function resetAll() {
   currentPresetName = '';
   captureBaseline();
   updateCompareBadges();
+  refreshCompareSelect();
   toast('初期化しました');
 }
 
@@ -905,6 +917,7 @@ function initPresets() {
     $('#presetSelect').value = name;
     captureBaseline();
     updateCompareBadges();
+    refreshCompareSelect();
     toast('プリセットを保存しました');
   });
 
@@ -921,6 +934,7 @@ function initPresets() {
     $('#presetSelect').value = name;
     captureBaseline();
     updateCompareBadges();
+    refreshCompareSelect();
     toast('名前を変更しました');
   });
 
@@ -935,6 +949,7 @@ function initPresets() {
     currentPresetName = '';
     captureBaseline();
     updateCompareBadges();
+    refreshCompareSelect();
     toast('削除しました');
   });
 
@@ -977,6 +992,7 @@ function initPresets() {
     render();
     captureBaseline();
     updateCompareBadges();
+    refreshCompareSelect();
     toast('プリセットを読み込みました');
   });
 }
