@@ -324,17 +324,22 @@ function openComparePicker(mode /* 'A' | 'B' */) {
     }
     // 非モーダルで開く（iOS showModalバグ回避）
     dlg.setAttribute('aria-modal', 'true');
+
+    // ★ 初期フォーカス回避：検索欄を一時的にフォーカス不可能にする
+    const prevTabIdx = q.getAttribute('tabindex');
+    const wasDisabled = q.disabled;
+    q.setAttribute('tabindex', '-1');
+    q.disabled = true; // これで“初期フォーカス先”から外れる
+
     dlg.show();
     q.value = '';
     build('');
-    // ★ 初期フォーカスはダイアログ本体へ（自動で検索欄に当たるのを防ぐ）
-    // q.focus({ preventScroll: true });
-    if (!dlg.hasAttribute('tabindex')) dlg.setAttribute('tabindex', '-1');
-    // 直前にクリックした要素のフォーカスを外してから
-    document.activeElement?.blur?.();
-    // フレーム後にダイアログへフォーカスを固定
+    document.activeElement?.blur?.(); // 既存フォーカスも外す（何にもフォーカスしない）
+
+    // 次フレームで元に戻す（でもフォーカスは当てない）
     requestAnimationFrame(() => {
-      dlg.focus({ preventScroll: true });
+      if (prevTabIdx === null) q.removeAttribute('tabindex'); else q.setAttribute('tabindex', prevTabIdx);
+      q.disabled = wasDisabled;
     });
 
     // 念のため sticky を一度リフロー

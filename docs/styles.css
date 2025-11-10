@@ -289,12 +289,15 @@ dialog.sheet::backdrop { background: rgba(0,0,0,.35); }
 }
 #cmpList li + li button { margin-top:6px; }
 
-/* 比較ピッカー用：非モーダルでも下固定 */
-dialog.sheet[open] {
+/* シートは常に下端に密着。安全域を考慮しつつGPUピン止め */
+dialog.sheet[open]{
   position: fixed;
   left: 0; right: 0; bottom: 0; top: auto;
   margin: 0;
   z-index: 1000;
+  transform: translateZ(0);      /* ピン止め */
+  will-change: transform;
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px); /* iOSの下部安全域 */
 }
 
 /* 手動バックドロップ */
