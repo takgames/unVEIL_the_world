@@ -330,6 +330,7 @@ function openComparePicker(mode /* 'A' | 'B' */) {
     // ★ 初期フォーカスはダイアログ本体へ（自動で検索欄に当たるのを防ぐ）
     // q.focus({ preventScroll: true });
 
+
     // 念のため sticky を一度リフロー
     forceStickyRelayout();
   }
