@@ -126,6 +126,27 @@ dialog:focus { outline: none; }
 #toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top)); transform: translateX(-50%); z-index: 1000; background: var(--card); color: var(--fg); border: 1px solid var(--border); padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
 #toast.show { opacity: 1 }
 
+/* トースト：少しだけ主張する配色に（ライト/ダーク両対応） */
+.toast {
+  /* 元の見た目を踏襲しつつアクセント寄せに */
+  background: color-mix(in oklab, var(--accent) 18%, var(--card));
+  border: 1px solid color-mix(in oklab, var(--accent) 46%, var(--border));
+  color: var(--fg);
+  box-shadow:
+    0 8px 20px rgba(0,0,0,.18),
+    0 2px 6px rgba(0,0,0,.08);
+}
+
+/* 種別があれば微調整（任意） */
+.toast.success {
+  background: color-mix(in oklab, #0f9d58 18%, var(--card));
+  border-color: color-mix(in oklab, #0f9d58 48%, var(--border));
+}
+.toast.error {
+  background: color-mix(in oklab, #d93025 18%, var(--card));
+  border-color: color-mix(in oklab, #d93025 48%, var(--border));
+}
+
 @media (max-width: 720px) {
   .two-cols { grid-template-columns: 1fr }
   .results-values { grid-template-columns: 1fr }
@@ -210,7 +231,7 @@ dialog:focus { outline: none; }
 /* バッジの縦ズレ対策：ベースライン揃え＋1行高で統一 */
 .badge-btn {
   display: inline-flex;
-  align-items: baseline;        /* ← ここが効きます */
+  align-items: baseline;
   gap: 6px;
 }
 
@@ -314,3 +335,25 @@ dialog.sheet[open] {
 }
 .badgeA .badge-link { color: var(--accent); }
 .badgeB .badge-link { color: var(--accent); }
+
+/* iPhone等・縦狭画面で結果行の縦幅を節約 */
+@media (max-width: 430px) and (orientation: portrait) {
+  /* 行の内側余白を詰める */
+  .results-values > div {
+    padding-block: 2px;
+  }
+  /* テキストの行間を詰める */
+  .results-values > div span,
+  .results-values > div strong,
+  .results-values > div .delta-chip {
+    line-height: 1.05;
+  }
+  /* 行間（要素間ギャップ）があるレイアウトのための保険 */
+  .results-values { gap: 4px !important; }
+  /* 差分チップも少しだけ詰める */
+  .results-values .delta-chip {
+    margin-left: 6px;
+    padding: 0 6px;
+    font-size: 11.5px;
+  }
+}

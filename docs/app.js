@@ -324,9 +324,11 @@ function openComparePicker(mode /* 'A' | 'B' */) {
     }
     // 非モーダルで開く（iOS showModalバグ回避）
     dlg.setAttribute('aria-modal', 'true');
-    dlg.show();                 // ← ここが showModal() からの差し替え
+    dlg.show();
+    q.value = '';
+    build('');
     // 検索にフォーカス
-    q.value = ''; build(''); q.focus({ preventScroll: true });
+    // q.focus({ preventScroll: true });
 
     // 念のため sticky を一度リフロー
     forceStickyRelayout();
