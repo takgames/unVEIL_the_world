@@ -416,7 +416,7 @@ dialog.sheet[open]{
   gap: 12px;
   flex-wrap: wrap; /* 折返し許可（狭い時の見切れ防止） */
 }
-.app-header #appTitle { margin: 0; }
+.app-header h1 { margin: 0; }
 
 /* iPhoneなど縦狭画面：タイトルとアイコンを別段にして中央揃え */
 @media (max-width: 430px) and (orientation: portrait) {
@@ -426,7 +426,7 @@ dialog.sheet[open]{
     justify-content: center;
     gap: 6px;
   }
-  .app-header #appTitle {
+  .app-header h1 {
     width: 100%;
     text-align: center;
     /* 長いタイトルも1行で見切れずにエリプシスにしたいなら下2行を有効化
@@ -435,18 +435,18 @@ dialog.sheet[open]{
     text-overflow: ellipsis;
     */
   }
-  .app-header .actions-inline {
+  .app-header .header-actions {
     width: 100%;
     justify-content: center; /* アイコン行を中央に */
     gap: 6px;
     flex-wrap: wrap;
   }
 
-  /* ボタンを一回り小さく */
-  .icon-btn {
+  /* ボタンを一回り小さく（特異性で40px指定を上書き） */
+  .app-header .header-actions .btn.icon-btn {
     width: 28px;
     height: 28px;
-    font-size: 16px; /* 絵文字の視認性は保ちつつ小型化 */
+    font-size: 16px;
     border-radius: 8px;
   }
 }
