@@ -221,6 +221,12 @@ dialog:focus { outline: none; }
   line-height: 1;
 }
 
+/* バッジとボタンの縦揃えブレをさらに抑える */
+.actions-inline { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.badge-btn { display:inline-flex; align-items:baseline; gap:6px; cursor:pointer; user-select:none; }
+.badge-btn .label-full, .badge-btn .label-short, .badge-btn .name { line-height:1; }
+.badge-btn .name { transform: translateY(0.5px); }
+
 /* 既存：名前の省略表示 */
 .badgeA .name, .badgeB .name {
   display: inline-block;
@@ -228,9 +234,6 @@ dialog:focus { outline: none; }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-@media (max-width: 420px) {
-  .badgeA .name, .badgeB .name { max-width: 40vw; }
 }
 
 /* ヘッダ右のアクション群 */
@@ -241,7 +244,7 @@ dialog:focus { outline: none; }
 @media (max-width: 420px) {
   .label-full { display:none; }
   .label-short { display:inline; }
-  /* iPhone縦：セレクトは隠してバッジで選ぶ */
+/* 縦狭(iPhone)では select を隠し、ピッカー中心に */
   #compareSelect { display:none; }
   .actions-inline { gap:6px; }
   .badgeA .name, .badgeB .name { max-width: 40vw; }
@@ -302,3 +305,12 @@ dialog.sheet[open] {
   background: var(--bg);
   color: var(--fg);
 }
+
+.badge-link {
+  margin-left: 6px;
+  font-size: 12px;           /* 小ぶりに */
+  line-height: 1;
+  opacity: .9;
+}
+.badgeA .badge-link { color: var(--accent); }
+.badgeB .badge-link { color: var(--accent); }

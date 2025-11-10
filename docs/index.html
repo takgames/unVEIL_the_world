@@ -243,17 +243,20 @@
             <span id="badgeA" class="badgeA badge-btn" role="button" tabindex="0" aria-label="比較元">
               <span class="label-full">比較元:</span><span class="label-short">元:</span>
               <span id="badgeAName" class="name">現在</span>
+              <span id="linkChipA" class="badge-link" title="この側が入力とリンク中" hidden>🔗</span>
             </span>
+
+            <!-- 入替ボタンをバッジの間へ -->
+            <button id="compareSwap" class="btn xs" type="button" title="入替">↔︎</button>
 
             <span id="badgeB" class="badgeB badge-btn" role="button" tabindex="0" aria-label="比較先">
               <span class="label-full">比較先:</span><span class="label-short">先:</span>
-              <span id="badgeBName" class="name">未選択</span>
+              <span id="badgeBName" class="name">なし</span>
+              <span id="linkChipB" class="badge-link" title="この側が入力とリンク中" hidden>🔗</span>
             </span>
 
-            <!-- 比較先セレクト（PC/横画面用）。縦画面では自動で非表示にします -->
+            <!-- 広い画面では <select> も併用、縦狭ではピッカーを使う -->
             <select id="compareSelect" title="比較先を選択"></select>
-
-            <button id="compareSwap"  class="btn xs" type="button" title="入替">↔︎</button>
             <button id="compareClear" class="btn xs" type="button" title="解除">×</button>
             <button id="compareSave"  class="btn xs" type="button" title="比較先を保存" hidden>保存</button>
           </div>
