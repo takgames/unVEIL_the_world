@@ -127,7 +127,7 @@ dialog:focus { outline: none; }
 #toast.show { opacity: 1 }
 
 /* トースト：少しだけ主張する配色に（ライト/ダーク両対応） */
-.toast {
+#toast {
   /* 元の見た目を踏襲しつつアクセント寄せに */
   background: color-mix(in oklab, var(--accent) 18%, var(--card));
   border: 1px solid color-mix(in oklab, var(--accent) 46%, var(--border));
@@ -138,11 +138,11 @@ dialog:focus { outline: none; }
 }
 
 /* 種別があれば微調整（任意） */
-.toast.success {
+#toast.success {
   background: color-mix(in oklab, #0f9d58 18%, var(--card));
   border-color: color-mix(in oklab, #0f9d58 48%, var(--border));
 }
-.toast.error {
+#toast.error {
   background: color-mix(in oklab, #d93025 18%, var(--card));
   border-color: color-mix(in oklab, #d93025 48%, var(--border));
 }
