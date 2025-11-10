@@ -122,19 +122,41 @@ dialog:focus { outline: none; }
 .dialog-card .btn.primary:hover { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 16%, var(--card)); filter: none; }
 .dialog-card .btn:focus, .dialog-card .btn:focus-visible { outline: none; box-shadow: none; }
 
-/* トースト：上部に表示 */
-#toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top)); transform: translateX(-50%); z-index: 1000; background: var(--card); color: var(--fg); border: 1px solid var(--border); padding: 10px 14px; border-radius: 10px; box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
-#toast.show { opacity: 1 }
-
-/* トースト：少しだけ主張する配色に（ライト/ダーク両対応） */
+ 
+/* 画面中央に固定（どのUIにも隠れない） */
 #toast {
-  /* 元の見た目を踏襲しつつアクセント寄せに */
+  position: fixed;
+  left: 50%;
+  top: calc(50% - 6vh);
+  transform: translate(-50%, -50%) scale(.98);
+  z-index: 2000;           /* 結果/ヘッダーより上。必要なら調整 */
+  max-width: min(92vw, 480px);
+  width: max-content;
+  text-align: center;
+  pointer-events: none;    /* 背景を触れる（閉じるUIが無ければ推奨） */
+  opacity: 0;
+  transition: opacity .18s ease, transform .18s ease;
+}
+#toast.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+#toast {
   background: color-mix(in oklab, var(--accent) 18%, var(--card));
   border: 1px solid color-mix(in oklab, var(--accent) 46%, var(--border));
   color: var(--fg);
-  box-shadow:
-    0 8px 20px rgba(0,0,0,.18),
-    0 2px 6px rgba(0,0,0,.08);
+  box-shadow: 0 8px 20px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.08);
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+#toast.success {
+  background: color-mix(in oklab, #0f9d58 18%, var(--card));
+  border-color: color-mix(in oklab, #0f9d58 48%, var(--border));
+}
+#toast.error {
+  background: color-mix(in oklab, #d93025 18%, var(--card));
+  border-color: color-mix(in oklab, #d93025 48%, var(--border));
 }
 
 /* 種別があれば微調整（任意） */
