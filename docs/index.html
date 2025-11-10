@@ -1,5 +1,11 @@
 <!doctype html>
-<html lang="ja" data-theme="auto">
+<html lang="ja" data-theme="light">
+  <script>
+    (function () {
+      var t = localStorage.getItem('uvt-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
@@ -8,20 +14,22 @@
   </head>
   <body>
     <header class="app-header container">
-      <h1>unVEIL the world ダメージシミュレーター</h1>
-      <div class="header-actions">
-        <button id="resetBtn" class="btn icon-btn danger" aria-label="リセット" title="リセット">
-          <span class="emoji">↺</span>
-        </button>
-        <button id="shareBtn" class="btn icon-btn" aria-label="共有" title="共有URL">
-          <span class="emoji">🔗</span>
-        </button>
-        <button id="themeBtn" class="btn icon-btn" aria-label="テーマ切替" title="ライト/ダーク切替">
-          <span class="emoji">🌓</span>
-        </button>
-        <button id="helpBtn" class="btn icon-btn" aria-label="ヘルプ" title="ヘルプ / 計算式">
-          <span class="emoji">❔</span>
-        </button>
+      <div class="row space-between align-center app-header-row">
+        <h1>unVEIL the world ダメージシミュレーター</h1>
+        <div class="header-actions">
+          <button id="resetBtn" class="btn icon-btn danger" aria-label="リセット" title="リセット">
+            <span class="emoji">↺</span>
+          </button>
+          <button id="shareBtn" class="btn icon-btn" aria-label="共有" title="共有URL">
+            <span class="emoji">📤</span>
+          </button>
+          <button id="themeBtn" class="btn icon-btn" aria-label="テーマ切替" title="ライト/ダーク切替">
+            <span class="emoji">🌓</span>
+          </button>
+          <button id="helpBtn" class="btn icon-btn" aria-label="ヘルプ" title="ヘルプ / 計算式">
+            <span class="emoji">❔</span>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -311,8 +319,8 @@
         <h3 id="shareTitle">共有URLをコピー</h3>
         <p class="muted small">コピー形式を選んでください</p>
         <div class="row gap">
-          <button id="copyUrl" type="button" class="btn primary">URLをコピー</button>
-          <button id="copyMd"  type="button" class="btn">Markdownでコピー</button>
+          <button id="copyUrl" type="button" class="btn primary">📋 URLそのまま</button>
+          <button id="copyMd"  type="button" class="btn">📝 Markdown</button>
           <button id="closeShare" type="button" class="btn">閉じる</button>
         </div>
       </div>

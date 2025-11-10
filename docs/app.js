@@ -408,8 +408,11 @@ let state = structuredClone(DEFAULTS);
 function initTheme() {
   const saved = localStorage.getItem('uvt-theme');
   const html = document.documentElement;
-  if (saved === 'light' || saved === 'dark') html.setAttribute('data-theme', saved);
-  else html.setAttribute('data-theme', 'dark');
+  if (saved === 'light' || saved === 'dark') {
+    html.setAttribute('data-theme', saved);
+  } else {
+    html.setAttribute('data-theme', 'light');
+  }
   $('#themeBtn').addEventListener('click', () => {
     const cur = html.getAttribute('data-theme');
     const next = cur === 'light' ? 'dark' : 'light';
@@ -575,14 +578,22 @@ function calcAll(s) {
 
 // ====== 描画 ======
 function render() {
+  // 表示の主役 = 常にリンク中の側
+  const sLink  = getSideState(linkedSide);
+  const sOther = getSideState(other(linkedSide)); // 比較相手（無ければ null）
+
+  const rLink  = sLink  ? calcAll(sLink)  : null;
+  const rOther = sOther ? calcAll(sOther) : null;
+
+  // 表示は rLink を主として…
+  const R = rLink || calcAll(getSideState(linkedSide)); // 念のため
+
+  // 差分は 役割ベースで計算（比較先 − 比較元）
   const sBase = baseState();
   const sComp = compState();
-
   const rBase = sBase ? calcAll(sBase) : null;
   const rComp = sComp ? calcAll(sComp) : null;
 
-  // ——— 合計/内訳/結果（表示は rBase を主、差分は rComp との比較） ———
-  const R = rBase || calcAll(getSideState(linkedSide)); // 念のため
   // 合計（装備合計）
   $('#sumEquipAtk').textContent = fmtInt(R.sums.atk);
   $('#sumEquipAtkPct').textContent = fmtPct(R.sums.atkPct);
@@ -614,43 +625,81 @@ function render() {
   $('#outCrit').textContent = fmtInt(R.crit);
 
   // 差分（comp がある時のみ）
-  setDeltaChip($('#deltaNormal'),  R.normal,  rComp ? rComp.normal  : NaN);
-  setDeltaChip($('#deltaAverage'), R.average, rComp ? rComp.average : NaN);
-  setDeltaChip($('#deltaCrit'),    R.crit,    rComp ? rComp.crit    : NaN);
+  setDeltaChip($('#deltaNormal'),  rBase ? rBase.normal  : NaN, rComp ? rComp.normal  : NaN);
+  setDeltaChip($('#deltaAverage'), rBase ? rBase.average : NaN, rComp ? rComp.average : NaN);
+  setDeltaChip($('#deltaCrit'),    rBase ? rBase.crit    : NaN, rComp ? rComp.crit    : NaN);
 
   // チャート（手前=比較元、奥=比較先）
-  const max = Math.max(
-    1,
-    R.normal, R.average, R.crit,
-    rComp ? rComp.normal  : 0,
-    rComp ? rComp.average : 0,
-    rComp ? rComp.crit    : 0
-  );
+  const max = Math.max(1, R.normal, R.average, R.crit, rOther ? rOther.normal : 0, rOther ? rOther.average : 0, rOther ? rOther.crit : 0);
   const seg = (x)=> (x / max) * 100;
 
-  // 奥：比較先
-  if (rComp) {
-    const bN=seg(rComp.normal), bA=Math.max(0, seg(rComp.average)-bN), bC=Math.max(0, seg(rComp.crit)-(bN+bA));
+  // ★ しきい値付き setter（髪の毛ラインを消す）
+  const chartEl = $('.chart');
+  const chartW  = chartEl ? chartEl.clientWidth : 0;
+  const EPS_PX  = 1; // 1px 未満は表示しない（調整可）
+
+  function setDef(el, leftPct, widthPct) {
+    if (!el) return;
+    const px = chartW ? (widthPct / 100) * chartW : 0;
+    if (widthPct <= 0 || px < EPS_PX) {
+      el.style.width = '0%';
+      el.style.left  = '0%';
+      el.classList.add('is-zero');   // ← 完全に消す
+    } else {
+      el.style.left  = leftPct + '%';
+      el.style.width = widthPct + '%';
+      el.classList.remove('is-zero');
+    }
+  }
+
+  // ★ 背面：比較相手（“もう一方”）
+  if (rOther) {
+    const bN = seg(rOther.normal);
+    const bA = Math.max(0, seg(rOther.average) - bN);
+    const bC = Math.max(0, seg(rOther.crit) - (bN + bA));
     const set=(el,l,w)=>{ el.style.left=l+'%'; el.style.width=w+'%'; };
     set($('#barBNormal'), 0, bN); set($('#barBAvg'), bN, bA); set($('#barBCrit'), bN+bA, bC);
   } else ['#barBNormal','#barBAvg','#barBCrit'].forEach(sel=>{ const el=$(sel); if(el){el.style.width='0%'; el.style.left='0%';}});
 
-  // 手前：比較元
-  const aN=seg(R.normal), aA=Math.max(0, seg(R.average)-aN), aC=Math.max(0, seg(R.crit)-(aN+aA));
+  // ★ 前面：リンク中の側（表示の主役）
+  const aN = seg(R.normal);
+  const aA = Math.max(0, seg(R.average) - aN);
+  const aC = Math.max(0, seg(R.crit) - (aN + aA));
   const setA=(el,l,w)=>{ el.style.left=l+'%'; el.style.width=w+'%'; };
   setA($('#barNormal'), 0, aN); setA($('#barAvg'), aN, aA); setA($('#barCrit'), aN+aA, aC);
 
-  // A > B の赤ストライプ（Deficit）
-  if (rComp) {
-    const bN=seg(rComp.normal), bA=Math.max(0, seg(rComp.average)-bN), bC=Math.max(0, seg(rComp.crit)-(bN+bA));
-    const defN = Math.max(0, aN - bN);
-    const defA = Math.max(0, (aN+aA) - (bN+bA));
-    const defC = Math.max(0, (aN+aA+aC) - (bN+bA+bC));
-    const setD=(el,l,w)=>{ el.style.left=l+'%'; el.style.width=w+'%'; };
-    setD($('#barDefNormal'), bN, defN);
-    setD($('#barDefAvg'),    bN+bA, defA);
-    setD($('#barDefCrit'),   bN+bA+bC, defC);
-  } else ['#barDefNormal','#barDefAvg','#barDefCrit'].forEach(sel=>{ const el=$(sel); if(el){el.style.width='0%'; el.style.left='0%'; }});
+  // ★ 赤ストライプ（比較先 − 比較元 がマイナスの不足分だけ表示）
+  if (rBase && rComp) {
+    const baseN = seg(rBase.normal);
+    const baseA = Math.max(0, seg(rBase.average) - baseN);
+    const baseC = Math.max(0, seg(rBase.crit)    - (baseN + baseA));
+
+    const compN = seg(rComp.normal);
+    const compA = Math.max(0, seg(rComp.average) - compN);
+    const compC = Math.max(0, seg(rComp.crit)    - (compN + compA));
+
+    const defN_left = compN;
+    const defN_w    = Math.max(0, baseN - compN);
+
+    const defA_left = compN + compA;
+    const defA_w    = Math.max(0, (baseN + baseA) - (compN + compA));
+
+    const defC_left = compN + compA + compC;
+    const defC_w    = Math.max(0, (baseN + baseA + baseC) - (compN + compA + compC));
+
+    setDef($('#barDefNormal'), defN_left, defN_w);
+    setDef($('#barDefAvg'),    defA_left, defA_w);
+    setDef($('#barDefCrit'),   defC_left, defC_w);
+  } else {
+    ['#barDefNormal','#barDefAvg','#barDefCrit'].forEach(sel => {
+      const el = $(sel);
+      if (el) {
+        el.style.width = '0%';
+        el.style.left  = '0%';
+        el.classList.add('is-zero');
+      }
+    });
+  }
 }
 
 // ====== 値のセット/取得（入力UIへ反映） ======
