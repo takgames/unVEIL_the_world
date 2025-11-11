@@ -501,15 +501,23 @@ dialog.sheet[open]{
   }
 }
 
-/* ホバー端末だけ hover を効かせる（iOS の“hover 残留”を無効化） */
+/* マウス(ホバー可能)のときだけ :hover を効かせる */
 @media (hover: hover) and (pointer: fine) {
-  .btn:hover, .icon-btn:hover { background: var(--card-subtle); /* 既存のhover色 */ }
+  .btn:hover,
+  .icon-btn:hover {
+    background: var(--card-subtle); /* 既存のホバー色に合わせてOK */
+  }
 }
 
-/* タッチ端末では hover を無効化 */
+/* タッチ(ホバー不可)では :hover を無効化し、押下時は :active で一瞬だけ色替え */
 @media (hover: none) and (pointer: coarse) {
-  .btn:hover, .icon-btn:hover { background: inherit; box-shadow: none; transform: none; }
+  .btn:hover,
+  .icon-btn:hover {
+    background: transparent !important; /* ホバー無効化 */
+  }
+  .btn:active,
+  .icon-btn:active {
+    background: var(--card-subtle);
+    transition: none; /* 残像防止 */
+  }
 }
-
-/* タップ時のiOSデフォの灰色ハイライトを消す */
-.btn, .icon-btn { -webkit-tap-highlight-color: transparent; }
