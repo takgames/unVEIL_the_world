@@ -1487,9 +1487,32 @@ function initFromQueryOrDefaults() {
 }
 
 function initReset() {
-  $('#resetBtn').addEventListener('click', () => {
-    if (!confirm('すべての入力を初期化します。よろしいですか？')) return;
-    resetAll();
+  $('#resetBtn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+
+    // ① まず現在のフォーカスと自前のバックドロップをクリア（合成崩れを避ける）
+    document.activeElement?.blur?.();
+    const bd = document.getElementById('cmpBackdrop');
+    if (bd) bd.hidden = true;
+    const cmp = document.getElementById('comparePicker');
+    try { cmp?.close?.(); } catch {}
+
+    // ② 1フレーム遅らせてネイティブ confirm を出す（ここが肝）
+    requestAnimationFrame(() => {
+      const ok = confirm('初期化しますか？');
+      if (!ok) return;
+
+      // ③ 実リセット
+      resetAll();
+
+      // ④ iOS の合成リフレッシュ（微小transformで再描画を促す）
+      const html = document.documentElement;
+      html.style.webkitTransform = 'translateZ(0.1px)';
+      requestAnimationFrame(() => { html.style.webkitTransform = ''; });
+
+      // sticky再レイアウトの保険（既に実装済みならその関数を呼ぶ）
+      if (typeof forceStickyRelayout === 'function') forceStickyRelayout();
+    });
   });
 }
 
