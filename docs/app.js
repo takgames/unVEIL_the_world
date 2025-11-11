@@ -47,6 +47,90 @@ function compName(){
   return compareCtx ? compareCtx.name || '（未命名）' : 'なし';
 }
 
+function ensureSummaryHint(detailsId){
+  const d = document.getElementById(detailsId);
+  if (!d) return null;
+  const sum = d.querySelector('summary');
+  if (!sum) return null;
+  let hint = sum.querySelector('.g-hint');
+  if (!hint){
+    hint = document.createElement('span');
+    hint.className = 'g-hint';
+    sum.appendChild(hint);
+  }
+  return hint;
+}
+function pctStr(n){ return (Math.round(n*10)/10) + '%'; }
+function nonZeroPairs(obj){
+  return Object.entries(obj).filter(([,v]) => Math.abs(+v||0) > 0);
+}
+
+/* 現在の“リンク側”の状態から各グループのサマリを作る */
+function updateGroupHints(){
+  const s = getSideState(linkedSide);
+  if (!s) return;
+  const r = calcAll(s); // 合計/中間値を使いたいので計算
+
+  // プリセット
+  {
+    const el = ensureSummaryHint('grpPreset');
+    if (el) el.textContent = `選択: ${currentPresetName || '未選択'}`;
+  }
+
+  // ステータス
+  {
+    const el = ensureSummaryHint('grpStatus');
+    if (el) el.textContent = `基礎${s.baseAtk||0} / 会心${pctStr(s.critRate||0)}/${pctStr(s.critDmg||0)}`;
+  }
+
+  // 装備（合計値）
+  {
+    const el = ensureSummaryHint('grpEquip');
+    if (el){
+      const p = [
+        `攻${r.sums.atk||0}`,
+        `攻%${pctStr(r.sums.atkPct||0)}`,
+        `会${pctStr(r.sums.critRate||0)}/${pctStr(r.sums.critDmg||0)}`,
+        `属%${pctStr(r.sums.elemDmgPct||0)}`
+      ];
+      el.textContent = p.join('・');
+    }
+  }
+
+  // スキル
+  {
+    const el = ensureSummaryHint('grpSkill');
+    if (el) el.textContent = `倍率${pctStr(s.skillPct||0)} + 固定${s.skillFlat||0}`;
+  }
+
+  // 戦闘中効果（0は省略）
+  {
+    const el = ensureSummaryHint('grpBattle');
+    if (el){
+      const pairs = nonZeroPairs({
+        '攻%': s.atkUpPct||0,
+        '与%': s.dmgUpPct||0,
+        'C与%': s.cardDmgUpPct||0,
+        '属%': s.elemDmgUpPct||0,
+      }).map(([k,v]) => `${k}${pctStr(v)}`);
+      el.textContent = pairs.length ? pairs.join('・') : '—';
+    }
+  }
+
+  // 敵の詳細
+  {
+    const el = ensureSummaryHint('grpEnemy');
+    if (el){
+      const aff = s.affinity==='adv' ? '有利' : s.affinity==='dis' ? '不利' : 'なし';
+      const brk = s.isBreak ? 'ブレイク' : '—';
+      el.textContent = `防${s.enemyDef||0} / ${aff} / ${brk}`;
+    }
+  }
+
+  // 計算の内訳（ヒントは空のまま）
+  ensureSummaryHint('grpBreakdown'); // 置き場だけ確保（中身は空）
+}
+
 // ====== バッチレンダー (#10) ======
 let rafId = 0;
 function scheduleRender() {
@@ -700,6 +784,8 @@ function render() {
       }
     });
   }
+
+  updateGroupHints();
 }
 
 // ====== 値のセット/取得（入力UIへ反映） ======
@@ -1421,4 +1507,5 @@ window.addEventListener('DOMContentLoaded', () => {
   initComparePicker();
   initReset();
   initZeroFriendlyInputs();
+  updateGroupHints();
 });

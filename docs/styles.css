@@ -67,6 +67,34 @@ body {
 .card-body { padding: 16px }
 .card.subtle { background: var(--card-subtle) }
 
+/* 見出し（summary）をクリックターゲット＆左右2カラム化 */
+.card > summary{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* ▸ / ▾ インジケータ（details の open 属性で自動切替）*/
+.card > summary::before{
+  content:'▸';
+  font-size:12px;
+  line-height:1;
+  opacity:.9;
+  transform: translateY(1px);
+}
+.card[open] > summary::before{ content:'▾'; }
+
+/* 右端に“要約”を出す。折りたたみ時は濃く、展開時は薄く */
+.card > summary .g-hint{
+  margin-left:auto;
+  font-size:12px;
+  color: var(--muted);
+  max-width: 60%;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  opacity:.95;
+}
+.card[open] > summary .g-hint{ opacity:.55; }
+
 .grid { display: grid }
 .stack { display: grid; gap: 6px }
 label > input:not([type=checkbox]):not([type=radio]) { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); font-size: var(--input-fz); }
