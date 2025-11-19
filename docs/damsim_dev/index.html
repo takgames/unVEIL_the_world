@@ -353,28 +353,40 @@
 
     <!-- ヘルプダイアログ -->
     <dialog id="helpDialog" aria-labelledby="helpTitle" tabindex="-1">
-      <div class="dialog-card" style="max-height:min(70vh,640px); overflow:auto">
-        <h3 id="helpTitle">ヘルプ / 計算式</h3>
-        <p class="muted small">このシミュレーターの計算式とヒント</p>
-        <h4>計算式</h4>
-        <pre class="subtle card" style="padding:12px; overflow:auto"><code>
-    [装備補正攻撃力] = Σ装備攻撃力 + (基礎攻撃力 × (Σ装備攻撃力補正% / 100))
-    [最終攻撃力] = (基礎攻撃力 + 補正攻撃力 + 装備補正攻撃力) × (1 + 攻撃力アップ% / 100)
-    [属性相性] = なし:1.00 / 有利:1.25 / 不利:0.85
-    [ブレイク値] = ブレイク時:1.3 / 通常:1.0
-    [防御係数] = e^-(0.001058×防御 − 0.000000715×防御^2)
-    [通常ダメ] = (((最終攻撃力 × (スキル%)) + スキル固定) × (1+ダメ%) × (1+カード%) × (1+属性%) × 属性相性 × ブレイク × 防御係数)
-    [会心ダメ] = 通常ダメ × (1 + 会心ダメ% / 100)
-    [平均ダメ] = 通常ダメ × (1 + (会心ダメ% / 100) × (会心率% / 100))
-    ※ 会心率は上限100%
-        </code></pre>
-        <h4>Tips</h4>
-        <ul>
-          <li>「その他」のメインは値入力できません（空白）。</li>
-          <li>数値が<code>0</code>のフィールドは、フォーカス時に一時的に空白化します（フォーカスアウトで<code>0</code>に戻ります）。</li>
-          <li>共有URLはBase64圧縮で<code>?z=...</code>に埋め込みます。</li>
-        </ul>
-        <div class="row gap" style="margin-top:12px">
+      <div class="dialog-card help-card" style="max-height:min(70vh,640px); overflow:auto">
+        <h3 id="helpTitle">ヘルプ</h3>
+        <p class="muted small">基本的な操作方法と便利な機能のまとめ</p>
+
+        <section class="help-section">
+          <h4>1. 入力モード</h4>
+          <p>画面上部の「入力モード」を切り替えることで、入力したい粒度を選べます。</p>
+          <ul>
+            <li><strong>簡易:</strong> 最終攻撃力と会心値を直接入力。</li>
+            <li><strong>標準:</strong> 戦闘前攻撃力をまとめて入力し、バフで調整。</li>
+            <li><strong>装備:</strong> 基礎/補正値や各装備ステータスを細かく設定。</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h4>2. プリセットと比較</h4>
+          <p>ビルドを保存して素早く呼び出したり、A/B比較でダメージ差をチェックできます。</p>
+          <ul>
+            <li>プリセット名を入力し「保存/上書き」で状態を保存。</li>
+            <li>結果バーの「比較元/比較先」バッジから比較対象を選択。</li>
+            <li>共有ボタンで現在の状態をURL化し、仲間と共有可能。</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h4>3. 入力のヒント</h4>
+          <ul>
+            <li>戦闘中効果や敵情報を変えると、結果バーと比較差分が即時更新されます。</li>
+            <li>数値フィールドは 0 のときフォーカスすると空欄になり、入力しやすくなっています。</li>
+          </ul>
+        </section>
+
+        <div class="row gap help-actions">
+          <button id="replayGuide" type="button" class="btn primary">ステップガイドを開始</button>
           <button id="closeHelp" type="button" class="btn">閉じる</button>
         </div>
       </div>
@@ -404,6 +416,19 @@
     </dialog>
 
     <div id="cmpBackdrop" class="sheet-backdrop" hidden></div>
+
+    <div id="guideOverlay" class="guide-overlay" hidden tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="guideStepTitle">
+      <div class="guide-card">
+        <p id="guideStepProgress" class="guide-progress">STEP 1/4</p>
+        <h3 id="guideStepTitle">ようこそ</h3>
+        <p id="guideStepBody">ガイド本文</p>
+        <div class="row space-between guide-actions">
+          <button id="guideSkip" class="btn subtle" type="button">スキップ</button>
+          <button id="guideNext" class="btn primary" type="button">次へ</button>
+        </div>
+      </div>
+    </div>
+    <div id="guideSpotlight" class="guide-spotlight" hidden aria-hidden="true"></div>
 
     <script defer src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script defer src="app.js"></script>

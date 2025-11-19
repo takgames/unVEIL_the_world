@@ -211,6 +211,113 @@ function updateGroupHints(){
   ensureSummaryHint('grpBreakdown'); // 置き場だけ確保（中身は空）
 }
 
+function shouldShowGuide() {
+  try { return !localStorage.getItem(GUIDE_STORAGE_KEY); }
+  catch { return true; }
+}
+
+function markGuideSeen() {
+  try { localStorage.setItem(GUIDE_STORAGE_KEY, '1'); }
+  catch {}
+}
+
+function renderGuideStep() {
+  const step = GUIDE_STEPS[guideStepIndex];
+  $('#guideStepProgress').textContent = `STEP ${guideStepIndex + 1}/${GUIDE_STEPS.length}`;
+  $('#guideStepTitle').textContent = step.title;
+  $('#guideStepBody').textContent = step.body;
+  const nextBtn = $('#guideNext');
+  if (nextBtn) nextBtn.textContent = (guideStepIndex === GUIDE_STEPS.length - 1) ? '完了' : '次へ';
+  setGuideHighlight(step.target);
+}
+
+function closeGuide(markSeen) {
+  const overlay = $('#guideOverlay');
+  if (!overlay) return;
+  overlay.hidden = true;
+  document.body.classList.remove('guide-open');
+  setGuideHighlight(null);
+  if (markSeen) markGuideSeen();
+}
+
+function startGuide(forceReplay=false) {
+  const overlay = $('#guideOverlay');
+  if (!overlay) return;
+  guideStepIndex = 0;
+  renderGuideStep();
+  overlay.hidden = false;
+  document.body.classList.add('guide-open');
+  overlay.focus({ preventScroll: true });
+}
+
+function advanceGuide() {
+  if (guideStepIndex < GUIDE_STEPS.length - 1) {
+    guideStepIndex += 1;
+    renderGuideStep();
+  } else {
+    closeGuide(true);
+  }
+}
+
+function initGuide() {
+  const overlay = $('#guideOverlay');
+  if (!overlay) return;
+  $('#guideNext')?.addEventListener('click', () => advanceGuide());
+  $('#guideSkip')?.addEventListener('click', () => closeGuide(true));
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeGuide(true); });
+  overlay.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeGuide(true); });
+  $('#replayGuide')?.addEventListener('click', () => {
+    $('#helpDialog')?.close();
+    startGuide(true);
+  });
+  window.addEventListener('resize', () => {
+    if (document.body.classList.contains('guide-open') && guideHighlightEl) {
+      positionGuideSpotlight(guideHighlightEl);
+    }
+  });
+  if (shouldShowGuide()) startGuide(false);
+}
+
+function positionGuideSpotlight(target) {
+  const spot = $('#guideSpotlight');
+  if (!spot || !target) return;
+  const rect = target.getBoundingClientRect();
+  const pad = 12;
+  const top = window.scrollY + rect.top - pad;
+  const left = window.scrollX + rect.left - pad;
+  const width = rect.width + pad * 2;
+  const height = rect.height + pad * 2;
+  spot.style.top = `${Math.max(8, top)}px`;
+  spot.style.left = `${Math.max(8, left)}px`;
+  spot.style.width = `${Math.max(80, width)}px`;
+  spot.style.height = `${Math.max(80, height)}px`;
+}
+
+function setGuideHighlight(selector) {
+  const spot = $('#guideSpotlight');
+  if (guideHighlightEl) {
+    guideHighlightEl.classList.remove('guide-highlight');
+    guideHighlightEl = null;
+  }
+  if (spot) {
+    spot.classList.remove('show');
+    spot.hidden = true;
+  }
+  if (!selector) return;
+  const target = document.querySelector(selector);
+  if (!target) return;
+  const det = target.closest('details');
+  if (det) det.open = true;
+  guideHighlightEl = target;
+  target.classList.add('guide-highlight');
+  positionGuideSpotlight(target);
+  if (spot) {
+    spot.hidden = false;
+    requestAnimationFrame(() => spot.classList.add('show'));
+  }
+  target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+}
+
 // ====== バッチレンダー (#10) ======
 let rafId = 0;
 function scheduleRender() {
@@ -576,6 +683,31 @@ const MODE_META = {
   standard: { label: '標準',   desc: '装備の補正値を含んだ戦闘前のステータス合計値を入力します。' },
   gear:     { label: '装備',   desc: '基礎/補正/装備値を詳細に入力して計算します。' },
 };
+const GUIDE_STORAGE_KEY = 'uvt-guide-shown';
+const GUIDE_STEPS = [
+  {
+    title: '入力モードを決める',
+    body: '最上部のモードカードから「簡易 / 標準 / 装備」を選び、入力したい粒度を切り替えます。',
+    target: '#grpMode'
+  },
+  {
+    title: 'ステータスや各種数値を入力',
+    body: '値を変更すると結果のチャートに即時反映されます。',
+    target: '#grpStatus'
+  },
+  {
+    title: 'プリセット / 比較を活用',
+    body: 'プリセットでビルドを保存して、結果欄の比較バッジでダメージの差分を確認できます。',
+    target: '#grpPreset'
+  },
+  {
+    title: 'リンクの共有',
+    body: '共有ボタンからURLをコピーして結果を共有できます。',
+    target: '#shareBtn'
+  }
+];
+let guideStepIndex = 0;
+let guideHighlightEl = null;
 const LAST_MODE_KEY = 'uvt-last-mode';
 try {
   const savedMode = localStorage.getItem(LAST_MODE_KEY);
@@ -1514,6 +1646,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initComparePicker();
   initReset();
   initZeroFriendlyInputs();
+  initGuide();
   updateGroupHints();
 
   blurSelfOnClick('#resetBtn');

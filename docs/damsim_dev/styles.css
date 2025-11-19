@@ -192,6 +192,12 @@ dialog { border: none; border-radius: 12px; padding: 0; background: transparent;
 .dialog-card { background: var(--card); color: var(--fg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: min(90vw, 420px); box-shadow: var(--shadow) }
 dialog::backdrop { backdrop-filter: blur(2px) brightness(.8) }
 dialog:focus { outline: none; }
+.help-card { display: flex; flex-direction: column; gap: 16px; }
+.help-card > h3 { margin-bottom: 2px; }
+.help-card > p { margin-top: 0; }
+.help-section { border-top: 1px solid var(--border); padding-top: 12px; }
+.help-section:first-of-type { border-top: none; padding-top: 0; }
+.help-actions { margin-top: 8px; flex-wrap: wrap; }
 /* 共有ダイアログ内のボタンは初期強調しない（ホバーのみ色変化） */
 .dialog-card .btn { box-shadow: none; transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
 .dialog-card .btn.primary { border-color: var(--border); background: var(--card); }
@@ -234,6 +240,36 @@ dialog:focus { outline: none; }
   background: color-mix(in oklab, #d93025 18%, var(--card));
   border-color: color-mix(in oklab, #d93025 48%, var(--border));
 }
+
+.guide-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1900;
+}
+.guide-overlay[hidden] { display: none !important; }
+.guide-card {
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px;
+  width: min(480px, 92vw);
+  box-shadow: var(--shadow), 0 12px 40px rgba(0,0,0,.35);
+  position: relative;
+  z-index: 1910;
+}
+.guide-progress { margin: 0; font-size: 12px; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; }
+.guide-card h3 { margin: 8px 0 10px; }
+.guide-card p { margin: 0 0 8px; }
+.guide-actions { margin-top: 12px; }
+.btn.subtle { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn.subtle:hover { color: var(--fg); }
+body.guide-open { overflow: hidden; }
 
 @media (max-width: 480px) and (orientation: portrait) {
   .main-grid { gap: 12px; }
@@ -567,3 +603,15 @@ dialog.sheet[open]{
     transition: none; /* 残像防止 */
   }
 }
+.guide-spotlight {
+  position: fixed;
+  border: 3px solid var(--accent);
+  border-radius: 20px;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 35%, transparent), 0 12px 28px rgba(0,0,0,.45);
+  pointer-events: none;
+  z-index: 1850;
+  transition: top .2s ease, left .2s ease, width .2s ease, height .2s ease, opacity .2s ease;
+  opacity: 0;
+}
+.guide-spotlight.show { opacity: 1; }
+.guide-highlight { position: relative; }
