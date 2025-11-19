@@ -127,6 +127,11 @@ function updateGroupHints(){
   const r = calcAll(s); // 合計/中間値を使いたいので計算
   const mode = s.inputMode || 'gear';
 
+  {
+    const el = ensureSummaryHint('grpMode');
+    if (el) el.textContent = MODE_META[mode]?.label || '—';
+  }
+
   // プリセット
   {
     const el = ensureSummaryHint('grpPreset');

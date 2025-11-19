@@ -235,6 +235,11 @@ dialog:focus { outline: none; }
   border-color: color-mix(in oklab, #d93025 48%, var(--border));
 }
 
+@media (max-width: 480px) and (orientation: portrait) {
+  .main-grid { gap: 12px; }
+  .card { margin-bottom: 4px; }
+}
+
 /* 種別があれば微調整（任意） */
 #toast.success {
   background: color-mix(in oklab, #0f9d58 18%, var(--card));
