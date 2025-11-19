@@ -1285,6 +1285,7 @@ function initPresets() {
     const name = $('#presetName').value.trim();
     if (!cur) { toast('変更するプリセットを選択してください'); return; }
     if (!name) { toast('新しい名前を入力してください'); return; }
+    if (name === cur) { toast('同じ名前です'); return; }
     const map = loadPresets();
     if (!map[cur]) { toast('指定のプリセットが見つかりません'); return; }
     map[name] = map[cur]; delete map[cur]; savePresets(map);
