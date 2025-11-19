@@ -274,6 +274,7 @@ body.guide-open { overflow: hidden; }
 @media (max-width: 480px) and (orientation: portrait) {
   .main-grid { gap: 12px; }
   .card { margin-bottom: 4px; }
+  .guide-spotlight { display: none !important; }
 }
 
 /* 種別があれば微調整（任意） */
