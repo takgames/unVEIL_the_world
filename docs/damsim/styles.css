@@ -1,0 +1,763 @@
+:root {
+  --bg: #0b0c10;
+  --fg: #eaf0f1;
+  --muted: #9aa6ac;
+  --card: #14161b;
+  --card-subtle: #111318;
+  --border: #242834;
+  --accent: #6ea8fe;
+  --accent-2: #a78bfa;
+  --normal: #5dd39e; /* 通常=緑 */
+  --avg: #ffd166;    /* 平均=黄 */
+  --crit: #ff6b6b;   /* 会心=赤 */
+  --danger: #ff6b6b;
+  --ok: #5dd39e;
+  --shadow: 0 6px 18px rgba(0,0,0,.3);
+  --input-fz: clamp(16px, 3.6vw, 20px);
+  --result-fz: clamp(18px, 4.2vw, 24px);
+  --equip-accent: color-mix(in oklab, var(--accent) 26%, transparent);
+  --card-noise: radial-gradient(60% 60% at 20% 20%, rgba(255,255,255,.04), transparent 60%);
+  --card-tint: linear-gradient(135deg, rgba(255,255,255,.04), rgba(255,255,255,0));
+  --chart-shadow: drop-shadow(0 1px 2px rgba(0,0,0,.3));
+}
+
+html[data-theme="light"] {
+  --bg: #fafafa;
+  --fg: #122023;
+  --muted: #607078;
+  --card: #ffffff;
+  --card-subtle: #f4f6f8;
+  --border: #e5e8ec;
+  --accent: #2b6cb0;
+  --accent-2: #6b46c1;
+  --shadow: 0 6px 16px rgba(0,0,0,.08);
+  --card-noise: radial-gradient(60% 60% at 20% 20%, rgba(0,0,0,.03), transparent 60%);
+  --card-tint: linear-gradient(135deg, rgba(0,0,0,.03), rgba(0,0,0,0));
+  --chart-shadow: drop-shadow(0 1px 2px rgba(0,0,0,.14));
+}
+
+* { box-sizing: border-box }
+html,body { height: 100% }
+body {
+  margin: 0;
+  color: var(--fg);
+  background: var(--bg);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans JP", sans-serif;
+}
+.container { width: min(1100px, 100% - 24px); margin: 0 auto; }
+.small { font-size: 12px }
+.muted { color: var(--muted) }
+.row { display: flex; align-items: center }
+.wrap { flex-wrap: wrap }
+.space-between { justify-content: space-between }
+.align-center { align-items: center }
+.gap { gap: 12px }
+.gap-sm { gap: 8px }
+.two-cols { grid-template-columns: repeat(2, minmax(0,1fr)) }
+
+.app-header { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 16px 0; }
+.app-header h1 { margin: 0; font-size: clamp(18px, 2.3vw, 24px) }
+.header-actions { display: flex; gap: 8px; }
+
+.btn { cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--fg);
+  border-radius: 10px; padding: 8px 12px; box-shadow: var(--shadow); }
+.btn:hover { filter: brightness(1.06) }
+.btn.primary { border-color: var(--accent); }
+.btn.danger { border-color: var(--danger); color: #fff; background: linear-gradient(180deg, #ff6b6b, #d94848); }
+
+.main-grid { display: grid; gap: 16px; padding-bottom: 220px; }
+.card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background-color: var(--card);
+  background-image:
+    var(--card-noise),
+    var(--card-tint),
+    linear-gradient(180deg, color-mix(in oklab, var(--accent) 6%, transparent), var(--card));
+  background-blend-mode: soft-light, normal, normal;
+  box-shadow: var(--shadow);
+}
+.card > summary { padding: 12px 16px; cursor: pointer; font-weight: 700; list-style: none; }
+.card > summary::-webkit-details-marker { display: none }
+.card[open] > summary { border-bottom: 1px solid var(--border) }
+.card-body { padding: 16px }
+.card.subtle {
+  background-color: var(--card-subtle);
+  background-image:
+    var(--card-noise),
+    linear-gradient(180deg, color-mix(in oklab, var(--accent) 4%, transparent), var(--card-subtle));
+  background-blend-mode: soft-light, normal;
+}
+
+.mode-card .card-body { display: flex; flex-direction: column; gap: 10px; }
+.mode-switch { display: flex; gap: 8px; flex-wrap: wrap; }
+.mode-btn {
+  flex: 1;
+  min-width: 90px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card-subtle);
+  color: var(--fg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease;
+}
+.mode-btn.is-active {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 18%, var(--card));
+}
+.mode-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mode-chip { background: color-mix(in oklab, var(--accent) 15%, transparent); border-color: var(--accent); }
+.mode-desc { margin: 0; }
+.hint-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 1px 6px;
+  margin-left: 6px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--accent) 35%, var(--border));
+  color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+}
+
+.mode-only { display: none !important; }
+html[data-input-mode="simple"] .mode-only-simple,
+html[data-input-mode="standard"] .mode-only-standard,
+html[data-input-mode="gear"] .mode-only-gear {
+  display: grid !important;
+}
+.mode-hide-simple { display: grid; }
+html[data-input-mode="simple"] .mode-hide-simple {
+  display: none !important;
+}
+
+html[data-input-mode="simple"] #grpEquip,
+html[data-input-mode="standard"] #grpEquip { display: none; }
+
+/* 見出し（summary）をクリックターゲット＆左右2カラム化 */
+.card > summary{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* ▸ / ▾ インジケータ（details の open 属性で自動切替）*/
+.card > summary::before{
+  content:'▸';
+  font-size:12px;
+  line-height:1;
+  opacity:.9;
+  transform: translateY(1px);
+}
+.card[open] > summary::before{ content:'▾'; }
+
+/* 右端に“要約”を出す。折りたたみ時は濃く、展開時は薄く */
+.card > summary .g-hint{
+  margin-left:auto;
+  font-size:12px;
+  color: var(--muted);
+  max-width: 72%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  white-space: normal;
+  opacity:.95;
+}
+.card[open] > summary .g-hint{ opacity:.55; }
+
+.hint-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 14%, transparent);
+  color: var(--fg);
+  line-height: 1.2;
+}
+.hint-badge-atk { background: color-mix(in oklab, var(--accent) 16%, transparent); color: var(--accent); }
+.hint-badge-crit { background: color-mix(in oklab, var(--avg) 26%, transparent); color: #c05621; }
+.hint-badge-critdmg { background: color-mix(in oklab, var(--crit) 18%, transparent); color: var(--crit); }
+.hint-badge-elem { background: color-mix(in oklab, var(--accent-2) 20%, transparent); color: var(--accent-2); }
+.hint-badge-skill { background: color-mix(in oklab, var(--normal) 18%, transparent); color: var(--fg); }
+.hint-badge-enemy { background: color-mix(in oklab, var(--muted) 18%, transparent); color: var(--fg); }
+
+.grid { display: grid }
+.stack { display: grid; gap: 6px }
+label > input:not([type=checkbox]):not([type=radio]) { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); font-size: var(--input-fz); }
+label > select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); font-size: var(--input-fz); }
+select option { font-size: var(--input-fz); }
+input[type=number] { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+legend { padding: 0 6px }
+.key-field > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  padding-left: 22px;
+}
+.key-field > span:first-child::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--accent) 42%, transparent);
+  box-shadow: 0 1px 3px rgba(0,0,0,.18);
+}
+.key-field.key-atk > span:first-child::before { content: '⚔'; color: var(--accent); text-align: center; font-size: 12px; line-height: 16px; }
+.key-field.key-crit > span:first-child::before { content: '★'; color: var(--avg); text-align: center; font-size: 12px; line-height: 16px; background: color-mix(in oklab, var(--avg) 28%, transparent); }
+.key-field.key-critdmg > span:first-child::before { content: '★'; color: var(--crit); text-align: center; font-size: 12px; line-height: 16px; background: color-mix(in oklab, var(--crit) 26%, transparent); }
+.key-field.key-elem > span:first-child::before { content: '✦'; color: var(--accent-2); text-align: center; font-size: 11px; line-height: 16px; background: color-mix(in oklab, var(--accent-2) 24%, transparent); }
+
+/* 装備レイアウト - 確定版 */
+.equip-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.equip-card { position: relative; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px 12px; background: linear-gradient(180deg, color-mix(in oklab, var(--card) 94%, transparent), var(--card)); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.equip-card::before { content:""; position:absolute; left:0; top:0; bottom:0; width: 3px; background: var(--equip-accent); border-top-left-radius: inherit; border-bottom-left-radius: inherit; }
+.equip-card > legend { font-weight: 700; padding: 0 8px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }
+.subgrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-top: 8px; }
+
+/* 内訳 */
+.breakdown-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px }
+.breakdown-grid > div { display: flex; justify-content: space-between; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px }
+
+/* 結果固定バー */
+.results { position: sticky; bottom: 0; z-index: 20; background: linear-gradient(180deg, transparent, rgba(0,0,0,.25)); }
+html[data-theme="light"] .results { background: linear-gradient(180deg, transparent, rgba(255,255,255,.6)); }
+.results-inner { position: relative; border: 1px solid color-mix(in oklab, var(--accent) 28%, var(--border)); border-radius: 14px; margin: 10px auto; padding: 12px; background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 7%, var(--card)) 0%, var(--card) 60%); box-shadow: var(--shadow), 0 0 0 2px color-mix(in oklab, var(--accent) 10%, transparent); }
+.results-head { margin-bottom: 8px }
+.chip { border-radius: 999px; padding: 2px 8px; font-size: 12px; border: 1px solid var(--border); }
+
+/* 凡例はバー色と一致 */
+.chip-normal { background: color-mix(in oklab, var(--normal) 35%, transparent); }
+.chip-avg { background: color-mix(in oklab, var(--avg) 35%, transparent); }
+.chip-crit { background: color-mix(in oklab, var(--crit) 45%, transparent); }
+
+.chart {
+  position: relative;
+  height: 22px;
+  border: 1px solid var(--border);
+  border-radius: 1000px;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--card-subtle) 90%, transparent), var(--card-subtle));
+  overflow: hidden;
+}
+.bar {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 0;
+  transition: width .2s ease, left .2s ease;
+  mix-blend-mode: normal;
+  border-radius: 0;
+  filter: var(--chart-shadow);
+}
+.bar-normal,
+.barB-normal { border-top-left-radius: 1000px; border-bottom-left-radius: 1000px; }
+.bar-crit,
+.barB-crit { border-top-right-radius: 1000px; border-bottom-right-radius: 1000px; }
+.bar-normal {
+  left: 0;
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--normal) 75%, white 25%),
+    color-mix(in oklab, var(--normal) 90%, black 10%));
+  opacity: 1;
+}
+.bar-avg {
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--avg) 70%, white 30%),
+    color-mix(in oklab, var(--avg) 100%, black 0%));
+  opacity: 1;
+}
+.bar-crit {
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--crit) 75%, white 25%),
+    color-mix(in oklab, var(--crit) 95%, black 5%));
+  opacity: 1;
+}
+.chart-scale { position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px); background-size: 20% 100%, 10% 100%; }
+html[data-theme="light"] .chart-scale { background-image: linear-gradient(90deg, rgba(0,0,0,.06) 1px, transparent 1px); background-size: 10% 100%; }
+
+.results-values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px }
+.results-values > div { display: flex; justify-content: space-between; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--card-subtle) }
+
+.app-footer { padding: 24px 0 40px; color: var(--muted); }
+
+/* ダイアログ */
+dialog { border: none; border-radius: 12px; padding: 0; background: transparent; }
+.dialog-card { background: var(--card); color: var(--fg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: min(90vw, 420px); box-shadow: var(--shadow) }
+dialog::backdrop { backdrop-filter: blur(2px) brightness(.8) }
+dialog:focus { outline: none; }
+.help-card { display: flex; flex-direction: column; gap: 16px; }
+.help-card > h3 { margin-bottom: 2px; }
+.help-card > p { margin-top: 0; }
+.help-section { border-top: 1px solid var(--border); padding-top: 12px; }
+.help-section:first-of-type { border-top: none; padding-top: 0; }
+.help-actions { margin-top: 8px; flex-wrap: wrap; }
+/* 共有ダイアログ内のボタンは初期強調しない（ホバーのみ色変化） */
+.dialog-card .btn { box-shadow: none; transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
+.dialog-card .btn.primary { border-color: var(--border); background: var(--card); }
+.dialog-card .btn.primary:hover { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 16%, var(--card)); filter: none; }
+.dialog-card .btn:focus, .dialog-card .btn:focus-visible { outline: none; box-shadow: none; }
+
+/* トースト：アイコン付き＋遅延フェード */
+#toast {
+  position: fixed;
+  left: 50%;
+  top: calc(50% - 6vh);
+  transform: translate(-50%, -50%) scale(.98);
+  z-index: 2000;
+  max-width: min(92vw, 520px);
+  width: max-content;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .4s ease, transform .35s ease;
+  background: color-mix(in oklab, var(--accent) 18%, var(--card));
+  border: 1px solid color-mix(in oklab, var(--accent) 46%, var(--border));
+  color: var(--fg);
+  box-shadow: 0 12px 28px rgba(0,0,0,.22), 0 3px 10px rgba(0,0,0,.12);
+  padding: 12px 16px;
+  border-radius: 12px;
+}
+#toast.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+#toast.fade-out {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(.96);
+}
+#toast .toast-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+#toast .toast-icon {
+  width: 18px;
+  text-align: center;
+  font-size: 14px;
+}
+#toast .toast-text { display: inline-block; text-align: left; }
+#toast.success {
+  background: color-mix(in oklab, #0f9d58 18%, var(--card));
+  border-color: color-mix(in oklab, #0f9d58 48%, var(--border));
+}
+#toast.error {
+  background: color-mix(in oklab, #d93025 18%, var(--card));
+  border-color: color-mix(in oklab, #d93025 48%, var(--border));
+}
+
+.guide-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 20px;
+  z-index: 1900;
+}
+.guide-overlay[hidden] { display: none !important; }
+.guide-card {
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px;
+  width: min(480px, 92vw);
+  box-shadow: var(--shadow), 0 12px 40px rgba(0,0,0,.35);
+  position: absolute;
+  z-index: 1910;
+  transform-origin: top right;
+}
+.guide-progress { margin: 0; font-size: 12px; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; }
+.guide-card h3 { margin: 8px 0 10px; }
+.guide-card p { margin: 0 0 8px; }
+.guide-actions { margin-top: 12px; gap: 8px; }
+#guideNext { margin-left: auto; min-width: 110px; }
+.btn.subtle { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn.subtle:hover { color: var(--fg); }
+/* 簡易アラート */
+.alert {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0 auto 10px;
+  background: color-mix(in oklab, var(--accent) 6%, var(--card));
+  box-shadow: var(--shadow);
+}
+.alert.warning {
+  border-color: color-mix(in oklab, #d93025 55%, var(--border));
+  background: color-mix(in oklab, #d93025 10%, var(--card));
+}
+.alert-title { font-weight: 700; margin-bottom: 6px; }
+.alert ul { margin: 0; padding-left: 20px; }
+.input-warning {
+  border-color: color-mix(in oklab, #d93025 70%, var(--border)) !important;
+  box-shadow: 0 0 0 2px color-mix(in oklab, #d93025 18%, transparent);
+  background: color-mix(in oklab, #d93025 4%, var(--bg));
+}
+body.guide-open { overflow: hidden; }
+
+@media (max-width: 480px) and (orientation: portrait) {
+  .main-grid { gap: 12px; }
+  .card { margin-bottom: 4px; }
+  .guide-spotlight { display: none !important; }
+}
+
+/* 種別があれば微調整（任意） */
+
+@media (max-width: 720px) {
+  .two-cols { grid-template-columns: 1fr }
+  .results-values { grid-template-columns: 1fr }
+}
+
+/* アイコンボタンのレイアウトを中央揃えに（歪み防止） */
+.header-actions .btn.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; height: 40px; /* タップしやすい最小44px相当でもOK */
+  padding: 0;
+}
+
+/* 絵文字サイズと位置の微調整（OS差吸収） */
+.btn.icon-btn .emoji {
+  font-size: 20px;         /* 18〜22でお好み調整 */
+  line-height: 1;
+  display: block;
+  transform: translateY(1px); /* 絵文字のベースライン補正 */
+}
+
+/* ホバー/フォーカスでわずかにトーンアップ（既存の .btn:hover にも連動） */
+.btn.icon-btn:hover { filter: brightness(1.06); }
+.btn.icon-btn:focus-visible { outline: 2px solid color-mix(in oklab, var(--accent) 50%, transparent); outline-offset: 2px; }
+
+.icon-btn {
+  font-size: 18px;           /* 他のボタンと高さを合わせる */
+  line-height: 1;            /* 絵文字の縦ズレを防ぐ */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 32px; /* クリック領域を十分に */
+  border-radius: 8px;
+}
+
+/* hover で色だけ変える（発光なし） */
+.icon-btn:hover { background: var(--card-subtle); }
+
+/* 比較コントロール */
+.compare-controls { display: flex; align-items: center; gap: 8px; margin: 6px 0 8px; }
+.compare-controls select { padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); }
+.btn.xs { padding: 4px 8px; font-size: 12px; border-radius: 8px; }
+
+/* 結果ヘッダ右側：比較UI */
+.actions-inline { display: flex; align-items: center; gap: 8px; }
+.actions-inline select {
+  padding: 4px 8px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--fg);
+}
+.btn.xs { padding: 4px 8px; font-size: 12px; border-radius: 8px; }
+
+/* A/Bバッジ（A=現在, B=比較） */
+.badgeA, .badgeB {
+  border: 1px solid var(--border); border-radius: 999px; padding: 0 8px; font-size: 12px;
+  background: var(--card-subtle);
+}
+.badgeA { border-color: color-mix(in oklab, var(--normal) 45%, var(--border)); }
+.badgeB { border-color: color-mix(in oklab, var(--avg) 45%, var(--border)); }
+
+/* ラベルを色チップ化（旧凡例の見た目を踏襲） */
+.chip { border-radius: 999px; padding: 2px 8px; font-size: 12px; border: 1px solid var(--border); }
+.chip-normal { background: color-mix(in oklab, var(--normal) 35%, transparent); }
+.chip-avg    { background: color-mix(in oklab, var(--avg) 35%, transparent); }
+.chip-crit   { background: color-mix(in oklab, var(--crit) 45%, transparent); }
+
+/* B(比較)バー：奥にストライプ */
+.barB { z-index: 0; opacity: .60; filter: none; }
+.bar  { z-index: 1; }  /* A（現状） */
+.barB-normal {
+  left: 0;
+  background:
+    repeating-linear-gradient(45deg,
+      color-mix(in oklab, var(--normal) 46%, transparent) 0 10px,
+      transparent 10px 18px),
+    color-mix(in oklab, var(--normal) 24%, transparent);
+}
+.barB-avg {
+  background:
+    repeating-linear-gradient(45deg,
+      color-mix(in oklab, var(--avg) 46%, transparent) 0 10px,
+      transparent 10px 18px),
+    color-mix(in oklab, var(--avg) 24%, transparent);
+}
+.barB-crit {
+  background:
+    repeating-linear-gradient(45deg,
+      color-mix(in oklab, var(--crit) 46%, transparent) 0 10px,
+      transparent 10px 18px),
+    color-mix(in oklab, var(--crit) 24%, transparent);
+}
+
+/* 劣位（比較先 < 比較元）を示すオーバーレイ：クロスハッチ＋ダッシュ枠 */
+.barDef {
+  /* 位置づけは既存どおり（.bar と同じ absolute 想定） */
+  z-index: 2;
+  pointer-events: none;
+  filter: none;
+
+  /* 色：必要なら :root に --deficit を用意してもOK */
+  --def-color: var(--deficit, #d93025);
+
+  /* クロスハッチ（×）— 2方向のストライプを重ねる */
+  background:
+    repeating-linear-gradient(135deg,
+      color-mix(in oklab, var(--def-color) 40%, transparent) 0 10px,
+      transparent 10px 18px),
+    repeating-linear-gradient(45deg,
+      color-mix(in oklab, var(--def-color) 26%, transparent) 0 10px,
+      transparent 10px 18px);
+
+  opacity: .9; /* ほんのり強めに */
+}
+
+/* 破線のアウトライン（差分領域を“囲う”） */
+.barDef::after {
+  content: "";
+  position: absolute;
+  inset: 0;                    /* オーバーレイ領域にぴったり */
+  border: 2px dashed color-mix(in oklab, var(--def-color) 85%, transparent);
+  border-radius: inherit;      /* .bar から角丸を継承（なければ8px程度でもOK） */
+}
+
+/* しきい値未満のときは完全非表示（髪の毛ライン対策） */
+.barDef.is-zero,
+.barDef.is-zero::after {
+  display: none !important;
+}
+
+/* 差分チップ（既存） */
+.delta-chip { margin-left: 8px; border-radius: 999px; padding: 0 6px; font-size: 12px; border: 1px solid var(--border); }
+.delta-pos  { color: #0f9d58; border-color: #0f9d58; background: color-mix(in oklab, #0f9d58 12%, transparent); }
+.delta-neg  { color: #d93025; border-color: #d93025; background: color-mix(in oklab, #d93025 12%, transparent); }
+.delta-zero { color: var(--muted); }
+
+/* 比較セレクトが極小化されないよう最低幅を確保 */
+.actions-inline select { min-width: 140px; }
+
+/* “（比較なし）”っぽく見せる（任意） */
+.actions-inline select option[value=""] { color: var(--muted); }
+
+/* バッジの縦ズレ対策：ベースライン揃え＋1行高で統一 */
+.badge-btn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+/* 中の要素は行高を揃える */
+.badge-btn .label-full,
+.badge-btn .label-short,
+.badge-btn .name {
+  line-height: 1;
+}
+
+/* バッジとボタンの縦揃えブレをさらに抑える */
+.actions-inline { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.badge-btn { display:inline-flex; align-items:baseline; gap:6px; cursor:pointer; user-select:none; }
+.badge-btn .label-full, .badge-btn .label-short, .badge-btn .name { line-height:1; }
+.badge-btn .name { transform: translateY(0.5px); }
+
+/* 既存：名前の省略表示 */
+.badgeA .name, .badgeB .name {
+  display: inline-block;
+  max-width: 34vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ヘッダ右のアクション群 */
+.actions-inline { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+
+/* ラベルは狭いとき短縮表示（A:/B:） */
+.label-short { display:none; }
+@media (max-width: 420px) {
+  .label-full { display:none; }
+  .label-short { display:inline; }
+/* 縦狭(iPhone)では select を隠し、ピッカー中心に */
+  #compareSelect { display:none; }
+  .actions-inline { gap:6px; }
+  .badgeA .name, .badgeB .name { max-width: 40vw; }
+}
+
+/* Bが未選択のとき薄め表示（でもタップ可能） */
+.badgeB.empty { opacity: .7; }
+
+/* ボトムシート（iOSに馴染むUI） */
+dialog.sheet { border:none; padding:0; width:100%; max-width:100%; inset:auto 0 0 0; border-radius:16px 16px 0 0; }
+dialog.sheet::backdrop { background: rgba(0,0,0,.35); }
+.sheet-inner { background: var(--card); color: var(--fg); padding:12px; max-height: 65vh; overflow:auto; border-radius:16px 16px 0 0; }
+.sheet-handle { width:44px; height:4px; background: var(--border); border-radius:2px; margin:6px auto 8px; opacity:.8; }
+
+#cmpSearch { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--fg); }
+#cmpList { list-style:none; padding:0; margin:8px 0 0; }
+#cmpList li { margin:0; }
+#cmpList li button {
+  width:100%; text-align:left; padding:10px 12px; border:1px solid var(--border);
+  border-radius:10px; background:var(--card-subtle); color:var(--fg);
+}
+#cmpList li + li button { margin-top:6px; }
+
+/* シートは常に下端に密着。安全域を考慮しつつGPUピン止め */
+dialog.sheet[open]{
+  position: fixed;
+  left: 0; right: 0; bottom: 0; top: auto;
+  margin: 0;
+  z-index: 1000;
+  transform: translateZ(0);      /* ピン止め */
+  will-change: transform;
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px); /* iOSの下部安全域 */
+}
+
+/* 手動バックドロップ */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(2px) brightness(.8);
+  z-index: 999;
+}
+
+/* iOSのsticky崩れリセット用 微小変換（JSで一瞬付け外し） */
+.results.reflow { transform: translateZ(0.1px); }
+
+/* iOSの自動ズーム対策：検索欄は常に16px以上 */
+#cmpSearch { font-size: var(--input-fz); line-height: 1.2; }
+
+/* さらに保険（小さい画面では強制16px） */
+@media (max-width: 430px) {
+  #cmpSearch { font-size: 16px; }
+}
+
+/* 既存: シート内入力の見た目 */
+#cmpSearch {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.badge-link {
+  margin-left: 6px;
+  font-size: 12px;           /* 小ぶりに */
+  line-height: 1;
+  opacity: .9;
+}
+.badgeA .badge-link { color: var(--accent); }
+.badgeB .badge-link { color: var(--accent); }
+
+/* iPhone等・縦狭画面で結果行の縦幅を節約 */
+@media (max-width: 430px) and (orientation: portrait) {
+  /* 行の内側余白を詰める */
+  .results-values > div {
+    padding-block: 2px;
+  }
+  /* テキストの行間を詰める */
+  .results-values > div span,
+  .results-values > div strong,
+  .results-values > div .delta-chip {
+    line-height: 1.05;
+  }
+  /* 行間（要素間ギャップ）があるレイアウトのための保険 */
+  .results-values { gap: 4px !important; }
+  /* 差分チップも少しだけ詰める */
+  .results-values .delta-chip {
+    margin-left: 6px;
+    padding: 0 6px;
+    font-size: 11.5px;
+  }
+}
+
+/* 既定：横一列のまま */
+.app-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap; /* 折返し許可（狭い時の見切れ防止） */
+}
+.app-header h1 { margin: 0; }
+
+/* iPhoneなど縦狭画面：タイトルとアイコンを別段にして中央揃え */
+@media (max-width: 430px) and (orientation: portrait) {
+  .app-header-row {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .app-header h1 {
+    width: 100%;
+    text-align: center;
+    /* 長いタイトルも1行で見切れずにエリプシスにしたいなら下2行を有効化
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    */
+  }
+  .app-header .header-actions {
+    width: 100%;
+    justify-content: center; /* アイコン行を中央に */
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* ボタンを一回り小さく（特異性で40px指定を上書き） */
+  .app-header .header-actions .btn.icon-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+    border-radius: 8px;
+  }
+}
+
+/* マウス(ホバー可能)のときだけ :hover を効かせる */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover,
+  .icon-btn:hover {
+    background: var(--card-subtle); /* 既存のホバー色に合わせてOK */
+  }
+}
+
+/* タッチ(ホバー不可)では :hover を無効化し、押下時は :active で一瞬だけ色替え */
+@media (hover: none) and (pointer: coarse) {
+  .btn:hover,
+  .icon-btn:hover {
+    background: transparent !important; /* ホバー無効化 */
+  }
+  .btn:active,
+  .icon-btn:active {
+    background: var(--card-subtle);
+    transition: none; /* 残像防止 */
+  }
+}
+.guide-spotlight {
+  position: fixed;
+  border: 3px solid var(--accent);
+  border-radius: 20px;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 35%, transparent), 0 12px 28px rgba(0,0,0,.45);
+  pointer-events: none;
+  z-index: 1850;
+  transition: top .2s ease, left .2s ease, width .2s ease, height .2s ease, opacity .2s ease;
+  opacity: 0;
+}
+.guide-spotlight.show { opacity: 1; }
+.guide-highlight { position: relative; }

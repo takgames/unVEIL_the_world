@@ -1,1 +1,455 @@
+<!doctype html>
+<html lang="ja" data-theme="light">
+  <script>
+    (function () {
+      var t = localStorage.getItem('uvt-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
 
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>(非公式) unVEIL the world ダメージシミュレーター</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+
+  <body>
+    <header class="app-header container">
+      <div class="row space-between align-center app-header-row">
+        <h1>unVEIL the world ダメージシミュレーター</h1>
+        <div class="header-actions">
+          <button id="resetBtn" class="btn icon-btn danger" aria-label="リセット" title="リセット">
+            <span class="emoji">↺</span>
+          </button>
+          <button id="shareBtn" class="btn icon-btn" aria-label="共有" title="共有URL">
+            <span class="emoji">📤</span>
+          </button>
+          <button id="themeBtn" class="btn icon-btn" aria-label="テーマ切替" title="ライト/ダーク切替">
+            <span class="emoji">🌓</span>
+          </button>
+          <button id="helpBtn" class="btn icon-btn" aria-label="ヘルプ" title="ヘルプ / 計算式">
+            <span class="emoji">❔</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div id="validationBox" class="container alert warning" role="status" aria-live="polite" hidden>
+      <div class="alert-title">入力の確認</div>
+      <ul id="validationList"></ul>
+    </div>
+
+    <main class="container main-grid" id="appRoot" tabindex="-1">
+      <details id="grpMode" class="card mode-card" open>
+        <summary>入力モード<span class="g-hint"></span></summary>
+        <div class="card-body">
+          <div class="mode-head row space-between align-center">
+            <strong>入力モード</strong>
+            <span id="modeBadge" class="chip mode-chip">装備モード</span>
+          </div>
+          <div id="modeSwitcher" class="mode-switch" role="radiogroup" aria-label="入力モード">
+            <button type="button" class="mode-btn" data-mode="simple">簡易</button>
+            <button type="button" class="mode-btn" data-mode="standard">標準</button>
+            <button type="button" class="mode-btn is-active" data-mode="gear">装備</button>
+          </div>
+          <p id="modeDesc" class="mode-desc muted small">装備を個別に入力して計算します。</p>
+        </div>
+      </details>
+
+      <!-- プリセット -->
+      <details id="grpPreset" class="card" aria-labelledby="lblPreset">
+        <summary id="lblPreset">プリセット</summary>
+        <div class="card-body grid gap">
+          <div class="grid two-cols">
+            <label class="stack">
+              <span>プリセット名</span>
+              <input id="presetName" type="text" placeholder="例) アタッカー汎用" />
+            </label>
+            <label class="stack">
+              <span>プリセット一覧</span>
+              <select id="presetSelect"></select>
+            </label>
+          </div>
+          <div class="row wrap gap">
+            <button id="savePreset" class="btn">保存/上書き</button>
+            <button id="renamePreset" class="btn">名前変更</button>
+            <button id="deletePreset" class="btn danger">削除</button>
+          </div>
+        </div>
+      </details>
+
+      <!-- ステータス -->
+      <details id="grpStatus" class="card" open>
+        <summary>ステータス</summary>
+        <div class="card-body grid two-cols gap status-grid">
+          <label class="stack mode-only mode-only-simple key-field key-atk">
+            <span>最終攻撃力 <span class="hint-chip" title="攻撃力アップ%を反映した後の値">攻UP適用後</span></span>
+            <input type="number" id="finalAtkInput" min="0" step="1" />
+          </label>
+          <label class="stack mode-only mode-only-standard key-field key-atk"><span>攻撃力</span><input type="number" id="preAtkInput" min="0" step="1" /></label>
+          <label class="stack mode-only mode-only-gear key-field key-atk"><span>基礎攻撃力</span><input type="number" id="baseAtk" min="0" step="1" /></label>
+          <label class="stack mode-only mode-only-gear key-field key-atk"><span>補正攻撃力</span><input type="number" id="bonusAtk" min="0" step="1" value="0" /></label>
+          <label class="stack mode-only mode-only-simple key-field key-crit"><span>最終会心率 %</span><input type="number" id="simpleCritRate" min="0" max="100" step="0.1" /></label>
+          <label class="stack mode-only mode-only-simple key-field key-critdmg"><span>最終会心ダメージ %</span><input type="number" id="simpleCritDmg" min="0" step="0.1" /></label>
+          <label class="stack mode-only mode-only-simple key-field key-elem"><span>最終属性ダメージ %</span><input type="number" id="simpleElemDmgPct" min="0" step="0.1" /></label>
+          <label class="stack mode-hide-simple key-field key-crit"><span>会心率 %</span><input type="number" id="critRate" min="0" max="100" step="0.1" /></label>
+          <label class="stack mode-hide-simple key-field key-critdmg"><span>会心ダメージ %</span><input type="number" id="critDmg" min="0" step="0.1" /></label>
+          <label class="stack mode-hide-simple key-field key-elem"><span>属性ダメージ %</span><input type="number" id="elemDmgPct" min="0" step="0.1" /></label>
+        </div>
+      </details>
+
+      <!-- 装備 -->
+      <details id="grpEquip" class="card">
+        <summary>装備</summary>
+        <div class="card-body grid gap">
+          <div class="equip-grid">
+            <!-- グローブ -->
+            <fieldset class="equip-card"><legend>グローブ</legend>
+              <div class="grid two-cols gap">
+                <label class="stack"><span>メイン (攻撃力)</span><input type="number" data-main-type="atk" data-slot="glove" class="mainVal" min="0" step="1"></label>
+                <div></div>
+              </div>
+              <div class="subgrid">
+                <label class="stack"><span>サブ 攻撃力</span><input type="number" data-sub="atk" data-slot="glove" min="0" step="1"></label>
+                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="number" data-sub="atkPct" data-slot="glove" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心率 %</span><input type="number" data-sub="critRate" data-slot="glove" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心ダメージ %</span><input type="number" data-sub="critDmg" data-slot="glove" min="0" step="0.1"></label>
+              </div>
+            </fieldset>
+
+            <!-- 服 -->
+            <fieldset class="equip-card"><legend>服</legend>
+              <div class="grid two-cols gap">
+                <label class="stack"><span>メイン (その他)</span><input type="number" data-main-type="other" data-slot="armor" class="mainVal" min="0" step="1" placeholder="—"></label>
+                <div></div>
+              </div>
+              <div class="subgrid">
+                <label class="stack"><span>サブ 攻撃力</span><input type="number" data-sub="atk" data-slot="armor" min="0" step="1"></label>
+                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="number" data-sub="atkPct" data-slot="armor" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心率 %</span><input type="number" data-sub="critRate" data-slot="armor" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心ダメージ %</span><input type="number" data-sub="critDmg" data-slot="armor" min="0" step="0.1"></label>
+              </div>
+            </fieldset>
+
+            <!-- 紋章 -->
+            <fieldset class="equip-card"><legend>紋章</legend>
+              <div class="grid two-cols gap">
+                <label class="stack">
+                  <span>メイン 種類</span>
+                  <select data-slot="emblem" class="mainType">
+                    <option value="atk">攻撃力</option>
+                    <option value="atkPct">攻撃力補正 %</option>
+                    <option value="elemDmgPct">属性ダメージ %</option>
+                    <option value="other">その他</option>
+                  </select>
+                </label>
+                <label class="stack"><span>メイン 値</span><input type="number" data-slot="emblem" class="mainVal" min="0" step="0.1" placeholder="—"></label>
+              </div>
+              <div class="subgrid">
+                <label class="stack"><span>サブ 攻撃力</span><input type="number" data-sub="atk" data-slot="emblem" min="0" step="1"></label>
+                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="number" data-sub="atkPct" data-slot="emblem" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心率 %</span><input type="number" data-sub="critRate" data-slot="emblem" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心ダメージ %</span><input type="number" data-sub="critDmg" data-slot="emblem" min="0" step="0.1"></label>
+              </div>
+            </fieldset>
+
+            <!-- 指輪 -->
+            <fieldset class="equip-card"><legend>指輪</legend>
+              <div class="grid two-cols gap">
+                <label class="stack">
+                  <span>メイン 種類</span>
+                  <select data-slot="ring" class="mainType">
+                    <option value="atk">攻撃力</option>
+                    <option value="atkPct">攻撃力補正 %</option>
+                    <option value="critRate">会心率 %</option>
+                    <option value="critDmg">会心ダメージ %</option>
+                    <option value="other">その他</option>
+                  </select>
+                </label>
+                <label class="stack"><span>メイン 値</span><input type="number" data-slot="ring" class="mainVal" min="0" step="0.1" placeholder="—"></label>
+              </div>
+              <div class="subgrid">
+                <label class="stack"><span>サブ 攻撃力</span><input type="number" data-sub="atk" data-slot="ring" min="0" step="1"></label>
+                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="number" data-sub="atkPct" data-slot="ring" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心率 %</span><input type="number" data-sub="critRate" data-slot="ring" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心ダメージ %</span><input type="number" data-sub="critDmg" data-slot="ring" min="0" step="0.1"></label>
+              </div>
+            </fieldset>
+
+            <!-- ブローチ -->
+            <fieldset class="equip-card"><legend>ブローチ</legend>
+              <div class="grid two-cols gap">
+                <label class="stack">
+                  <span>メイン 種類</span>
+                  <select data-slot="brooch" class="mainType">
+                    <option value="atk">攻撃力</option>
+                    <option value="atkPct">攻撃力補正 %</option>
+                    <option value="critDmg">会心ダメージ %</option>
+                    <option value="other">その他</option>
+                  </select>
+                </label>
+                <label class="stack"><span>メイン 値</span><input type="number" data-slot="brooch" class="mainVal" min="0" step="0.1" placeholder="—"></label>
+              </div>
+              <div class="subgrid">
+                <label class="stack"><span>サブ 攻撃力</span><input type="number" data-sub="atk" data-slot="brooch" min="0" step="1"></label>
+                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="number" data-sub="atkPct" data-slot="brooch" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心率 %</span><input type="number" data-sub="critRate" data-slot="brooch" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心ダメージ %</span><input type="number" data-sub="critDmg" data-slot="brooch" min="0" step="0.1"></label>
+              </div>
+            </fieldset>
+          </div>
+
+          <!-- 合計 -->
+          <div class="totals card subtle">
+            <div class="totals-row"><span>装備 攻撃力 合計</span><output id="sumEquipAtk">0</output></div>
+            <div class="totals-row"><span>装備 攻撃力補正 % 合計</span><output id="sumEquipAtkPct">0</output></div>
+            <div class="totals-row"><span>装備 会心率 % 合計</span><output id="sumEquipCritRate">0</output></div>
+            <div class="totals-row"><span>装備 会心ダメージ % 合計</span><output id="sumEquipCritDmg">0</output></div>
+            <div class="totals-row"><span>装備 属性ダメージ % 合計</span><output id="sumEquipElemDmgPct">0</output></div>
+          </div>
+        </div>
+      </details>
+
+      <!-- スキル -->
+      <details id="grpSkill" class="card" open>
+        <summary>スキル</summary>
+        <div class="card-body grid two-cols gap">
+          <label class="stack"><span>スキル攻撃 %</span><input type="number" id="skillPct" min="0" step="0.1" /></label>
+          <label class="stack"><span>スキル固定値</span><input type="number" id="skillFlat" min="0" step="1" value="0" /></label>
+        </div>
+      </details>
+
+      <!-- 戦闘中効果 -->
+      <details id="grpBattle" class="card" open>
+        <summary>戦闘中効果</summary>
+        <div class="card-body grid two-cols gap">
+          <label class="stack mode-hide-simple"><span>攻撃力アップ %</span><input type="number" id="atkUpPct" min="0" step="0.1" value="0" /></label>
+          <label class="stack"><span>ダメージアップ %</span><input type="number" id="dmgUpPct" min="0" step="0.1" value="0" /></label>
+          <label class="stack"><span>カードダメージアップ %</span><input type="number" id="cardDmgUpPct" min="0" step="0.1" value="0" /></label>
+          <label class="stack mode-hide-simple"><span>会心率アップ %</span><input type="number" id="critRateUpPct" min="0" step="0.1" value="0" /></label>
+          <label class="stack mode-hide-simple"><span>会心ダメージアップ %</span><input type="number" id="critDmgUpPct" min="0" step="0.1" value="0" /></label>
+          <label class="stack mode-hide-simple"><span>属性ダメージアップ %</span><input type="number" id="elemDmgUpPct" min="0" step="0.1" value="0" /></label>
+        </div>
+      </details>
+
+      <!-- 敵の詳細 -->
+      <details id="grpEnemy" class="card" open>
+        <summary>敵の詳細</summary>
+        <div class="card-body grid two-cols gap">
+          <label class="stack"><span>防御力</span><input type="number" id="enemyDef" min="0" step="1" value="0" /></label>
+          <label class="stack"><span>属性相性</span>
+            <select id="affinity">
+              <option value="none">なし</option>
+              <option value="adv">有利</option>
+              <option value="dis">不利</option>
+            </select>
+          </label>
+          <label class="row align-center gap-sm checkbox-inline"><input type="checkbox" id="isBreak" /> <span>ブレイク状態</span></label>
+        </div>
+      </details>
+
+      <!-- 計算の内訳 -->
+      <details id="grpBreakdown" class="card">
+        <summary>計算の内訳</summary>
+        <div class="card-body">
+          <div class="breakdown-grid">
+            <div><span title="Σ装備攻撃力 + 基礎攻撃力 × (Σ装備攻撃力補正%/100)">装備補正攻撃力</span><strong id="outEquipAdjAtk">0</strong></div>
+            <div><span title="基礎+補正+装備補正（モードにより直接入力）">戦闘前攻撃力</span><strong id="outPreAtk">0</strong></div>
+            <div><span title="会心率（装備＋戦闘中バフ、上限100%）">最終会心率%</span><strong id="outPreCritRate">0</strong></div>
+            <div><span title="会心ダメ（装備＋戦闘中バフ）">最終会心ダメ%</span><strong id="outPreCritDmg">0</strong></div>
+            <div><span title="(基礎+補正+装備補正) × (1+攻撃力アップ%)">最終攻撃力</span><strong id="outFinalAtk">0</strong></div>
+            <div><span title="最終攻撃力 × (スキル%)">スキル倍率適用後</span><strong id="outAfterSkillMult">0</strong></div>
+            <div><span title="(上記) + スキル固定値">スキル固定値加算後</span><strong id="outAfterSkillAdd">0</strong></div>
+            <div><span title="(上記) × (1+ダメージアップ%)">ダメージUP適用後</span><strong id="outAfterDmgUp">0</strong></div>
+            <div><span title="(上記) × (1+カードダメージアップ%)">カードダメUP適用後</span><strong id="outAfterCardUp">0</strong></div>
+            <div><span title="属性ダメ%（ステータス+戦闘中+装備）合算">最終属性ダメ%</span><strong id="outAllElemPct">0</strong></div>
+            <div><span title="(上記) × (1+属性ダメ合算%)">属性ダメ適用後</span><strong id="outAfterElemUp">0</strong></div>
+            <div><span title="有利1.25/不利0.85/なし1.00">属性相性倍率</span><strong id="outAffinity">1.00</strong></div>
+            <div><span title="(上記) × 属性相性">属性相性適用後</span><strong id="outAfterAffinity">0</strong></div>
+            <div><span title="ブレイク時1.3/通常1.0">ブレイク倍率</span><strong id="outBreak">1.00</strong></div>
+            <div><span title="(上記) × ブレイク倍率">ブレイク適用後</span><strong id="outAfterBreak">0</strong></div>
+            <div><span title="exp(-0.001058×防御 + 0.000000715×防御^2)">防御係数</span><strong id="outDefCoeff">1.0000</strong></div>
+            <div><span title="(上記) × 防御係数">防御適用後</span><strong id="outAfterDefense">0</strong></div>
+          </div>
+        </div>
+      </details>
+    </main>
+
+    <!-- 結果 (常時 下部表示) -->
+    <section class="results" aria-live="polite">
+      <div class="container results-inner">
+        <div class="results-head row space-between align-center">
+          <strong>結果</strong>
+          <div class="actions-inline">
+            <span id="badgeA" class="badgeA badge-btn" role="button" tabindex="0" aria-label="比較元">
+              <span class="label-full">比較元:</span><span class="label-short">元:</span>
+              <span id="badgeAName" class="name">現在</span>
+              <span id="linkChipA" class="badge-link" title="この側が入力とリンク中" hidden>🔗</span>
+            </span>
+
+            <!-- 入替ボタンをバッジの間へ -->
+            <button id="compareSwap" class="btn xs" type="button" title="入替">↔︎</button>
+
+            <span id="badgeB" class="badgeB badge-btn" role="button" tabindex="0" aria-label="比較先">
+              <span class="label-full">比較先:</span><span class="label-short">先:</span>
+              <span id="badgeBName" class="name">なし</span>
+              <span id="linkChipB" class="badge-link" title="この側が入力とリンク中" hidden>🔗</span>
+            </span>
+
+            <!-- 広い画面では <select> も併用、縦狭ではピッカーを使う -->
+            <select id="compareSelect" title="比較先を選択"></select>
+            <button id="compareClear" class="btn xs" type="button" title="解除">×</button>
+            <button id="compareSave"  class="btn xs" type="button" title="比較先を保存" hidden>保存</button>
+          </div>
+        </div>
+        <div class="chart" role="img" aria-label="ダメージチャート">
+          <!-- 奥側：B（比較）ストライプ -->
+          <div id="barBNormal" class="bar barB barB-normal"></div>
+          <div id="barBAvg"    class="bar barB barB-avg"></div>
+          <div id="barBCrit"   class="bar barB barB-crit"></div>
+
+          <!-- 手前：A（現状）既存の3本がこの後に来る -->
+          <div id="barNormal"  class="bar bar-normal"></div>
+          <div id="barAvg"     class="bar bar-avg"></div>
+          <div id="barCrit"    class="bar bar-crit"></div>
+
+          <!-- 最前面：A>B のとき差分を“赤ストライプ”で可視化 -->
+          <div id="barDefNormal" class="bar barDef barDef-normal"></div>
+          <div id="barDefAvg"    class="bar barDef barDef-avg"></div>
+          <div id="barDefCrit"   class="bar barDef barDef-crit"></div>
+        </div>
+        <div class="results-values">
+          <div>
+            <span class="chip chip-normal">通常</span>
+            <strong id="outNormal"></strong>
+            <span id="deltaNormal" class="delta-chip" hidden></span>
+          </div>
+          <div>
+            <span class="chip chip-avg">平均</span>
+            <strong id="outAverage"></strong>
+            <span id="deltaAverage" class="delta-chip" hidden></span>
+          </div>
+          <div>
+            <span class="chip chip-crit">会心</span>
+            <strong id="outCrit"></strong>
+            <span id="deltaCrit" class="delta-chip" hidden></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="app-footer container">
+      <div>©2025 Tak</div>
+      <div class="muted small">本シミュレーターは実測検証に基づいた近似値の推測を目的としているため、実際のゲームプレイにおける結果と一致することを保証するものではありません。</div>
+    </footer>
+
+    <!-- トースト -->
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <!-- 共有ダイアログ（2ボタン方式） -->
+    <dialog id="shareDialog" aria-labelledby="shareTitle" tabindex="-1">
+      <div class="dialog-card">
+        <h3 id="shareTitle">共有URLをコピー</h3>
+        <p class="muted small">コピー形式を選んでください</p>
+        <div class="row gap">
+          <button id="copyUrl" type="button" class="btn primary">📋 URLそのまま</button>
+          <button id="copyMd"  type="button" class="btn">📝 Markdown</button>
+          <button id="closeShare" type="button" class="btn">閉じる</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- ヘルプダイアログ -->
+    <dialog id="helpDialog" aria-labelledby="helpTitle" tabindex="-1">
+      <div class="dialog-card help-card" style="max-height:min(70vh,640px); overflow:auto">
+        <h3 id="helpTitle">ヘルプ</h3>
+        <p class="muted small">基本的な操作方法と便利な機能のまとめ</p>
+
+        <section class="help-section">
+          <h4>1. ヘッダーボタン</h4>
+          <ul>
+            <li><strong>↺ リセット:</strong> すべての入力内容を初期値へ戻します。</li>
+            <li><strong>📤 共有:</strong> 現在の状態をURLまたはMarkdown形式(Discordなど向け)でコピーできます。</li>
+            <li><strong>🌓 テーマ:</strong> 全体の色合いをライト/ダークで切り替えます。</li>
+            <li><strong>❔ ヘルプ:</strong> このダイアログです。下部のボタンからインストラクションを再生できます。</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h4>2. 入力モード</h4>
+          <ul>
+            <li><strong>簡易:</strong> 戦闘中のステータスを直接入力します。</li>
+            <li><strong>標準:</strong> 戦闘前のステータスを入力し、戦闘中バフを明確にします。</li>
+            <li><strong>装備:</strong> 基礎/補正/装備を細かく入力し、装備の比較を可能にします。</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h4>3. プリセット・比較・共有</h4>
+          <ul>
+            <li>プリセット名を入力し「保存/上書き」で現在のビルドを保存できます。</li>
+            <li>「名前変更」は選択中のプリセット名を変更します。</li>
+            <li>結果欄の比較バッジから比較元/比較先を選択し、↔︎で役割を入れ替えできます。</li>
+            <li>共有ボタンで作成したURLには入力した値と比較設定が含まれます。</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h4>4. 結果と差分</h4>
+          <ul>
+            <li>結果は入力値に従って自動で更新されます。</li>
+            <li>通常/平均/会心の右に差分チップが表示され、プラスは緑、マイナスは赤で視覚化されます。</li>
+            <li>比較バッジの×ボタンで比較を解除、保存ボタンで一時比較をプリセット化できます。</li>
+          </ul>
+        </section>
+
+        <div class="row gap help-actions">
+          <button id="replayGuide" type="button" class="btn primary">インストラクションを開始</button>
+          <button id="closeHelp" type="button" class="btn">閉じる</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- 比較先ピッカー（iPhone縦向けのボトムシート） -->
+    <dialog id="comparePicker" class="sheet" aria-labelledby="cmpTitle">
+      <div class="sheet-inner">
+        <div class="sheet-handle"></div>
+        <h3 id="cmpTitle">比較先を選択</h3>
+        <input
+          id="cmpSearch"
+          class="input"
+          type="search"
+          placeholder="🔎 プリセットを検索"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+          inputmode="search"
+        />
+        <ul id="cmpList" class="list"></ul>
+        <div class="row gap" style="margin-top:8px">
+          <button id="cmpClear" class="btn xs">比較なし</button>
+          <button id="cmpClose" class="btn xs">閉じる</button>
+        </div>
+      </div>
+    </dialog>
+
+    <div id="cmpBackdrop" class="sheet-backdrop" hidden></div>
+
+    <div id="guideOverlay" class="guide-overlay" hidden tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="guideStepTitle">
+      <div class="guide-card">
+        <p id="guideStepProgress" class="guide-progress">STEP 1/4</p>
+        <h3 id="guideStepTitle">ようこそ</h3>
+        <p id="guideStepBody">ガイド本文</p>
+        <div class="row space-between guide-actions">
+          <button id="guideSkip" class="btn subtle" type="button">スキップ</button>
+          <button id="guideNext" class="btn primary" type="button">次へ</button>
+        </div>
+      </div>
+    </div>
+    <div id="guideSpotlight" class="guide-spotlight" hidden aria-hidden="true"></div>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+    <script defer src="app.js"></script>
+  </body>
+</html>
