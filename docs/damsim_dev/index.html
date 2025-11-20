@@ -85,10 +85,12 @@
           <label class="stack mode-only mode-only-standard"><span>攻撃力</span><input type="number" id="preAtkInput" min="0" step="1" /></label>
           <label class="stack mode-only mode-only-gear"><span>基礎攻撃力</span><input type="number" id="baseAtk" min="0" step="1" /></label>
           <label class="stack mode-only mode-only-gear"><span>補正攻撃力</span><input type="number" id="bonusAtk" min="0" step="1" value="0" /></label>
-          <label class="stack mode-only mode-only-simple"><span>会心率 %</span><input type="number" id="simpleCritRate" min="0" max="100" step="0.1" /></label>
-          <label class="stack mode-only mode-only-simple"><span>会心ダメージ %</span><input type="number" id="simpleCritDmg" min="0" step="0.1" /></label>
+          <label class="stack mode-only mode-only-simple"><span>最終会心率 %</span><input type="number" id="simpleCritRate" min="0" max="100" step="0.1" /></label>
+          <label class="stack mode-only mode-only-simple"><span>最終会心ダメージ %</span><input type="number" id="simpleCritDmg" min="0" step="0.1" /></label>
+          <label class="stack mode-only mode-only-simple"><span>最終属性ダメージ %</span><input type="number" id="simpleElemDmgPct" min="0" step="0.1" /></label>
           <label class="stack mode-hide-simple"><span>会心率 %</span><input type="number" id="critRate" min="0" max="100" step="0.1" /></label>
           <label class="stack mode-hide-simple"><span>会心ダメージ %</span><input type="number" id="critDmg" min="0" step="0.1" /></label>
+          <label class="stack mode-hide-simple"><span>属性ダメージ %</span><input type="number" id="elemDmgPct" min="0" step="0.1" /></label>
         </div>
       </details>
 
@@ -220,7 +222,9 @@
           <label class="stack mode-hide-simple"><span>攻撃力アップ %</span><input type="number" id="atkUpPct" min="0" step="0.1" value="0" /></label>
           <label class="stack"><span>ダメージアップ %</span><input type="number" id="dmgUpPct" min="0" step="0.1" value="0" /></label>
           <label class="stack"><span>カードダメージアップ %</span><input type="number" id="cardDmgUpPct" min="0" step="0.1" value="0" /></label>
-          <label class="stack"><span>属性ダメージアップ %</span><input type="number" id="elemDmgUpPct" min="0" step="0.1" value="0" /></label>
+          <label class="stack mode-hide-simple"><span>会心率アップ %</span><input type="number" id="critRateUpPct" min="0" step="0.1" value="0" /></label>
+          <label class="stack mode-hide-simple"><span>会心ダメージアップ %</span><input type="number" id="critDmgUpPct" min="0" step="0.1" value="0" /></label>
+          <label class="stack mode-hide-simple"><span>属性ダメージアップ %</span><input type="number" id="elemDmgUpPct" min="0" step="0.1" value="0" /></label>
         </div>
       </details>
 
@@ -247,14 +251,14 @@
           <div class="breakdown-grid">
             <div><span title="Σ装備攻撃力 + 基礎攻撃力 × (Σ装備攻撃力補正%/100)">装備補正攻撃力</span><strong id="outEquipAdjAtk">0</strong></div>
             <div><span title="基礎+補正+装備補正（モードにより直接入力）">戦闘前攻撃力</span><strong id="outPreAtk">0</strong></div>
-            <div><span title="会心率（装備込み、上限100%）">戦闘前会心率%</span><strong id="outPreCritRate">0</strong></div>
-            <div><span title="会心ダメ（装備込み）">戦闘前会心ダメ%</span><strong id="outPreCritDmg">0</strong></div>
+            <div><span title="会心率（装備＋戦闘中バフ、上限100%）">最終会心率%</span><strong id="outPreCritRate">0</strong></div>
+            <div><span title="会心ダメ（装備＋戦闘中バフ）">最終会心ダメ%</span><strong id="outPreCritDmg">0</strong></div>
             <div><span title="(基礎+補正+装備補正) × (1+攻撃力アップ%)">最終攻撃力</span><strong id="outFinalAtk">0</strong></div>
             <div><span title="最終攻撃力 × (スキル%)">スキル倍率適用後</span><strong id="outAfterSkillMult">0</strong></div>
             <div><span title="(上記) + スキル固定値">スキル固定値加算後</span><strong id="outAfterSkillAdd">0</strong></div>
             <div><span title="(上記) × (1+ダメージアップ%)">ダメージUP適用後</span><strong id="outAfterDmgUp">0</strong></div>
             <div><span title="(上記) × (1+カードダメージアップ%)">カードダメUP適用後</span><strong id="outAfterCardUp">0</strong></div>
-            <div><span title="属性ダメ%（戦闘中+装備）合算">属性ダメ合算%</span><strong id="outAllElemPct">0</strong></div>
+            <div><span title="属性ダメ%（ステータス+戦闘中+装備）合算">最終属性ダメ%</span><strong id="outAllElemPct">0</strong></div>
             <div><span title="(上記) × (1+属性ダメ合算%)">属性ダメ適用後</span><strong id="outAfterElemUp">0</strong></div>
             <div><span title="有利1.25/不利0.85/なし1.00">属性相性倍率</span><strong id="outAffinity">1.00</strong></div>
             <div><span title="(上記) × 属性相性">属性相性適用後</span><strong id="outAfterAffinity">0</strong></div>

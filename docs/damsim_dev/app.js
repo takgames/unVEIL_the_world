@@ -142,12 +142,14 @@ function updateGroupHints(){
   {
     const el = ensureSummaryHint('grpStatus');
     if (el) {
+      const critStr = `会心${pctStr(r.allCritRate)}/${pctStr(r.allCritDmg)}`;
+      const elemStr = `属性${pctStr(r.allElemPct)}`;
       if (mode === 'simple') {
-        el.textContent = `最終${fmtInt(r.finalAtk)} / 会心${pctStr(s.simpleCritRate||0)}/${pctStr(s.simpleCritDmg||0)}`;
+        el.textContent = `最終${fmtInt(r.finalAtk)} / ${critStr}・${elemStr}`;
       } else if (mode === 'standard') {
-        el.textContent = `攻${fmtInt(s.preAtkInput||0)} / 会心${pctStr(r.allCritRate)}/${pctStr(r.allCritDmg)}`;
+        el.textContent = `攻${fmtInt(s.preAtkInput||0)} / ${critStr}・${elemStr}`;
       } else {
-        el.textContent = `基礎${s.baseAtk||0} / 会心${pctStr(s.critRate||0)}/${pctStr(s.critDmg||0)}`;
+        el.textContent = `基礎${s.baseAtk||0} / ${critStr}・${elemStr}`;
       }
     }
   }
@@ -191,7 +193,9 @@ function updateGroupHints(){
         '攻%': mode === 'simple' ? 0 : (s.atkUpPct||0),
         '与%': s.dmgUpPct||0,
         'C与%': s.cardDmgUpPct||0,
-        '属%': s.elemDmgUpPct||0,
+        '会%': mode === 'simple' ? 0 : (s.critRateUpPct||0),
+        '会ダメ%': mode === 'simple' ? 0 : (s.critDmgUpPct||0),
+        '属%': mode === 'simple' ? 0 : (s.elemDmgUpPct||0),
       }).map(([k,v]) => `${k}${pctStr(v)}`);
       el.textContent = pairs.length ? pairs.join('・') : '—';
     }
@@ -655,6 +659,7 @@ const DEFAULTS = {
   preAtkInput: 5000,
   simpleCritRate: 20,
   simpleCritDmg: 50,
+  simpleElemDmgPct: 0,
   baseAtk: 5000,
   bonusAtk: 0,
   critRate: 20,
@@ -664,7 +669,10 @@ const DEFAULTS = {
   atkUpPct: 0,
   dmgUpPct: 0,
   cardDmgUpPct: 0,
+  elemDmgPct: 0,
   elemDmgUpPct: 0,
+  critRateUpPct: 0,
+  critDmgUpPct: 0,
   enemyDef: 0,
   affinity: 'none',
   isBreak: false,
@@ -679,7 +687,7 @@ const DEFAULTS = {
 
 const INPUT_MODES = ['simple', 'standard', 'gear'];
 const MODE_META = {
-  simple:   { label: '簡易',   desc: '戦闘中の最終攻撃力と会心値を直接入力します。' },
+  simple:   { label: '簡易',   desc: '戦闘中の最終攻撃力・会心・属性ダメを直接入力します。' },
   standard: { label: '標準',   desc: '装備の補正値を含んだ戦闘前のステータス合計値を入力します。' },
   gear:     { label: '装備',   desc: '基礎/補正/装備値を詳細に入力して計算します。' },
 };
@@ -731,6 +739,13 @@ function normalizeStateShape(raw) {
     : (dest.baseAtk + dest.bonusAtk);
   dest.simpleCritRate = Number.isFinite(raw.simpleCritRate) ? raw.simpleCritRate : dest.critRate;
   dest.simpleCritDmg = Number.isFinite(raw.simpleCritDmg) ? raw.simpleCritDmg : dest.critDmg;
+  dest.elemDmgPct = Number.isFinite(raw.elemDmgPct) ? raw.elemDmgPct : DEFAULTS.elemDmgPct;
+  dest.elemDmgUpPct = Number.isFinite(raw.elemDmgUpPct) ? raw.elemDmgUpPct : DEFAULTS.elemDmgUpPct;
+  dest.critRateUpPct = Number.isFinite(raw.critRateUpPct) ? raw.critRateUpPct : DEFAULTS.critRateUpPct;
+  dest.critDmgUpPct = Number.isFinite(raw.critDmgUpPct) ? raw.critDmgUpPct : DEFAULTS.critDmgUpPct;
+  dest.simpleElemDmgPct = Number.isFinite(raw.simpleElemDmgPct)
+    ? raw.simpleElemDmgPct
+    : (dest.elemDmgPct + dest.elemDmgUpPct);
 
   const slots = ['glove','armor','emblem','ring','brooch'];
   dest.equip = {};
@@ -791,11 +806,15 @@ function bindInputs() {
     ['#bonusAtk', 'bonusAtk'],
     ['#simpleCritRate', 'simpleCritRate'],
     ['#simpleCritDmg', 'simpleCritDmg'],
+    ['#simpleElemDmgPct', 'simpleElemDmgPct'],
     ['#critRate', 'critRate'],
     ['#critDmg', 'critDmg'],
+    ['#elemDmgPct', 'elemDmgPct'],
     ['#skillPct', 'skillPct'],
     ['#skillFlat', 'skillFlat'],
     ['#atkUpPct', 'atkUpPct'],
+    ['#critRateUpPct', 'critRateUpPct'],
+    ['#critDmgUpPct', 'critDmgUpPct'],
     ['#dmgUpPct', 'dmgUpPct'],
     ['#cardDmgUpPct', 'cardDmgUpPct'],
     ['#elemDmgUpPct', 'elemDmgUpPct'],
@@ -888,6 +907,9 @@ function calcAll(s) {
   const useEquipAttack = mode === 'gear';
   const useEquipCrit = mode !== 'simple';
   const useEquipElem = mode !== 'simple';
+  const baseCritRate = s.critRate + (useEquipCrit ? sum.critRate : 0);
+  const baseCritDmg = s.critDmg + (useEquipCrit ? sum.critDmg : 0);
+  const baseElemPct = s.elemDmgPct + (useEquipElem ? sum.elemDmgPct : 0);
 
   const rawEquipAdjAtk = sum.atk + (s.baseAtk * (sum.atkPct / 100));
   const equipAdjUsed = useEquipAttack ? rawEquipAdjAtk : 0;
@@ -911,7 +933,10 @@ function calcAll(s) {
   const defCoeff = Math.exp(-((0.001058 * d) - (0.000000715 * d * d)));
 
   // 属性合算
-  const allElemPct = s.elemDmgUpPct + (useEquipElem ? sum.elemDmgPct : 0);
+  // 簡易モードは“最終値”を直接入力する前提なので、戦闘中バフを二重適用しない
+  const allElemPct = (mode === 'simple')
+    ? readNumber(s.simpleElemDmgPct, baseElemPct)
+    : baseElemPct + s.elemDmgUpPct;
 
   // 中間項
   const afterSkillMult = finalAtk * (s.skillPct / 100);
@@ -926,11 +951,11 @@ function calcAll(s) {
   const normal = Math.floor(afterDefense);
 
   const allCritRate = mode === 'simple'
-    ? clamp(readNumber(s.simpleCritRate, s.critRate), 0, 100)
-    : clamp(s.critRate + (useEquipCrit ? sum.critRate : 0), 0, 100);
+    ? clamp(readNumber(s.simpleCritRate, baseCritRate), 0, 100)
+    : clamp(baseCritRate + s.critRateUpPct, 0, 100);
   const allCritDmg = mode === 'simple'
-    ? readNumber(s.simpleCritDmg, s.critDmg)
-    : s.critDmg + (useEquipCrit ? sum.critDmg : 0);
+    ? readNumber(s.simpleCritDmg, baseCritDmg)
+    : baseCritDmg + s.critDmgUpPct;
 
   const crit = Math.floor(afterDefense * (1 + (allCritDmg / 100)));
   const average = Math.floor(afterDefense * (1 + ((allCritDmg / 100) * (allCritRate / 100))));
@@ -1116,11 +1141,16 @@ function setInputsFromState(s) {
   if (preCritInp) preCritInp.value = s.simpleCritRate;
   const preCritDmgInp = $('#simpleCritDmg');
   if (preCritDmgInp) preCritDmgInp.value = s.simpleCritDmg;
+  const simpleElemInp = $('#simpleElemDmgPct');
+  if (simpleElemInp) simpleElemInp.value = s.simpleElemDmgPct;
   $('#critRate').value = s.critRate;
   $('#critDmg').value = s.critDmg;
+  $('#elemDmgPct').value = s.elemDmgPct;
   $('#skillPct').value = s.skillPct;
   $('#skillFlat').value = s.skillFlat;
   $('#atkUpPct').value = s.atkUpPct;
+  $('#critRateUpPct').value = s.critRateUpPct;
+  $('#critDmgUpPct').value = s.critDmgUpPct;
   $('#dmgUpPct').value = s.dmgUpPct;
   $('#cardDmgUpPct').value = s.cardDmgUpPct;
   $('#elemDmgUpPct').value = s.elemDmgUpPct;
@@ -1174,6 +1204,7 @@ function setInputMode(mode) {
     s.finalAtkInput = Math.max(0, Math.round(snapshot.finalAtk));
     s.simpleCritRate = clamp(snapshot.allCritRate, 0, 100);
     s.simpleCritDmg = snapshot.allCritDmg;
+    s.simpleElemDmgPct = snapshot.allElemPct;
   }
   try { localStorage.setItem(LAST_MODE_KEY, next); } catch {}
   updateModeUI();
@@ -1322,9 +1353,12 @@ function applyQueryParams(qs) {
   getSideState(linkedSide).bonusAtk = getN('bo', 0);
   getSideState(linkedSide).critRate = getN('cr', DEFAULTS.critRate);
   getSideState(linkedSide).critDmg = getN('cd', DEFAULTS.critDmg);
+  getSideState(linkedSide).elemDmgPct = getN('ep', DEFAULTS.elemDmgPct);
   getSideState(linkedSide).skillPct = getN('sp', DEFAULTS.skillPct);
   getSideState(linkedSide).skillFlat = getN('sf', 0);
   getSideState(linkedSide).atkUpPct = getN('au', 0);
+  getSideState(linkedSide).critRateUpPct = getN('cru', 0);
+  getSideState(linkedSide).critDmgUpPct = getN('cdu', 0);
   getSideState(linkedSide).dmgUpPct = getN('du', 0);
   getSideState(linkedSide).cardDmgUpPct = getN('cu', 0);
   getSideState(linkedSide).elemDmgUpPct = getN('eu', 0);
@@ -1346,6 +1380,7 @@ function applyQueryParams(qs) {
   getSideState(linkedSide).finalAtkInput = getN('fa', getSideState(linkedSide).finalAtkInput);
   getSideState(linkedSide).simpleCritRate = getN('scr', getSideState(linkedSide).simpleCritRate);
   getSideState(linkedSide).simpleCritDmg = getN('scd', getSideState(linkedSide).simpleCritDmg);
+  getSideState(linkedSide).simpleElemDmgPct = getN('sep', getSideState(linkedSide).simpleElemDmgPct);
 }
 
 // ====== 折りたたみ状態 永続化 ======
