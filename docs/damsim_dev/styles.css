@@ -19,6 +19,7 @@
   --card-noise: radial-gradient(60% 60% at 20% 20%, rgba(255,255,255,.04), transparent 60%);
   --card-tint: linear-gradient(135deg, rgba(255,255,255,.04), rgba(255,255,255,0));
   --chart-shadow: drop-shadow(0 1px 2px rgba(0,0,0,.3));
+  --results-offset: 30px;
 }
 
 html[data-theme="light"] {
@@ -65,7 +66,7 @@ body {
 .btn.primary { border-color: var(--accent); }
 .btn.danger { border-color: var(--danger); color: #fff; background: linear-gradient(180deg, #ff6b6b, #d94848); }
 
-.main-grid { display: grid; gap: 16px; padding-bottom: 220px; }
+.main-grid { display: grid; gap: 16px; padding-bottom: calc(var(--results-offset) + env(safe-area-inset-bottom, 0px)); }
 .card {
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -416,9 +417,8 @@ body.guide-open { overflow: hidden; }
   .guide-spotlight { display: none !important; }
 }
 
-/* 種別があれば微調整（任意） */
-
 @media (max-width: 720px) {
+  :root { --results-offset: 80px; }
   .two-cols { grid-template-columns: 1fr }
   .results-values { grid-template-columns: 1fr }
 }
