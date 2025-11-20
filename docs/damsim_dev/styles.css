@@ -161,7 +161,8 @@ html[data-input-mode="standard"] #grpEquip { display: none; }
 .card > summary .g-hint{
   font-size:12px;
   color: var(--muted);
-  max-width: 72%;
+  max-width: 100%;
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
