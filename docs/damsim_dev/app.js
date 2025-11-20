@@ -687,7 +687,7 @@ const GUIDE_STORAGE_KEY = 'uvt-guide-shown';
 const GUIDE_STEPS = [
   {
     title: '入力モードを決める',
-    body: '最上部のモードカードから「簡易 / 標準 / 装備」を選び、入力したい粒度を切り替えます。',
+    body: '「簡易 / 標準 / 装備」からモードを選び、入力したい粒度を切り替えます。',
     target: '#grpMode'
   },
   {
@@ -702,7 +702,7 @@ const GUIDE_STEPS = [
   },
   {
     title: 'リンクの共有',
-    body: '共有ボタンからURLをコピーして結果を共有できます。',
+    body: '画面上部の共有ボタン📤からURLをコピーして、結果を誰かと共有できます。',
     target: '#shareBtn'
   }
 ];

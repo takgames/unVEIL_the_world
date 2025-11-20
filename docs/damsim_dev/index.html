@@ -358,35 +358,45 @@
         <p class="muted small">基本的な操作方法と便利な機能のまとめ</p>
 
         <section class="help-section">
-          <h4>1. 入力モード</h4>
-          <p>画面上部の「入力モード」を切り替えることで、入力したい粒度を選べます。</p>
+          <h4>1. ヘッダーボタン</h4>
           <ul>
-            <li><strong>簡易:</strong> 最終攻撃力と会心値を直接入力。</li>
-            <li><strong>標準:</strong> 戦闘前攻撃力をまとめて入力し、バフで調整。</li>
-            <li><strong>装備:</strong> 基礎/補正値や各装備ステータスを細かく設定。</li>
+            <li><strong>↺ リセット:</strong> すべての入力内容を初期値へ戻します。</li>
+            <li><strong>📤 共有:</strong> 現在の状態をURLまたはMarkdown形式(Discordなど向け)でコピーできます。</li>
+            <li><strong>🌓 テーマ:</strong> 全体の色合いをライト/ダークで切り替えます。</li>
+            <li><strong>❔ ヘルプ:</strong> このダイアログです。下部のボタンからインストラクションを再生できます。</li>
           </ul>
         </section>
 
         <section class="help-section">
-          <h4>2. プリセットと比較</h4>
-          <p>ビルドを保存して素早く呼び出したり、A/B比較でダメージ差をチェックできます。</p>
+          <h4>2. 入力モード</h4>
           <ul>
-            <li>プリセット名を入力し「保存/上書き」で状態を保存。</li>
-            <li>結果バーの「比較元/比較先」バッジから比較対象を選択。</li>
-            <li>共有ボタンで現在の状態をURL化し、仲間と共有可能。</li>
+            <li><strong>簡易:</strong> 戦闘中のステータスを直接入力します。</li>
+            <li><strong>標準:</strong> 戦闘前のステータスを入力し、戦闘中バフを明確にします。</li>
+            <li><strong>装備:</strong> 基礎/補正/装備を細かく入力し、装備の比較を可能にします。</li>
           </ul>
         </section>
 
         <section class="help-section">
-          <h4>3. 入力のヒント</h4>
+          <h4>3. プリセット・比較・共有</h4>
           <ul>
-            <li>戦闘中効果や敵情報を変えると、結果バーと比較差分が即時更新されます。</li>
-            <li>数値フィールドは 0 のときフォーカスすると空欄になり、入力しやすくなっています。</li>
+            <li>プリセット名を入力し「保存/上書き」で現在のビルドを保存できます。</li>
+            <li>「名前変更」は選択中のプリセット名を変更します。</li>
+            <li>結果欄の比較バッジから比較元/比較先を選択し、↔︎で役割を入れ替えできます。</li>
+            <li>共有ボタンで作成したURLには入力した値と比較設定が含まれます。</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h4>4. 結果と差分</h4>
+          <ul>
+            <li>結果は入力値に従って自動で更新されます。</li>
+            <li>通常/平均/会心の右に差分チップが表示され、プラスは緑、マイナスは赤で視覚化されます。</li>
+            <li>比較バッジの×ボタンで比較を解除、保存ボタンで一時比較をプリセット化できます。</li>
           </ul>
         </section>
 
         <div class="row gap help-actions">
-          <button id="replayGuide" type="button" class="btn primary">ステップガイドを開始</button>
+          <button id="replayGuide" type="button" class="btn primary">インストラクションを開始</button>
           <button id="closeHelp" type="button" class="btn">閉じる</button>
         </div>
       </div>
