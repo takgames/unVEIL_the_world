@@ -42,7 +42,7 @@
 
     <main class="container main-grid" id="appRoot" tabindex="-1">
       <details id="grpMode" class="card mode-card" open>
-        <summary>入力モード<span class="g-hint"></span></summary>
+        <summary><span class="sum-label">入力モード</span><span class="g-hint"></span></summary>
         <div class="card-body">
           <div class="mode-head row space-between align-center">
             <strong>入力モード</strong>
@@ -59,7 +59,7 @@
 
       <!-- プリセット -->
       <details id="grpPreset" class="card" aria-labelledby="lblPreset">
-        <summary id="lblPreset">プリセット</summary>
+        <summary id="lblPreset"><span class="sum-label">プリセット</span><span class="g-hint"></span></summary>
         <div class="card-body grid gap">
           <div class="grid two-cols">
             <label class="stack">
@@ -81,7 +81,7 @@
 
       <!-- ステータス -->
       <details id="grpStatus" class="card" open>
-        <summary>ステータス</summary>
+        <summary><span class="sum-label">ステータス</span><span class="g-hint"></span></summary>
         <div class="card-body grid two-cols gap status-grid">
           <label class="stack mode-only mode-only-simple key-field key-atk">
             <span>最終攻撃力 <span class="hint-chip" title="攻撃力アップ%を反映した後の値">攻UP適用後</span></span>
@@ -101,7 +101,7 @@
 
       <!-- 装備 -->
       <details id="grpEquip" class="card">
-        <summary>装備</summary>
+        <summary><span class="sum-label">装備</span><span class="g-hint"></span></summary>
         <div class="card-body grid gap">
           <div class="equip-grid">
             <!-- グローブ -->
@@ -213,7 +213,7 @@
 
       <!-- スキル -->
       <details id="grpSkill" class="card" open>
-        <summary>スキル</summary>
+        <summary><span class="sum-label">スキル</span><span class="g-hint"></span></summary>
         <div class="card-body grid two-cols gap">
           <label class="stack"><span>スキル攻撃 %</span><input type="number" id="skillPct" min="0" step="0.1" /></label>
           <label class="stack"><span>スキル固定値</span><input type="number" id="skillFlat" min="0" step="1" value="0" /></label>
@@ -222,7 +222,7 @@
 
       <!-- 戦闘中効果 -->
       <details id="grpBattle" class="card" open>
-        <summary>戦闘中効果</summary>
+        <summary><span class="sum-label">戦闘中効果</span><span class="g-hint"></span></summary>
         <div class="card-body grid two-cols gap">
           <label class="stack mode-hide-simple"><span>攻撃力アップ %</span><input type="number" id="atkUpPct" min="0" step="0.1" value="0" /></label>
           <label class="stack"><span>ダメージアップ %</span><input type="number" id="dmgUpPct" min="0" step="0.1" value="0" /></label>
@@ -235,7 +235,7 @@
 
       <!-- 敵の詳細 -->
       <details id="grpEnemy" class="card" open>
-        <summary>敵の詳細</summary>
+        <summary><span class="sum-label">敵の詳細</span><span class="g-hint"></span></summary>
         <div class="card-body grid two-cols gap">
           <label class="stack"><span>防御力</span><input type="number" id="enemyDef" min="0" step="1" value="0" /></label>
           <label class="stack"><span>属性相性</span>
@@ -251,7 +251,7 @@
 
       <!-- 計算の内訳 -->
       <details id="grpBreakdown" class="card">
-        <summary>計算の内訳</summary>
+        <summary><span class="sum-label">計算の内訳</span><span class="g-hint"></span></summary>
         <div class="card-body">
           <div class="breakdown-grid">
             <div><span title="Σ装備攻撃力 + 基礎攻撃力 × (Σ装備攻撃力補正%/100)">装備補正攻撃力</span><strong id="outEquipAdjAtk">0</strong></div>

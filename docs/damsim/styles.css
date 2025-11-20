@@ -19,6 +19,7 @@
   --card-noise: radial-gradient(60% 60% at 20% 20%, rgba(255,255,255,.04), transparent 60%);
   --card-tint: linear-gradient(135deg, rgba(255,255,255,.04), rgba(255,255,255,0));
   --chart-shadow: drop-shadow(0 1px 2px rgba(0,0,0,.3));
+  --results-offset: 30px;
 }
 
 html[data-theme="light"] {
@@ -65,7 +66,7 @@ body {
 .btn.primary { border-color: var(--accent); }
 .btn.danger { border-color: var(--danger); color: #fff; background: linear-gradient(180deg, #ff6b6b, #d94848); }
 
-.main-grid { display: grid; gap: 16px; padding-bottom: 220px; }
+.main-grid { display: grid; gap: 16px; padding-bottom: calc(var(--results-offset) + env(safe-area-inset-bottom, 0px)); }
 .card {
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -139,7 +140,8 @@ html[data-input-mode="standard"] #grpEquip { display: none; }
 
 /* 見出し（summary）をクリックターゲット＆左右2カラム化 */
 .card > summary{
-  display:flex;
+  display:grid;
+  grid-template-columns: auto auto minmax(0,1fr);
   align-items:center;
   gap:8px;
 }
@@ -151,23 +153,32 @@ html[data-input-mode="standard"] #grpEquip { display: none; }
   line-height:1;
   opacity:.9;
   transform: translateY(1px);
+  grid-column: 1;
 }
 .card[open] > summary::before{ content:'▾'; }
 
 /* 右端に“要約”を出す。折りたたみ時は濃く、展開時は薄く */
 .card > summary .g-hint{
-  margin-left:auto;
   font-size:12px;
   color: var(--muted);
-  max-width: 72%;
+  max-width: 100%;
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
+  text-align: right;
   gap: 6px;
   white-space: normal;
   opacity:.95;
+  grid-column: 3;
 }
 .card[open] > summary .g-hint{ opacity:.55; }
+
+.sum-label {
+  white-space: nowrap;
+  flex: 0 0 auto;
+  grid-column: 2;
+}
 
 .hint-badge {
   display: inline-flex;
@@ -410,8 +421,6 @@ body.guide-open { overflow: hidden; }
   .guide-spotlight { display: none !important; }
 }
 
-/* 種別があれば微調整（任意） */
-
 @media (max-width: 720px) {
   .two-cols { grid-template-columns: 1fr }
   .results-values { grid-template-columns: 1fr }
@@ -433,6 +442,8 @@ body.guide-open { overflow: hidden; }
   display: block;
   transform: translateY(1px); /* 絵文字のベースライン補正 */
 }
+/* ヘルプボタンはライトテーマで薄くならないよう彩度を上げる */
+#helpBtn .emoji { color: color-mix(in oklab, var(--accent) 60%, var(--fg)); }
 
 /* ホバー/フォーカスでわずかにトーンアップ（既存の .btn:hover にも連動） */
 .btn.icon-btn:hover { filter: brightness(1.06); }
