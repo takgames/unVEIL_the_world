@@ -269,6 +269,26 @@ dialog:focus { outline: none; }
 .guide-actions { margin-top: 12px; }
 .btn.subtle { background: transparent; color: var(--muted); border: 1px solid var(--border); }
 .btn.subtle:hover { color: var(--fg); }
+/* 簡易アラート */
+.alert {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0 auto 10px;
+  background: color-mix(in oklab, var(--accent) 6%, var(--card));
+  box-shadow: var(--shadow);
+}
+.alert.warning {
+  border-color: color-mix(in oklab, #d93025 55%, var(--border));
+  background: color-mix(in oklab, #d93025 10%, var(--card));
+}
+.alert-title { font-weight: 700; margin-bottom: 6px; }
+.alert ul { margin: 0; padding-left: 20px; }
+.input-warning {
+  border-color: color-mix(in oklab, #d93025 70%, var(--border)) !important;
+  box-shadow: 0 0 0 2px color-mix(in oklab, #d93025 18%, transparent);
+  background: color-mix(in oklab, #d93025 4%, var(--bg));
+}
 body.guide-open { overflow: hidden; }
 
 @media (max-width: 480px) and (orientation: portrait) {

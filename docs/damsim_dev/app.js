@@ -717,6 +717,7 @@ const GUIDE_STEPS = [
 let guideStepIndex = 0;
 let guideHighlightEl = null;
 const LAST_MODE_KEY = 'uvt-last-mode';
+const EQUIP_SLOTS = ['glove','armor','emblem','ring','brooch'];
 try {
   const savedMode = localStorage.getItem(LAST_MODE_KEY);
   if (INPUT_MODES.includes(savedMode)) {
@@ -986,6 +987,83 @@ function calcAll(s) {
   };
 }
 
+// ====== 入力バリデーション（計算はそのまま、警告のみ表示） ======
+let lastValidationMarks = [];
+function collectValidationIssues(s) {
+  const issues = [];
+  const marks = [];
+  const mode = INPUT_MODES.includes(s.inputMode) ? s.inputMode : 'gear';
+  const warn = (cond, msg, sel) => { if (cond) { issues.push(msg); if (sel) marks.push(sel); } };
+  const neg = (v) => Number.isFinite(v) && v < 0;
+  const nfi = (v) => !Number.isFinite(v);
+
+  if (mode === 'simple') {
+    warn(nfi(s.finalAtkInput) || s.finalAtkInput < 0, '最終攻撃力が未入力または0未満です', '#finalAtkInput');
+    warn(s.simpleCritRate < 0, '最終会心率が0%未満です', '#simpleCritRate');
+    warn(s.simpleCritRate > 100, '最終会心率が100%を超えています（計算上は100%上限です）', '#simpleCritRate');
+    warn(s.simpleCritDmg < 0, '最終会心ダメージが0未満です', '#simpleCritDmg');
+    warn(s.simpleElemDmgPct < 0, '最終属性ダメージが0未満です', '#simpleElemDmgPct');
+  } else if (mode === 'standard') {
+    warn(nfi(s.preAtkInput) || s.preAtkInput < 0, '攻撃力が未入力または0未満です', '#preAtkInput');
+  } else if (mode === 'gear') {
+    warn(nfi(s.baseAtk) || s.baseAtk < 0, '基礎攻撃力が未入力または0未満です', '#baseAtk');
+    warn(nfi(s.bonusAtk) || s.bonusAtk < 0, '補正攻撃力が0未満です', '#bonusAtk');
+  }
+
+  warn(s.critRate < 0, '会心率が0%未満です', '#critRate');
+  warn(s.critRate > 100, '会心率が100%を超えています（計算上は100%上限です）', '#critRate');
+  warn(s.critDmg < 0, '会心ダメージが0未満です', '#critDmg');
+  warn(s.skillPct < 0, 'スキル攻撃%が0未満です', '#skillPct');
+  warn(s.skillFlat < 0, 'スキル固定値が0未満です', '#skillFlat');
+  warn(s.atkUpPct < 0, '攻撃力アップ%が0未満です', '#atkUpPct');
+  warn(s.dmgUpPct < 0, 'ダメージアップ%が0未満です', '#dmgUpPct');
+  warn(s.cardDmgUpPct < 0, 'カードダメージアップ%が0未満です', '#cardDmgUpPct');
+  warn(s.critRateUpPct < 0, '会心率アップ%が0未満です', '#critRateUpPct');
+  warn(s.critDmgUpPct < 0, '会心ダメージアップ%が0未満です', '#critDmgUpPct');
+  warn(s.elemDmgPct < 0, '属性ダメージ%が0未満です', '#elemDmgPct');
+  warn(s.elemDmgUpPct < 0, '属性ダメージアップ%が0未満です', '#elemDmgUpPct');
+  warn(s.enemyDef < 0, '防御力が0未満です', '#enemyDef');
+
+  let equipWarned = false;
+  EQUIP_SLOTS.forEach((slot) => {
+    const g = s.equip[slot];
+    if (!g) return;
+    if (!equipWarned && neg(g.mainVal)) {
+      warn(true, '装備の値に0未満があります', `input.mainVal[data-slot="${slot}"]`);
+      equipWarned = true;
+    }
+    for (const [k, v] of Object.entries(g.sub || {})) {
+      if (equipWarned) break;
+      if (neg(v)) {
+        warn(true, '装備サブの値に0未満があります', `input[data-slot="${slot}"][data-sub="${k}"]`);
+        equipWarned = true;
+      }
+    }
+  });
+
+  return { issues, marks };
+}
+
+function updateValidationNotice(result) {
+  const box = $('#validationBox');
+  const list = $('#validationList');
+  lastValidationMarks.forEach((sel) => { const el = $(sel); if (el) el.classList.remove('input-warning'); });
+  lastValidationMarks = [];
+  if (!box || !list || !result || !result.issues.length) {
+    if (box) box.hidden = true;
+    if (list) list.innerHTML = '';
+    return;
+  }
+  list.innerHTML = '';
+  result.issues.forEach((msg) => {
+    const li = document.createElement('li');
+    li.textContent = msg;
+    list.appendChild(li);
+  });
+  result.marks.forEach((sel) => { const el = $(sel); if (el) { el.classList.add('input-warning'); lastValidationMarks.push(sel); } });
+  box.hidden = false;
+}
+
 /**
  * 表示更新:
  * - 表示の主役 = linkedSide の状態（グラフ前面・数値・内訳）
@@ -996,6 +1074,12 @@ function render() {
   // 表示の主役 = 常にリンク中の側
   const sLink  = getSideState(linkedSide);
   const sOther = getSideState(other(linkedSide)); // 比較相手（無ければ null）
+
+  if (sLink) {
+    updateValidationNotice(collectValidationIssues(sLink));
+  } else {
+    updateValidationNotice({ issues: [], marks: [] });
+  }
 
   const rLink  = sLink  ? calcAll(sLink)  : null;
   const rOther = sOther ? calcAll(sOther) : null;
@@ -1232,6 +1316,7 @@ function resetAll() {
 function hasLZ() {
   return !!(window.LZString && typeof window.LZString.compressToBase64 === 'function');
 }
+const SHARE_SCHEMA_VERSION = '1';
 function encodeStateShort(obj) {
   if (!hasLZ()) throw new Error('LZ-String is not loaded');
   return window.LZString.compressToBase64(JSON.stringify(obj));
@@ -1317,7 +1402,10 @@ function initShare() {
 
   const makeUrl = () => {
     const payload = buildSharePayload();
-    return `${location.origin}${location.pathname}?z=${encodeURIComponent(encodeStateShort(payload))}`;
+    const params = new URLSearchParams();
+    params.set('v', SHARE_SCHEMA_VERSION);
+    params.set('z', encodeStateShort(payload));
+    return `${location.origin}${location.pathname}?${params.toString()}`;
   };
   const copy = (fmt) => {
     if (!hasLZ()) { toast('共有リンクの生成に失敗しました（LZ-String）'); return; }
@@ -1599,6 +1687,10 @@ function initFromQueryOrDefaults() {
   const qs = location.search.slice(1);
   if (qs) {
     const p = new URLSearchParams(qs);
+    const ver = p.get('v');
+    if (ver && ver !== SHARE_SCHEMA_VERSION) {
+      toast(`共有リンクのバージョンが異なります (v=${ver})`);
+    }
     const z = p.get('z');
     if (z) {
       const decoded = decodeStateShort(z);
