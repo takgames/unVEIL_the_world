@@ -142,6 +142,7 @@ html[data-input-mode="standard"] #grpEquip { display: none; }
   display:flex;
   align-items:center;
   gap:8px;
+  flex-wrap: wrap;
 }
 
 /* ▸ / ▾ インジケータ（details の open 属性で自動切替）*/
@@ -168,6 +169,11 @@ html[data-input-mode="standard"] #grpEquip { display: none; }
   opacity:.95;
 }
 .card[open] > summary .g-hint{ opacity:.55; }
+
+.sum-label {
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
 
 .hint-badge {
   display: inline-flex;

@@ -159,7 +159,7 @@ function updateGroupHints(){
   {
     const el = ensureSummaryHint('grpStatus');
     if (el) {
-      const atkLabel = mode === 'simple' ? '最終' : mode === 'standard' ? '攻' : '基礎';
+      const atkLabel = mode === 'simple' || mode === 'standard' ? '攻' : '基礎';
       const atkVal = mode === 'simple' ? r.finalAtk : mode === 'standard' ? (s.preAtkInput || 0) : (s.baseAtk || 0);
       const bonus = (mode === 'gear') ? [{ label: '補正', value: s.bonusAtk || 0, type: 'atk', format: fmtInt, always: true }] : [];
       const badges = [
