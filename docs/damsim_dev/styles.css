@@ -442,6 +442,8 @@ body.guide-open { overflow: hidden; }
   display: block;
   transform: translateY(1px); /* 絵文字のベースライン補正 */
 }
+/* ヘルプボタンはライトテーマで薄くならないよう彩度を上げる */
+#helpBtn .emoji { color: color-mix(in oklab, var(--accent) 60%, var(--fg)); }
 
 /* ホバー/フォーカスでわずかにトーンアップ（既存の .btn:hover にも連動） */
 .btn.icon-btn:hover { filter: brightness(1.06); }
