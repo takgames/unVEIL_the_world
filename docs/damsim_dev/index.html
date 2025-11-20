@@ -83,19 +83,19 @@
       <details id="grpStatus" class="card" open>
         <summary>ステータス</summary>
         <div class="card-body grid two-cols gap status-grid">
-          <label class="stack mode-only mode-only-simple">
+          <label class="stack mode-only mode-only-simple key-field key-atk">
             <span>最終攻撃力 <span class="hint-chip" title="攻撃力アップ%を反映した後の値">攻UP適用後</span></span>
             <input type="number" id="finalAtkInput" min="0" step="1" />
           </label>
-          <label class="stack mode-only mode-only-standard"><span>攻撃力</span><input type="number" id="preAtkInput" min="0" step="1" /></label>
-          <label class="stack mode-only mode-only-gear"><span>基礎攻撃力</span><input type="number" id="baseAtk" min="0" step="1" /></label>
-          <label class="stack mode-only mode-only-gear"><span>補正攻撃力</span><input type="number" id="bonusAtk" min="0" step="1" value="0" /></label>
-          <label class="stack mode-only mode-only-simple"><span>最終会心率 %</span><input type="number" id="simpleCritRate" min="0" max="100" step="0.1" /></label>
-          <label class="stack mode-only mode-only-simple"><span>最終会心ダメージ %</span><input type="number" id="simpleCritDmg" min="0" step="0.1" /></label>
-          <label class="stack mode-only mode-only-simple"><span>最終属性ダメージ %</span><input type="number" id="simpleElemDmgPct" min="0" step="0.1" /></label>
-          <label class="stack mode-hide-simple"><span>会心率 %</span><input type="number" id="critRate" min="0" max="100" step="0.1" /></label>
-          <label class="stack mode-hide-simple"><span>会心ダメージ %</span><input type="number" id="critDmg" min="0" step="0.1" /></label>
-          <label class="stack mode-hide-simple"><span>属性ダメージ %</span><input type="number" id="elemDmgPct" min="0" step="0.1" /></label>
+          <label class="stack mode-only mode-only-standard key-field key-atk"><span>攻撃力</span><input type="number" id="preAtkInput" min="0" step="1" /></label>
+          <label class="stack mode-only mode-only-gear key-field key-atk"><span>基礎攻撃力</span><input type="number" id="baseAtk" min="0" step="1" /></label>
+          <label class="stack mode-only mode-only-gear key-field key-atk"><span>補正攻撃力</span><input type="number" id="bonusAtk" min="0" step="1" value="0" /></label>
+          <label class="stack mode-only mode-only-simple key-field key-crit"><span>最終会心率 %</span><input type="number" id="simpleCritRate" min="0" max="100" step="0.1" /></label>
+          <label class="stack mode-only mode-only-simple key-field key-critdmg"><span>最終会心ダメージ %</span><input type="number" id="simpleCritDmg" min="0" step="0.1" /></label>
+          <label class="stack mode-only mode-only-simple key-field key-elem"><span>最終属性ダメージ %</span><input type="number" id="simpleElemDmgPct" min="0" step="0.1" /></label>
+          <label class="stack mode-hide-simple key-field key-crit"><span>会心率 %</span><input type="number" id="critRate" min="0" max="100" step="0.1" /></label>
+          <label class="stack mode-hide-simple key-field key-critdmg"><span>会心ダメージ %</span><input type="number" id="critDmg" min="0" step="0.1" /></label>
+          <label class="stack mode-hide-simple key-field key-elem"><span>属性ダメージ %</span><input type="number" id="elemDmgPct" min="0" step="0.1" /></label>
         </div>
       </details>
 

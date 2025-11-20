@@ -16,6 +16,9 @@
   --input-fz: clamp(16px, 3.6vw, 20px);
   --result-fz: clamp(18px, 4.2vw, 24px);
   --equip-accent: color-mix(in oklab, var(--accent) 26%, transparent);
+  --card-noise: radial-gradient(60% 60% at 20% 20%, rgba(255,255,255,.04), transparent 60%);
+  --card-tint: linear-gradient(135deg, rgba(255,255,255,.04), rgba(255,255,255,0));
+  --chart-shadow: drop-shadow(0 1px 2px rgba(0,0,0,.3));
 }
 
 html[data-theme="light"] {
@@ -28,6 +31,9 @@ html[data-theme="light"] {
   --accent: #2b6cb0;
   --accent-2: #6b46c1;
   --shadow: 0 6px 16px rgba(0,0,0,.08);
+  --card-noise: radial-gradient(60% 60% at 20% 20%, rgba(0,0,0,.03), transparent 60%);
+  --card-tint: linear-gradient(135deg, rgba(0,0,0,.03), rgba(0,0,0,0));
+  --chart-shadow: drop-shadow(0 1px 2px rgba(0,0,0,.14));
 }
 
 * { box-sizing: border-box }
@@ -60,12 +66,28 @@ body {
 .btn.danger { border-color: var(--danger); color: #fff; background: linear-gradient(180deg, #ff6b6b, #d94848); }
 
 .main-grid { display: grid; gap: 16px; padding-bottom: 220px; }
-.card { border: 1px solid var(--border); border-radius: 14px; background: var(--card); box-shadow: var(--shadow); }
+.card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background-color: var(--card);
+  background-image:
+    var(--card-noise),
+    var(--card-tint),
+    linear-gradient(180deg, color-mix(in oklab, var(--accent) 6%, transparent), var(--card));
+  background-blend-mode: soft-light, normal, normal;
+  box-shadow: var(--shadow);
+}
 .card > summary { padding: 12px 16px; cursor: pointer; font-weight: 700; list-style: none; }
 .card > summary::-webkit-details-marker { display: none }
 .card[open] > summary { border-bottom: 1px solid var(--border) }
 .card-body { padding: 16px }
-.card.subtle { background: var(--card-subtle) }
+.card.subtle {
+  background-color: var(--card-subtle);
+  background-image:
+    var(--card-noise),
+    linear-gradient(180deg, color-mix(in oklab, var(--accent) 4%, transparent), var(--card-subtle));
+  background-blend-mode: soft-light, normal;
+}
 
 .mode-card .card-body { display: flex; flex-direction: column; gap: 10px; }
 .mode-switch { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -137,11 +159,33 @@ html[data-input-mode="standard"] #grpEquip { display: none; }
   margin-left:auto;
   font-size:12px;
   color: var(--muted);
-  max-width: 60%;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  max-width: 72%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  white-space: normal;
   opacity:.95;
 }
 .card[open] > summary .g-hint{ opacity:.55; }
+
+.hint-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 14%, transparent);
+  color: var(--fg);
+  line-height: 1.2;
+}
+.hint-badge-atk { background: color-mix(in oklab, var(--accent) 16%, transparent); color: var(--accent); }
+.hint-badge-crit { background: color-mix(in oklab, var(--avg) 26%, transparent); color: #c05621; }
+.hint-badge-critdmg { background: color-mix(in oklab, var(--crit) 18%, transparent); color: var(--crit); }
+.hint-badge-elem { background: color-mix(in oklab, var(--accent-2) 20%, transparent); color: var(--accent-2); }
+.hint-badge-skill { background: color-mix(in oklab, var(--normal) 18%, transparent); color: var(--fg); }
+.hint-badge-enemy { background: color-mix(in oklab, var(--muted) 18%, transparent); color: var(--fg); }
 
 .grid { display: grid }
 .stack { display: grid; gap: 6px }
@@ -150,6 +194,27 @@ label > select { width: 100%; padding: 12px; border-radius: 10px; border: 1px so
 select option { font-size: var(--input-fz); }
 input[type=number] { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 legend { padding: 0 6px }
+.key-field > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  padding-left: 22px;
+}
+.key-field > span:first-child::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--accent) 42%, transparent);
+  box-shadow: 0 1px 3px rgba(0,0,0,.18);
+}
+.key-field.key-atk > span:first-child::before { content: '⚔'; color: var(--accent); text-align: center; font-size: 12px; line-height: 16px; }
+.key-field.key-crit > span:first-child::before { content: '★'; color: var(--avg); text-align: center; font-size: 12px; line-height: 16px; background: color-mix(in oklab, var(--avg) 28%, transparent); }
+.key-field.key-critdmg > span:first-child::before { content: '★'; color: var(--crit); text-align: center; font-size: 12px; line-height: 16px; background: color-mix(in oklab, var(--crit) 26%, transparent); }
+.key-field.key-elem > span:first-child::before { content: '✦'; color: var(--accent-2); text-align: center; font-size: 11px; line-height: 16px; background: color-mix(in oklab, var(--accent-2) 24%, transparent); }
 
 /* 装備レイアウト - 確定版 */
 .equip-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
@@ -174,11 +239,46 @@ html[data-theme="light"] .results { background: linear-gradient(180deg, transpar
 .chip-avg { background: color-mix(in oklab, var(--avg) 35%, transparent); }
 .chip-crit { background: color-mix(in oklab, var(--crit) 45%, transparent); }
 
-.chart { position: relative; height: 22px; border: 1px solid var(--border); border-radius: 1000px; background: linear-gradient(90deg, transparent 0, transparent 100%); overflow: hidden; }
-.bar { position: absolute; top: 0; bottom: 0; width: 0; transition: width .2s ease, left .2s ease; mix-blend-mode: normal; }
-.bar-normal { left: 0; background: var(--normal); opacity: .95 }
-.bar-avg { background: var(--avg); opacity: .95 }
-.bar-crit { background: var(--crit); opacity: .95 }
+.chart {
+  position: relative;
+  height: 22px;
+  border: 1px solid var(--border);
+  border-radius: 1000px;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--card-subtle) 90%, transparent), var(--card-subtle));
+  overflow: hidden;
+}
+.bar {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 0;
+  transition: width .2s ease, left .2s ease;
+  mix-blend-mode: normal;
+  border-radius: 0;
+  filter: var(--chart-shadow);
+}
+.bar-normal,
+.barB-normal { border-top-left-radius: 1000px; border-bottom-left-radius: 1000px; }
+.bar-crit,
+.barB-crit { border-top-right-radius: 1000px; border-bottom-right-radius: 1000px; }
+.bar-normal {
+  left: 0;
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--normal) 75%, white 25%),
+    color-mix(in oklab, var(--normal) 90%, black 10%));
+  opacity: 1;
+}
+.bar-avg {
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--avg) 70%, white 30%),
+    color-mix(in oklab, var(--avg) 100%, black 0%));
+  opacity: 1;
+}
+.bar-crit {
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--crit) 75%, white 25%),
+    color-mix(in oklab, var(--crit) 95%, black 5%));
+  opacity: 1;
+}
 .chart-scale { position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px); background-size: 20% 100%, 10% 100%; }
 html[data-theme="light"] .chart-scale { background-image: linear-gradient(90deg, rgba(0,0,0,.06) 1px, transparent 1px); background-size: 10% 100%; }
 
@@ -204,34 +304,45 @@ dialog:focus { outline: none; }
 .dialog-card .btn.primary:hover { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 16%, var(--card)); filter: none; }
 .dialog-card .btn:focus, .dialog-card .btn:focus-visible { outline: none; box-shadow: none; }
 
- 
-/* 画面中央に固定（どのUIにも隠れない） */
+/* トースト：アイコン付き＋遅延フェード */
 #toast {
   position: fixed;
   left: 50%;
   top: calc(50% - 6vh);
   transform: translate(-50%, -50%) scale(.98);
-  z-index: 2000;           /* 結果/ヘッダーより上。必要なら調整 */
-  max-width: min(92vw, 480px);
+  z-index: 2000;
+  max-width: min(92vw, 520px);
   width: max-content;
   text-align: center;
-  pointer-events: none;    /* 背景を触れる（閉じるUIが無ければ推奨） */
+  pointer-events: none;
   opacity: 0;
-  transition: opacity .18s ease, transform .18s ease;
+  transition: opacity .4s ease, transform .35s ease;
+  background: color-mix(in oklab, var(--accent) 18%, var(--card));
+  border: 1px solid color-mix(in oklab, var(--accent) 46%, var(--border));
+  color: var(--fg);
+  box-shadow: 0 12px 28px rgba(0,0,0,.22), 0 3px 10px rgba(0,0,0,.12);
+  padding: 12px 16px;
+  border-radius: 12px;
 }
 #toast.show {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
 }
-
-#toast {
-  background: color-mix(in oklab, var(--accent) 18%, var(--card));
-  border: 1px solid color-mix(in oklab, var(--accent) 46%, var(--border));
-  color: var(--fg);
-  box-shadow: 0 8px 20px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.08);
-  padding: 10px 14px;
-  border-radius: 10px;
+#toast.fade-out {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(.96);
 }
+#toast .toast-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+#toast .toast-icon {
+  width: 18px;
+  text-align: center;
+  font-size: 14px;
+}
+#toast .toast-text { display: inline-block; text-align: left; }
 #toast.success {
   background: color-mix(in oklab, #0f9d58 18%, var(--card));
   border-color: color-mix(in oklab, #0f9d58 48%, var(--border));
@@ -246,8 +357,8 @@ dialog:focus { outline: none; }
   inset: 0;
   background: rgba(0,0,0,.6);
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   padding: 20px;
   z-index: 1900;
 }
@@ -260,13 +371,15 @@ dialog:focus { outline: none; }
   padding: 20px;
   width: min(480px, 92vw);
   box-shadow: var(--shadow), 0 12px 40px rgba(0,0,0,.35);
-  position: relative;
+  position: absolute;
   z-index: 1910;
+  transform-origin: top right;
 }
 .guide-progress { margin: 0; font-size: 12px; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; }
 .guide-card h3 { margin: 8px 0 10px; }
 .guide-card p { margin: 0 0 8px; }
-.guide-actions { margin-top: 12px; }
+.guide-actions { margin-top: 12px; gap: 8px; }
+#guideNext { margin-left: auto; min-width: 110px; }
 .btn.subtle { background: transparent; color: var(--muted); border: 1px solid var(--border); }
 .btn.subtle:hover { color: var(--fg); }
 /* 簡易アラート */
@@ -298,14 +411,6 @@ body.guide-open { overflow: hidden; }
 }
 
 /* 種別があれば微調整（任意） */
-#toast.success {
-  background: color-mix(in oklab, #0f9d58 18%, var(--card));
-  border-color: color-mix(in oklab, #0f9d58 48%, var(--border));
-}
-#toast.error {
-  background: color-mix(in oklab, #d93025 18%, var(--card));
-  border-color: color-mix(in oklab, #d93025 48%, var(--border));
-}
 
 @media (max-width: 720px) {
   .two-cols { grid-template-columns: 1fr }
@@ -374,17 +479,37 @@ body.guide-open { overflow: hidden; }
 .chip-crit   { background: color-mix(in oklab, var(--crit) 45%, transparent); }
 
 /* B(比較)バー：奥にストライプ */
-.barB { z-index: 0; opacity: .60; }
+.barB { z-index: 0; opacity: .60; filter: none; }
 .bar  { z-index: 1; }  /* A（現状） */
-.barB-normal { left: 0; background: repeating-linear-gradient(45deg, color-mix(in oklab, var(--normal) 70%, transparent) 0 6px, transparent 6px 12px); }
-.barB-avg    { background: repeating-linear-gradient(45deg, color-mix(in oklab, var(--avg) 70%, transparent) 0 6px, transparent 6px 12px); }
-.barB-crit   { background: repeating-linear-gradient(45deg, color-mix(in oklab, var(--crit) 70%, transparent) 0 6px, transparent 6px 12px); }
+.barB-normal {
+  left: 0;
+  background:
+    repeating-linear-gradient(45deg,
+      color-mix(in oklab, var(--normal) 46%, transparent) 0 10px,
+      transparent 10px 18px),
+    color-mix(in oklab, var(--normal) 24%, transparent);
+}
+.barB-avg {
+  background:
+    repeating-linear-gradient(45deg,
+      color-mix(in oklab, var(--avg) 46%, transparent) 0 10px,
+      transparent 10px 18px),
+    color-mix(in oklab, var(--avg) 24%, transparent);
+}
+.barB-crit {
+  background:
+    repeating-linear-gradient(45deg,
+      color-mix(in oklab, var(--crit) 46%, transparent) 0 10px,
+      transparent 10px 18px),
+    color-mix(in oklab, var(--crit) 24%, transparent);
+}
 
 /* 劣位（比較先 < 比較元）を示すオーバーレイ：クロスハッチ＋ダッシュ枠 */
 .barDef {
   /* 位置づけは既存どおり（.bar と同じ absolute 想定） */
   z-index: 2;
   pointer-events: none;
+  filter: none;
 
   /* 色：必要なら :root に --deficit を用意してもOK */
   --def-color: var(--deficit, #d93025);
@@ -392,11 +517,11 @@ body.guide-open { overflow: hidden; }
   /* クロスハッチ（×）— 2方向のストライプを重ねる */
   background:
     repeating-linear-gradient(135deg,
-      color-mix(in oklab, var(--def-color) 40%, transparent) 0 6px,
-      transparent 6px 12px),
+      color-mix(in oklab, var(--def-color) 40%, transparent) 0 10px,
+      transparent 10px 18px),
     repeating-linear-gradient(45deg,
-      color-mix(in oklab, var(--def-color) 26%, transparent) 0 6px,
-      transparent 6px 12px);
+      color-mix(in oklab, var(--def-color) 26%, transparent) 0 10px,
+      transparent 10px 18px);
 
   opacity: .9; /* ほんのり強めに */
 }

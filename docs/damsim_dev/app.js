@@ -107,6 +107,23 @@ function nonZeroPairs(obj){
   return Object.entries(obj).filter(([,v]) => Math.abs(+v||0) > 0);
 }
 
+function renderHintBadges(el, items, fallback='—') {
+  if (!el) return;
+  const available = (items || []).filter((item) => item && (item.always || Math.abs(item.value ?? 0) > 0));
+  if (!available.length) {
+    el.textContent = fallback;
+    return;
+  }
+  el.innerHTML = '';
+  available.forEach((item) => {
+    const span = document.createElement('span');
+    const val = item.format ? item.format(item.value) : item.value;
+    span.className = `hint-badge${item.type ? ` hint-badge-${item.type}` : ''}`;
+    span.textContent = `${item.label}${val}`;
+    el.appendChild(span);
+  });
+}
+
 const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
 function blurSelfOnClick(sel) {
@@ -142,15 +159,17 @@ function updateGroupHints(){
   {
     const el = ensureSummaryHint('grpStatus');
     if (el) {
-      const critStr = `会心${pctStr(r.allCritRate)}/${pctStr(r.allCritDmg)}`;
-      const elemStr = `属性${pctStr(r.allElemPct)}`;
-      if (mode === 'simple') {
-        el.textContent = `最終${fmtInt(r.finalAtk)} / ${critStr}・${elemStr}`;
-      } else if (mode === 'standard') {
-        el.textContent = `攻${fmtInt(s.preAtkInput||0)} / ${critStr}・${elemStr}`;
-      } else {
-        el.textContent = `基礎${s.baseAtk||0} / ${critStr}・${elemStr}`;
-      }
+      const atkLabel = mode === 'simple' ? '最終' : mode === 'standard' ? '攻' : '基礎';
+      const atkVal = mode === 'simple' ? r.finalAtk : mode === 'standard' ? (s.preAtkInput || 0) : (s.baseAtk || 0);
+      const bonus = (mode === 'gear') ? [{ label: '補正', value: s.bonusAtk || 0, type: 'atk', format: fmtInt, always: true }] : [];
+      const badges = [
+        { label: `${atkLabel}`, value: atkVal, type: 'atk', format: fmtInt, always: true },
+        ...bonus,
+        { label: '会率', value: r.allCritRate, type: 'crit', format: pctStr },
+        { label: '会ダメ', value: r.allCritDmg, type: 'critdmg', format: pctStr },
+        { label: '属ダメ', value: r.allElemPct, type: 'elem', format: pctStr },
+      ];
+      renderHintBadges(el, badges, '—');
     }
   }
 
@@ -161,20 +180,21 @@ function updateGroupHints(){
       if (mode === 'simple') {
         el.textContent = '簡易入力中';
       } else if (mode === 'standard') {
-        const p = [
-          '攻 合計入力',
-          `会${pctStr(r.sums.critRate||0)}/${pctStr(r.sums.critDmg||0)}`,
-          `属%${pctStr(r.sums.elemDmgPct||0)}`
+        const badges = [
+          { label: '会率', value: r.sums.critRate || 0, type: 'crit', format: pctStr },
+          { label: '会ダメ', value: r.sums.critDmg || 0, type: 'critdmg', format: pctStr },
+          { label: '属ダメ', value: r.sums.elemDmgPct || 0, type: 'elem', format: pctStr },
         ];
-        el.textContent = p.join('・');
+        renderHintBadges(el, badges, '会/属のみ参照');
       } else {
-        const p = [
-          `攻${r.sums.atk||0}`,
-          `攻%${pctStr(r.sums.atkPct||0)}`,
-          `会${pctStr(r.sums.critRate||0)}/${pctStr(r.sums.critDmg||0)}`,
-          `属%${pctStr(r.sums.elemDmgPct||0)}`
+        const badges = [
+          { label: '攻', value: r.sums.atk || 0, type: 'atk', format: fmtInt },
+          { label: '攻%', value: r.sums.atkPct || 0, type: 'atk', format: pctStr },
+          { label: '会率', value: r.sums.critRate || 0, type: 'crit', format: pctStr },
+          { label: '会ダメ', value: r.sums.critDmg || 0, type: 'critdmg', format: pctStr },
+          { label: '属ダメ', value: r.sums.elemDmgPct || 0, type: 'elem', format: pctStr },
         ];
-        el.textContent = p.join('・');
+        renderHintBadges(el, badges, '—');
       }
     }
   }
@@ -182,22 +202,28 @@ function updateGroupHints(){
   // スキル
   {
     const el = ensureSummaryHint('grpSkill');
-    if (el) el.textContent = `倍率${pctStr(s.skillPct||0)} + 固定${s.skillFlat||0}`;
+    if (el) {
+      const badges = [
+        { label: '倍率', value: s.skillPct || 0, type: 'skill', format: pctStr },
+        { label: '固定', value: s.skillFlat || 0, type: 'skill', format: fmtInt },
+      ];
+      renderHintBadges(el, badges, '—');
+    }
   }
 
   // 戦闘中効果（0は省略）
   {
     const el = ensureSummaryHint('grpBattle');
     if (el){
-      const pairs = nonZeroPairs({
-        '攻%': mode === 'simple' ? 0 : (s.atkUpPct||0),
-        '与%': s.dmgUpPct||0,
-        'C与%': s.cardDmgUpPct||0,
-        '会%': mode === 'simple' ? 0 : (s.critRateUpPct||0),
-        '会ダメ%': mode === 'simple' ? 0 : (s.critDmgUpPct||0),
-        '属%': mode === 'simple' ? 0 : (s.elemDmgUpPct||0),
-      }).map(([k,v]) => `${k}${pctStr(v)}`);
-      el.textContent = pairs.length ? pairs.join('・') : '—';
+      const badges = [
+        { label: '攻', value: mode === 'simple' ? 0 : (s.atkUpPct || 0), type: 'atk', format: pctStr },
+        { label: 'ダメ', value: s.dmgUpPct || 0, type: 'skill', format: pctStr },
+        { label: 'カード', value: s.cardDmgUpPct || 0, type: 'skill', format: pctStr },
+        { label: '会率', value: mode === 'simple' ? 0 : (s.critRateUpPct || 0), type: 'crit', format: pctStr },
+        { label: '会ダメ', value: mode === 'simple' ? 0 : (s.critDmgUpPct || 0), type: 'critdmg', format: pctStr },
+        { label: '属ダメ', value: mode === 'simple' ? 0 : (s.elemDmgUpPct || 0), type: 'elem', format: pctStr },
+      ];
+      renderHintBadges(el, badges, '—');
     }
   }
 
@@ -206,8 +232,12 @@ function updateGroupHints(){
     const el = ensureSummaryHint('grpEnemy');
     if (el){
       const aff = s.affinity==='adv' ? '有利' : s.affinity==='dis' ? '不利' : 'なし';
-      const brk = s.isBreak ? 'ブレイク' : '—';
-      el.textContent = `防${s.enemyDef||0} / ${aff} / ${brk}`;
+      const badges = [
+        { label: '防', value: s.enemyDef || 0, type: 'enemy', format: fmtInt, always: true },
+        { label: '相性', value: aff, type: 'enemy', format: (v)=>v, always: true },
+        { label: 'ブレイク', value: '', type: 'enemy', format: (v)=>v, always: !!s.isBreak },
+      ];
+      renderHintBadges(el, badges, `防${s.enemyDef || 0} / ${aff}`);
     }
   }
 
@@ -248,9 +278,9 @@ function startGuide(forceReplay=false) {
   const overlay = $('#guideOverlay');
   if (!overlay) return;
   guideStepIndex = 0;
-  renderGuideStep();
   overlay.hidden = false;
   document.body.classList.add('guide-open');
+  renderGuideStep();
   overlay.focus({ preventScroll: true });
 }
 
@@ -274,11 +304,14 @@ function initGuide() {
     $('#helpDialog')?.close();
     startGuide(true);
   });
-  window.addEventListener('resize', () => {
+  const repositionGuide = () => {
     if (document.body.classList.contains('guide-open') && guideHighlightEl) {
       positionGuideSpotlight(guideHighlightEl);
+      positionGuideCard(guideHighlightEl);
     }
-  });
+  };
+  window.addEventListener('resize', repositionGuide);
+  window.addEventListener('scroll', repositionGuide, { passive: true });
   if (shouldShowGuide()) startGuide(false);
 }
 
@@ -295,6 +328,34 @@ function positionGuideSpotlight(target) {
   spot.style.left = `${Math.max(8, left)}px`;
   spot.style.width = `${Math.max(80, width)}px`;
   spot.style.height = `${Math.max(80, height)}px`;
+}
+
+function positionGuideCard(target) {
+  const overlay = $('#guideOverlay');
+  const card = $('#guideOverlay .guide-card');
+  if (!overlay || !card || !target) return;
+  const rect = target.getBoundingClientRect();
+  const cardRect = card.getBoundingClientRect();
+  const margin = 12;
+  const style = getComputedStyle(overlay);
+  const padX = parseFloat(style.paddingLeft || '0');
+  const padY = parseFloat(style.paddingTop || '0');
+  const availW = window.innerWidth - padX * 2;
+  const availH = window.innerHeight - padY * 2;
+
+  const preferBelow = rect.bottom + margin + cardRect.height <= window.innerHeight;
+  let top = preferBelow ? rect.bottom + margin : rect.top - cardRect.height - margin;
+  // はみ出す場合のクランプ
+  top = Math.max(margin, Math.min(top, availH - cardRect.height - margin));
+
+  // 右下に寄せつつ、画面外なら左へずらす
+  let left = rect.right - cardRect.width + margin;
+  const maxLeft = availW - cardRect.width - margin;
+  if (left < margin) left = margin;
+  if (left > maxLeft) left = maxLeft;
+
+  card.style.top = `${Math.round(top + padY)}px`;
+  card.style.left = `${Math.round(left + padX)}px`;
 }
 
 function setGuideHighlight(selector) {
@@ -315,6 +376,7 @@ function setGuideHighlight(selector) {
   guideHighlightEl = target;
   target.classList.add('guide-highlight');
   positionGuideSpotlight(target);
+  positionGuideCard(target);
   if (spot) {
     spot.hidden = false;
     requestAnimationFrame(() => spot.classList.add('show'));
@@ -790,12 +852,40 @@ function initTheme() {
 
 // ====== トースト ======
 let toastTimer;
-function toast(msg) {
+let toastFadeTimer;
+function toast(msg, type='info') {
   const box = $('#toast');
-  box.textContent = msg;
-  box.classList.add('show');
+  if (!box) return;
+
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => box.classList.remove('show'), 1600);
+  clearTimeout(toastFadeTimer);
+
+  box.classList.remove('success','error','fade-out');
+  const icon = type === 'success' ? '✅' : type === 'error' ? '⚠️' : 'ℹ️';
+  box.textContent = '';
+  const inner = document.createElement('span');
+  inner.className = 'toast-inner';
+  const ico = document.createElement('span');
+  ico.className = 'toast-icon';
+  ico.textContent = icon;
+  const body = document.createElement('span');
+  body.className = 'toast-text';
+  body.textContent = msg;
+  inner.append(ico, body);
+  box.appendChild(inner);
+  if (type === 'success') box.classList.add('success');
+  else if (type === 'error') box.classList.add('error');
+
+  // リセットしてから表示（連続呼び出しでもアニメを再発火させる）
+  // eslint-disable-next-line no-unused-expressions
+  box.offsetWidth;
+  box.classList.add('show');
+
+  toastFadeTimer = setTimeout(() => box.classList.add('fade-out'), 2000);
+  toastTimer = setTimeout(() => {
+    box.classList.remove('show','fade-out','success','error');
+    box.innerHTML = '';
+  }, 4000);
 }
 
 // ====== 入力と状態の同期 ======
@@ -1310,7 +1400,7 @@ function resetAll() {
   captureBaseline();
   refreshCompareSelect();
   updateCompareBadges();
-  toast('初期化しました');
+  toast('初期化しました', 'success');
 }
 
 function hasLZ() {
@@ -1392,7 +1482,7 @@ function initShare() {
   }
 
   openerBtn.addEventListener('click', () => {
-    if (!hasLZ()) { toast('共有機能の初期化に失敗しました（LZ-String）'); return; }
+    if (!hasLZ()) { toast('共有機能の初期化に失敗しました（LZ-String）', 'error'); return; }
     dlg.showModal();
     if (!dlg.hasAttribute('tabindex')) dlg.setAttribute('tabindex', '-1');
     openerBtn.blur();
@@ -1408,11 +1498,11 @@ function initShare() {
     return `${location.origin}${location.pathname}?${params.toString()}`;
   };
   const copy = (fmt) => {
-    if (!hasLZ()) { toast('共有リンクの生成に失敗しました（LZ-String）'); return; }
+    if (!hasLZ()) { toast('共有リンクの生成に失敗しました（LZ-String）', 'error'); return; }
     const url = makeUrl();
     const text = fmt === 'md' ? `[unVEIL the world: ダメージシミュレーター](${url})` : url;
     navigator.clipboard?.writeText(text)
-      .then(() => { toast('クリップボードにコピーしました'); dlg.close(); })
+      .then(() => { toast('クリップボードにコピーしました', 'success'); dlg.close(); })
       .catch(() => { window.prompt('コピーしてください', text); dlg.close(); });
   };
   $('#copyUrl').addEventListener('click', (e)=>{ e.preventDefault(); copy('url'); });
@@ -1523,7 +1613,7 @@ function initPresets() {
 
   $('#savePreset').addEventListener('click', () => {
     let name = $('#presetName').value.trim();
-    if (!name) { toast('プリセット名を入力してください'); return; }
+    if (!name) { toast('プリセット名を入力してください', 'error'); return; }
     const map = loadPresets();
     map[name] = state; savePresets(map);
     currentPresetName = name;
@@ -1532,17 +1622,17 @@ function initPresets() {
     captureBaseline();
     refreshCompareSelect();
     updateCompareBadges();
-    toast('プリセットを保存しました');
+    toast('プリセットを保存しました', 'success');
   });
 
   $('#renamePreset').addEventListener('click', () => {
     const cur = $('#presetSelect').value;
     const name = $('#presetName').value.trim();
-    if (!cur) { toast('変更するプリセットを選択してください'); return; }
-    if (!name) { toast('新しい名前を入力してください'); return; }
+    if (!cur) { toast('変更するプリセットを選択してください', 'error'); return; }
+    if (!name) { toast('新しい名前を入力してください', 'error'); return; }
     if (name === cur) { toast('同じ名前です'); return; }
     const map = loadPresets();
-    if (!map[cur]) { toast('指定のプリセットが見つかりません'); return; }
+    if (!map[cur]) { toast('指定のプリセットが見つかりません', 'error'); return; }
     map[name] = map[cur]; delete map[cur]; savePresets(map);
     currentPresetName = name;
     refreshPresetSelect();
@@ -1550,12 +1640,12 @@ function initPresets() {
     captureBaseline();
     refreshCompareSelect();
     updateCompareBadges();
-    toast('名前を変更しました');
+    toast('名前を変更しました', 'success');
   });
 
   $('#deletePreset').addEventListener('click', () => {
     const cur = $('#presetSelect').value;
-    if (!cur) { toast('削除するプリセットを選択してください'); return; }
+    if (!cur) { toast('削除するプリセットを選択してください', 'error'); return; }
     if (!confirm('選択中のプリセットを削除します。よろしいですか？')) return;
     const map = loadPresets(); delete map[cur]; savePresets(map);
     refreshPresetSelect();
@@ -1565,7 +1655,7 @@ function initPresets() {
     captureBaseline();
     refreshCompareSelect();
     updateCompareBadges();
-    toast('削除しました');
+    toast('削除しました', 'success');
   });
 
   $('#presetSelect').addEventListener('change', (e) => {
@@ -1606,7 +1696,7 @@ function initPresets() {
     refreshPresetSelect();
     refreshCompareSelect();
     updateCompareBadges();
-    toast('プリセットを読み込みました');
+    toast('プリセットを読み込みました', 'success');
   });
 }
 
@@ -1663,7 +1753,7 @@ function initCompare() {
     refreshPresetSelect();
     refreshCompareSelect();
     $('#compareSave')?.setAttribute('hidden','');
-    toast('比較対象を保存しました');
+    toast('比較対象を保存しました', 'success');
   });
 }
 
@@ -1689,7 +1779,7 @@ function initFromQueryOrDefaults() {
     const p = new URLSearchParams(qs);
     const ver = p.get('v');
     if (ver && ver !== SHARE_SCHEMA_VERSION) {
-      toast(`共有リンクのバージョンが異なります (v=${ver})`);
+      toast(`共有リンクのバージョンが異なります (v=${ver})`, 'error');
     }
     const z = p.get('z');
     if (z) {
