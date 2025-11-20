@@ -140,10 +140,10 @@ html[data-input-mode="standard"] #grpEquip { display: none; }
 
 /* 見出し（summary）をクリックターゲット＆左右2カラム化 */
 .card > summary{
-  display:flex;
+  display:grid;
+  grid-template-columns: auto auto minmax(0,1fr);
   align-items:center;
   gap:8px;
-  flex-wrap: wrap;
 }
 
 /* ▸ / ▾ インジケータ（details の open 属性で自動切替）*/
@@ -153,27 +153,30 @@ html[data-input-mode="standard"] #grpEquip { display: none; }
   line-height:1;
   opacity:.9;
   transform: translateY(1px);
+  grid-column: 1;
 }
 .card[open] > summary::before{ content:'▾'; }
 
 /* 右端に“要約”を出す。折りたたみ時は濃く、展開時は薄く */
 .card > summary .g-hint{
-  margin-left:auto;
   font-size:12px;
   color: var(--muted);
   max-width: 72%;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
+  text-align: right;
   gap: 6px;
   white-space: normal;
   opacity:.95;
+  grid-column: 3;
 }
 .card[open] > summary .g-hint{ opacity:.55; }
 
 .sum-label {
   white-space: nowrap;
   flex: 0 0 auto;
+  grid-column: 2;
 }
 
 .hint-badge {
@@ -418,7 +421,6 @@ body.guide-open { overflow: hidden; }
 }
 
 @media (max-width: 720px) {
-  :root { --results-offset: 80px; }
   .two-cols { grid-template-columns: 1fr }
   .results-values { grid-template-columns: 1fr }
 }
