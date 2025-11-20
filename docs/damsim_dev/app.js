@@ -1500,7 +1500,17 @@ function initShare() {
   const copy = (fmt) => {
     if (!hasLZ()) { toast('共有リンクの生成に失敗しました（LZ-String）', 'error'); return; }
     const url = makeUrl();
-    const text = fmt === 'md' ? `[unVEIL the world: ダメージシミュレーター](${url})` : url;
+    let text = url;
+    if (fmt === 'md') {
+      // リンク先を送るだけでは中身が伝わりにくいため、Markdownのラベル側にプリセット/比較名を含めておく
+      const hasCompare = !!compareCtx;
+      const presetLabel = (linkedSide === 'A') ? (currentPresetName || '') : ((compareCtx?.name || '').trim());
+      let label = 'unVEIL the world: ダメージシミュレーター';
+      label += hasCompare
+        ? ` | 比較元：${baseName()} | 比較先：${compName()}`
+        : (presetLabel ? ` | プリセット：${presetLabel}` : '');
+      text = `[${label}](${url})`;
+    }
     navigator.clipboard?.writeText(text)
       .then(() => { toast('クリップボードにコピーしました', 'success'); dlg.close(); })
       .catch(() => { window.prompt('コピーしてください', text); dlg.close(); });
