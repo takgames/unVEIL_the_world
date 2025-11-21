@@ -203,7 +203,8 @@ html[data-input-mode="standard"] #grpEquip { display: none; }
 label > input:not([type=checkbox]):not([type=radio]) { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); font-size: var(--input-fz); }
 label > select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); font-size: var(--input-fz); }
 select option { font-size: var(--input-fz); }
-input[type=number] { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+input[type=number],
+.num-input { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 legend { padding: 0 6px }
 .key-field > span:first-child {
   display: inline-flex;
