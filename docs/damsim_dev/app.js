@@ -20,14 +20,16 @@
 const $ = (sel, el = document) => el.querySelector(sel);
 const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-const MATH_EXPR_RE = /^[0-9+\-*/().\s]+$/;
+const MATH_EXPR_RE = /^[0-9+\-*/().×÷＋－\s]+$/;
+const MATH_SYMBOL_MAP = { '×': '*', '÷': '/', '＋': '+', '－': '-' };
+const normalizeMathSymbols = (str) => str.replace(/[×÷＋－]/g, (ch) => MATH_SYMBOL_MAP[ch] || ch);
 // 数式入力を許容するための軽量パーサ（許可記号以外は無視してフォールバック）
 function evalMathExpression(v) {
   if (v === null || v === undefined) return null;
   const raw = typeof v === 'string' ? v : String(v);
-  const trimmed = raw.replace(/,/g, '').trim();
-  if (!trimmed || !MATH_EXPR_RE.test(trimmed)) return null;
-  const normalized = trimmed.replace(/\s+/g, '');
+  const cleaned = normalizeMathSymbols(raw.replace(/,/g, '').trim());
+  if (!cleaned || !MATH_EXPR_RE.test(cleaned)) return null;
+  const normalized = cleaned.replace(/\s+/g, '');
   // 許可外の演算子連続（//, ** 等）は弾く
   if (/\/{2,}|\*{2,}/.test(normalized)) return null;
   try {
