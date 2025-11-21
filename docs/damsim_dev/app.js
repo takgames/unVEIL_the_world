@@ -20,12 +20,30 @@
 const $ = (sel, el = document) => el.querySelector(sel);
 const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-// readNumber: カンマ区切りや空文字をまとめて扱い、数値以外はフォールバックに倒す
+const MATH_EXPR_RE = /^[0-9+\-*/().\s]+$/;
+// 数式入力を許容するための軽量パーサ（許可記号以外は無視してフォールバック）
+function evalMathExpression(v) {
+  if (v === null || v === undefined) return null;
+  const raw = typeof v === 'string' ? v : String(v);
+  const trimmed = raw.replace(/,/g, '').trim();
+  if (!trimmed || !MATH_EXPR_RE.test(trimmed)) return null;
+  const normalized = trimmed.replace(/\s+/g, '');
+  // 許可外の演算子連続（//, ** 等）は弾く
+  if (/\/{2,}|\*{2,}/.test(normalized)) return null;
+  try {
+    const val = Function('"use strict"; return (' + normalized + ');')();
+    return Number.isFinite(val) ? val : null;
+  } catch { return null; }
+}
+// readNumber: カンマ区切りや空文字・簡易数式をまとめて扱い、数値以外はフォールバックに倒す
 const readNumber = (v, fallback = 0) => {
   if (v === null || v === undefined) return fallback;
   if (typeof v === 'string') {
     const txt = v.replace(/,/g, '').trim();
     if (!txt) return fallback;
+    const exprVal = evalMathExpression(txt);
+    if (exprVal !== null) return exprVal;
+    if (!MATH_EXPR_RE.test(txt)) return fallback;
     const n = Number(txt);
     return Number.isFinite(n) ? n : fallback;
   }
@@ -889,6 +907,27 @@ function toast(msg, type='info') {
 }
 
 // ====== 入力と状態の同期 ======
+function normalizeNumberInput(el, fallback = 0) {
+  if (!el) return fallback;
+  const raw = (el.value || '').replace(/,/g, '').trim();
+  if (!raw) {
+    el.value = '0';
+    return 0;
+  }
+  return readNumber(el.value, fallback);
+}
+
+function bindNumberInput(el, setValue) {
+  if (!el || typeof setValue !== 'function') return;
+  const sync = () => { setValue(readNumber(el.value)); scheduleRender(); };
+  el.addEventListener('input', sync);
+  el.addEventListener('blur', () => {
+    const val = normalizeNumberInput(el);
+    setValue(val);
+    scheduleRender();
+  });
+}
+
 function bindInputs() {
   const map = [
     ['#finalAtkInput', 'finalAtkInput'],
@@ -913,10 +952,9 @@ function bindInputs() {
   ];
   map.forEach(([sel, key]) => {
     const el = $(sel);
-    el.addEventListener('input', () => {
+    bindNumberInput(el, (val) => {
       const s = getSideState(linkedSide);
-      s[key] = readNumber(el.value);
-      scheduleRender();
+      s[key] = val;
     });
   });
 
@@ -934,20 +972,18 @@ function bindInputs() {
   });
   // 装備: メイン値
   $$('.mainVal').forEach((inp) => {
-    inp.addEventListener('input', () => {
+    bindNumberInput(inp, (val) => {
       const slot = inp.dataset.slot;
       const fixedType = inp.dataset.mainType; // glove/armor 固定
       if (fixedType) getSideState(linkedSide).equip[slot].mainType = fixedType;
-      getSideState(linkedSide).equip[slot].mainVal = readNumber(inp.value);
-      scheduleRender();
+      getSideState(linkedSide).equip[slot].mainVal = val;
     });
   });
   // 装備: サブ
   $$('input[data-sub]').forEach((inp) => {
-    inp.addEventListener('input', () => {
+    bindNumberInput(inp, (val) => {
       const slot = inp.dataset.slot; const k = inp.dataset.sub;
-      getSideState(linkedSide).equip[slot].sub[k] = readNumber(inp.value);
-      scheduleRender();
+      getSideState(linkedSide).equip[slot].sub[k] = val;
     });
   });
 }
@@ -1769,7 +1805,7 @@ function initCompare() {
 
 // ====== 0フレンドリー入力 ======
 function initZeroFriendlyInputs() {
-  $$('input[type="number"]').forEach((el) => {
+  $$('.num-input').forEach((el) => {
     el.addEventListener('focus', () => {
       if (el.value === '0') { el.dataset.wasZero = '1'; el.value = ''; el.placeholder = '0'; }
     });

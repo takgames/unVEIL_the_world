@@ -85,17 +85,17 @@
         <div class="card-body grid two-cols gap status-grid">
           <label class="stack mode-only mode-only-simple key-field key-atk">
             <span>最終攻撃力 <span class="hint-chip" title="攻撃力アップ%を反映した後の値">攻UP適用後</span></span>
-            <input type="number" id="finalAtkInput" min="0" step="1" />
+            <input type="text" inputmode="decimal" class="num-input" id="finalAtkInput" min="0" step="1" />
           </label>
-          <label class="stack mode-only mode-only-standard key-field key-atk"><span>攻撃力</span><input type="number" id="preAtkInput" min="0" step="1" /></label>
-          <label class="stack mode-only mode-only-gear key-field key-atk"><span>基礎攻撃力</span><input type="number" id="baseAtk" min="0" step="1" /></label>
-          <label class="stack mode-only mode-only-gear key-field key-atk"><span>補正攻撃力</span><input type="number" id="bonusAtk" min="0" step="1" value="0" /></label>
-          <label class="stack mode-only mode-only-simple key-field key-crit"><span>最終会心率 %</span><input type="number" id="simpleCritRate" min="0" max="100" step="0.1" /></label>
-          <label class="stack mode-only mode-only-simple key-field key-critdmg"><span>最終会心ダメージ %</span><input type="number" id="simpleCritDmg" min="0" step="0.1" /></label>
-          <label class="stack mode-only mode-only-simple key-field key-elem"><span>最終属性ダメージ %</span><input type="number" id="simpleElemDmgPct" min="0" step="0.1" /></label>
-          <label class="stack mode-hide-simple key-field key-crit"><span>会心率 %</span><input type="number" id="critRate" min="0" max="100" step="0.1" /></label>
-          <label class="stack mode-hide-simple key-field key-critdmg"><span>会心ダメージ %</span><input type="number" id="critDmg" min="0" step="0.1" /></label>
-          <label class="stack mode-hide-simple key-field key-elem"><span>属性ダメージ %</span><input type="number" id="elemDmgPct" min="0" step="0.1" /></label>
+          <label class="stack mode-only mode-only-standard key-field key-atk"><span>攻撃力</span><input type="text" inputmode="decimal" class="num-input" id="preAtkInput" min="0" step="1" /></label>
+          <label class="stack mode-only mode-only-gear key-field key-atk"><span>基礎攻撃力</span><input type="text" inputmode="decimal" class="num-input" id="baseAtk" min="0" step="1" /></label>
+          <label class="stack mode-only mode-only-gear key-field key-atk"><span>補正攻撃力</span><input type="text" inputmode="decimal" class="num-input" id="bonusAtk" min="0" step="1" value="0" /></label>
+          <label class="stack mode-only mode-only-simple key-field key-crit"><span>最終会心率 %</span><input type="text" inputmode="decimal" class="num-input" id="simpleCritRate" min="0" max="100" step="0.1" /></label>
+          <label class="stack mode-only mode-only-simple key-field key-critdmg"><span>最終会心ダメージ %</span><input type="text" inputmode="decimal" class="num-input" id="simpleCritDmg" min="0" step="0.1" /></label>
+          <label class="stack mode-only mode-only-simple key-field key-elem"><span>最終属性ダメージ %</span><input type="text" inputmode="decimal" class="num-input" id="simpleElemDmgPct" min="0" step="0.1" /></label>
+          <label class="stack mode-hide-simple key-field key-crit"><span>会心率 %</span><input type="text" inputmode="decimal" class="num-input" id="critRate" min="0" max="100" step="0.1" /></label>
+          <label class="stack mode-hide-simple key-field key-critdmg"><span>会心ダメージ %</span><input type="text" inputmode="decimal" class="num-input" id="critDmg" min="0" step="0.1" /></label>
+          <label class="stack mode-hide-simple key-field key-elem"><span>属性ダメージ %</span><input type="text" inputmode="decimal" class="num-input" id="elemDmgPct" min="0" step="0.1" /></label>
         </div>
       </details>
 
@@ -107,28 +107,28 @@
             <!-- グローブ -->
             <fieldset class="equip-card"><legend>グローブ</legend>
               <div class="grid two-cols gap">
-                <label class="stack"><span>メイン (攻撃力)</span><input type="number" data-main-type="atk" data-slot="glove" class="mainVal" min="0" step="1"></label>
+                <label class="stack"><span>メイン (攻撃力)</span><input type="text" inputmode="decimal" data-main-type="atk" data-slot="glove" class="mainVal num-input" min="0" step="1"></label>
                 <div></div>
               </div>
               <div class="subgrid">
-                <label class="stack"><span>サブ 攻撃力</span><input type="number" data-sub="atk" data-slot="glove" min="0" step="1"></label>
-                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="number" data-sub="atkPct" data-slot="glove" min="0" step="0.1"></label>
-                <label class="stack"><span>サブ 会心率 %</span><input type="number" data-sub="critRate" data-slot="glove" min="0" step="0.1"></label>
-                <label class="stack"><span>サブ 会心ダメージ %</span><input type="number" data-sub="critDmg" data-slot="glove" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 攻撃力</span><input type="text" inputmode="decimal" class="num-input" data-sub="atk" data-slot="glove" min="0" step="1"></label>
+                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="text" inputmode="decimal" class="num-input" data-sub="atkPct" data-slot="glove" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心率 %</span><input type="text" inputmode="decimal" class="num-input" data-sub="critRate" data-slot="glove" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心ダメージ %</span><input type="text" inputmode="decimal" class="num-input" data-sub="critDmg" data-slot="glove" min="0" step="0.1"></label>
               </div>
             </fieldset>
 
             <!-- 服 -->
             <fieldset class="equip-card"><legend>服</legend>
               <div class="grid two-cols gap">
-                <label class="stack"><span>メイン (その他)</span><input type="number" data-main-type="other" data-slot="armor" class="mainVal" min="0" step="1" placeholder="—"></label>
+                <label class="stack"><span>メイン (その他)</span><input type="text" inputmode="decimal" data-main-type="other" data-slot="armor" class="mainVal num-input" min="0" step="1" placeholder="—"></label>
                 <div></div>
               </div>
               <div class="subgrid">
-                <label class="stack"><span>サブ 攻撃力</span><input type="number" data-sub="atk" data-slot="armor" min="0" step="1"></label>
-                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="number" data-sub="atkPct" data-slot="armor" min="0" step="0.1"></label>
-                <label class="stack"><span>サブ 会心率 %</span><input type="number" data-sub="critRate" data-slot="armor" min="0" step="0.1"></label>
-                <label class="stack"><span>サブ 会心ダメージ %</span><input type="number" data-sub="critDmg" data-slot="armor" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 攻撃力</span><input type="text" inputmode="decimal" class="num-input" data-sub="atk" data-slot="armor" min="0" step="1"></label>
+                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="text" inputmode="decimal" class="num-input" data-sub="atkPct" data-slot="armor" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心率 %</span><input type="text" inputmode="decimal" class="num-input" data-sub="critRate" data-slot="armor" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心ダメージ %</span><input type="text" inputmode="decimal" class="num-input" data-sub="critDmg" data-slot="armor" min="0" step="0.1"></label>
               </div>
             </fieldset>
 
@@ -144,13 +144,13 @@
                     <option value="other">その他</option>
                   </select>
                 </label>
-                <label class="stack"><span>メイン 値</span><input type="number" data-slot="emblem" class="mainVal" min="0" step="0.1" placeholder="—"></label>
+                <label class="stack"><span>メイン 値</span><input type="text" inputmode="decimal" data-slot="emblem" class="mainVal num-input" min="0" step="0.1" placeholder="—"></label>
               </div>
               <div class="subgrid">
-                <label class="stack"><span>サブ 攻撃力</span><input type="number" data-sub="atk" data-slot="emblem" min="0" step="1"></label>
-                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="number" data-sub="atkPct" data-slot="emblem" min="0" step="0.1"></label>
-                <label class="stack"><span>サブ 会心率 %</span><input type="number" data-sub="critRate" data-slot="emblem" min="0" step="0.1"></label>
-                <label class="stack"><span>サブ 会心ダメージ %</span><input type="number" data-sub="critDmg" data-slot="emblem" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 攻撃力</span><input type="text" inputmode="decimal" class="num-input" data-sub="atk" data-slot="emblem" min="0" step="1"></label>
+                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="text" inputmode="decimal" class="num-input" data-sub="atkPct" data-slot="emblem" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心率 %</span><input type="text" inputmode="decimal" class="num-input" data-sub="critRate" data-slot="emblem" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心ダメージ %</span><input type="text" inputmode="decimal" class="num-input" data-sub="critDmg" data-slot="emblem" min="0" step="0.1"></label>
               </div>
             </fieldset>
 
@@ -167,13 +167,13 @@
                     <option value="other">その他</option>
                   </select>
                 </label>
-                <label class="stack"><span>メイン 値</span><input type="number" data-slot="ring" class="mainVal" min="0" step="0.1" placeholder="—"></label>
+                <label class="stack"><span>メイン 値</span><input type="text" inputmode="decimal" data-slot="ring" class="mainVal num-input" min="0" step="0.1" placeholder="—"></label>
               </div>
               <div class="subgrid">
-                <label class="stack"><span>サブ 攻撃力</span><input type="number" data-sub="atk" data-slot="ring" min="0" step="1"></label>
-                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="number" data-sub="atkPct" data-slot="ring" min="0" step="0.1"></label>
-                <label class="stack"><span>サブ 会心率 %</span><input type="number" data-sub="critRate" data-slot="ring" min="0" step="0.1"></label>
-                <label class="stack"><span>サブ 会心ダメージ %</span><input type="number" data-sub="critDmg" data-slot="ring" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 攻撃力</span><input type="text" inputmode="decimal" class="num-input" data-sub="atk" data-slot="ring" min="0" step="1"></label>
+                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="text" inputmode="decimal" class="num-input" data-sub="atkPct" data-slot="ring" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心率 %</span><input type="text" inputmode="decimal" class="num-input" data-sub="critRate" data-slot="ring" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心ダメージ %</span><input type="text" inputmode="decimal" class="num-input" data-sub="critDmg" data-slot="ring" min="0" step="0.1"></label>
               </div>
             </fieldset>
 
@@ -189,13 +189,13 @@
                     <option value="other">その他</option>
                   </select>
                 </label>
-                <label class="stack"><span>メイン 値</span><input type="number" data-slot="brooch" class="mainVal" min="0" step="0.1" placeholder="—"></label>
+                <label class="stack"><span>メイン 値</span><input type="text" inputmode="decimal" data-slot="brooch" class="mainVal num-input" min="0" step="0.1" placeholder="—"></label>
               </div>
               <div class="subgrid">
-                <label class="stack"><span>サブ 攻撃力</span><input type="number" data-sub="atk" data-slot="brooch" min="0" step="1"></label>
-                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="number" data-sub="atkPct" data-slot="brooch" min="0" step="0.1"></label>
-                <label class="stack"><span>サブ 会心率 %</span><input type="number" data-sub="critRate" data-slot="brooch" min="0" step="0.1"></label>
-                <label class="stack"><span>サブ 会心ダメージ %</span><input type="number" data-sub="critDmg" data-slot="brooch" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 攻撃力</span><input type="text" inputmode="decimal" class="num-input" data-sub="atk" data-slot="brooch" min="0" step="1"></label>
+                <label class="stack"><span>サブ 攻撃力補正 %</span><input type="text" inputmode="decimal" class="num-input" data-sub="atkPct" data-slot="brooch" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心率 %</span><input type="text" inputmode="decimal" class="num-input" data-sub="critRate" data-slot="brooch" min="0" step="0.1"></label>
+                <label class="stack"><span>サブ 会心ダメージ %</span><input type="text" inputmode="decimal" class="num-input" data-sub="critDmg" data-slot="brooch" min="0" step="0.1"></label>
               </div>
             </fieldset>
           </div>
@@ -215,8 +215,8 @@
       <details id="grpSkill" class="card" open>
         <summary><span class="sum-label">スキル</span><span class="g-hint"></span></summary>
         <div class="card-body grid two-cols gap">
-          <label class="stack"><span>スキル攻撃 %</span><input type="number" id="skillPct" min="0" step="0.1" /></label>
-          <label class="stack"><span>スキル固定値</span><input type="number" id="skillFlat" min="0" step="1" value="0" /></label>
+          <label class="stack"><span>スキル攻撃 %</span><input type="text" inputmode="decimal" class="num-input" id="skillPct" min="0" step="0.1" /></label>
+          <label class="stack"><span>スキル固定値</span><input type="text" inputmode="decimal" class="num-input" id="skillFlat" min="0" step="1" value="0" /></label>
         </div>
       </details>
 
@@ -224,12 +224,12 @@
       <details id="grpBattle" class="card" open>
         <summary><span class="sum-label">戦闘中効果</span><span class="g-hint"></span></summary>
         <div class="card-body grid two-cols gap">
-          <label class="stack mode-hide-simple"><span>攻撃力アップ %</span><input type="number" id="atkUpPct" min="0" step="0.1" value="0" /></label>
-          <label class="stack"><span>ダメージアップ %</span><input type="number" id="dmgUpPct" min="0" step="0.1" value="0" /></label>
-          <label class="stack"><span>カードダメージアップ %</span><input type="number" id="cardDmgUpPct" min="0" step="0.1" value="0" /></label>
-          <label class="stack mode-hide-simple"><span>会心率アップ %</span><input type="number" id="critRateUpPct" min="0" step="0.1" value="0" /></label>
-          <label class="stack mode-hide-simple"><span>会心ダメージアップ %</span><input type="number" id="critDmgUpPct" min="0" step="0.1" value="0" /></label>
-          <label class="stack mode-hide-simple"><span>属性ダメージアップ %</span><input type="number" id="elemDmgUpPct" min="0" step="0.1" value="0" /></label>
+          <label class="stack mode-hide-simple"><span>攻撃力アップ %</span><input type="text" inputmode="decimal" class="num-input" id="atkUpPct" min="0" step="0.1" value="0" /></label>
+          <label class="stack"><span>ダメージアップ %</span><input type="text" inputmode="decimal" class="num-input" id="dmgUpPct" min="0" step="0.1" value="0" /></label>
+          <label class="stack"><span>カードダメージアップ %</span><input type="text" inputmode="decimal" class="num-input" id="cardDmgUpPct" min="0" step="0.1" value="0" /></label>
+          <label class="stack mode-hide-simple"><span>会心率アップ %</span><input type="text" inputmode="decimal" class="num-input" id="critRateUpPct" min="0" step="0.1" value="0" /></label>
+          <label class="stack mode-hide-simple"><span>会心ダメージアップ %</span><input type="text" inputmode="decimal" class="num-input" id="critDmgUpPct" min="0" step="0.1" value="0" /></label>
+          <label class="stack mode-hide-simple"><span>属性ダメージアップ %</span><input type="text" inputmode="decimal" class="num-input" id="elemDmgUpPct" min="0" step="0.1" value="0" /></label>
         </div>
       </details>
 
@@ -237,7 +237,7 @@
       <details id="grpEnemy" class="card" open>
         <summary><span class="sum-label">敵の詳細</span><span class="g-hint"></span></summary>
         <div class="card-body grid two-cols gap">
-          <label class="stack"><span>防御力</span><input type="number" id="enemyDef" min="0" step="1" value="0" /></label>
+          <label class="stack"><span>防御力</span><input type="text" inputmode="decimal" class="num-input" id="enemyDef" min="0" step="1" value="0" /></label>
           <label class="stack"><span>属性相性</span>
             <select id="affinity">
               <option value="none">なし</option>
